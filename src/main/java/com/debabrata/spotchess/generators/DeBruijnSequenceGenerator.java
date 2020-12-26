@@ -4,7 +4,7 @@ import java.util.Scanner;
 
 /**
  * This is not a generic implementation of a for B(k,n) with k symbols with permutations of n length within
- * De Bruijn sequence of k^n length. This is for bitboards so, B(2, 6) so we can have 64 digit numbers.
+ * De Bruijn sequence of k^n length. This is for bitboards so, B(2, 6) so we can have 64 digit binary numbers.
  * <p>
  * I have also of late and quiet painfully, I must mention, realized that you need to begin with 0. This is because
  * our shortcut of choice (multiply by single bit long to get unique new numbers) doesn't rotate the De Bruijn Sequence
@@ -29,9 +29,18 @@ public class DeBruijnSequenceGenerator {
     }
 
     /**
-     * Note on "links"
-     * row 0 and 1 is: possible numbers by adding a 0 or 1 the right of number and deleting 1 digit from left.
-     * row 2 is for the right link currently under consideration for finding the Euler Circuit. One out of row 2 or 3.
+     * How this program works:
+     * ----------------------------------------------------------------------------------------------------------------
+     * We use array index as stand in for the bits in the finished sequence. So 0b001001 denotes 9th index but also the
+     * sequence of digits "001001" in the 64 bit DeBruijn sequence. We can look for neighbours to either side of this
+     * sequence. We have arbitrarily chosen right. So the only two possible neighbours/indexes we can reach from 9 -
+     * "001001" are "010010" or "010011" i.e. 18 or 19. Since DeBruijn numbers are essentially circular in nature what
+     * we are trying to do is find a circuit through this sequence that ends up at the node that we started with
+     * (basically an Euler Circuit).
+     *
+     * In the array "links"
+     * row 0 and 1 give possible neighbours to an index. 0 being the neighbour we get by adding a 0 and 1 by adding a 1.
+     * row 2 is for the index of the neighbour currently under consideration for finding the circuit. -1 is default.
      */
     private static int[][] links = new int[3][64];
     private static int sequencesFound = 0;
@@ -51,20 +60,24 @@ public class DeBruijnSequenceGenerator {
         if (currentDepth == 1) {
             /* This is the last number */
             if (firstLink != links[0][currentLink] && firstLink != links[1][currentLink]) {
-                /* This number doesn't loop back to the original. We can get rid of this check and reduce the depth
-                 *  to 56 and it should work just fine. We'll need to make sure that the last number in the link is odd.
-                 *  That would make the process about 32 times faster. But it barely takes any time in any case. Also, I
-                 *  just like that we verify. */
+                /* This last number doesn't loop back to the firstLink. Circuit not found.
+                 *
+                 * Since we have hard coded 0 to be our starting point we can get rid of this check and reduce the depth
+                 * of the search to 56 and it should work just fine. We'll need to make sure that the last number in the
+                 * link is odd (otherwise there will be a 7 digit sequence of 0s). That should make the process about 32
+                 * times faster and it's a neat trick. But since generating the magic is a one time activity and because
+                 * the program is fast enough even without the trick I'm leaving this in. Also, I find it appealing that
+                 * the concept of circularity of DeBruijn sequences is emphasised this way. */
                 return false;
             }
             return findSequenceNumber == ++sequencesFound;
         } else {
-            links[2][currentLink] = links[0][currentLink];
+            links[2][currentLink] = links[0][currentLink]; /* We try the first potential neighbour. */
             boolean found = sequenceSearch(firstLink, links[0][currentLink], currentDepth - 1);
             if (found) {
                 return true;
             }
-            links[2][currentLink] = links[1][currentLink];
+            links[2][currentLink] = links[1][currentLink]; /* We try the second potential neighbour. */
             found = sequenceSearch(firstLink, links[1][currentLink], currentDepth - 1);
             if (found) {
                 return true;

@@ -3,6 +3,44 @@ package com.debabrata.spotchess.magics;
 import com.debabrata.spotchess.types.PieceType;
 
 public class RookAndBishopMovesUtil {
+    public static long[] getAllPossibleMovesCombinations(PieceType pieceType, int placeValue ){
+        long mask = getPieceMask(pieceType, placeValue);
+        long [] combos = getAllPossiblePiecePlacements(mask);
+        long [] moves  = new long[combos.length];
+        for ( int i = 0; i < combos.length; i++ ){
+            moves[i] = getMoves(pieceType, placeValue, combos[i]);
+        }
+        return moves;
+    }
+
+    /* Counting up from 0 and using least significant n bits as unique combinations,
+    *  we map each of those bits to a bit on the mask. Using an int to count up we can
+    *  map up to 32 bits which is more than enough for our purposes. Anything larger can't
+    *  be stored in an array in any case. */
+    public static long[] getAllPossiblePiecePlacements(long preMask){
+        int bitCount = Long.bitCount(preMask);
+        int [] bitToPositionMapping = new int[bitCount];
+        int i = 0;
+        while ( preMask != 0 ){
+            bitToPositionMapping[i++] = BitPositionUtil.getLastBitPlaceValue(preMask);
+            preMask = preMask & (preMask - 1);
+        }
+        int comboCount = 1 << bitCount;
+        long [] possibleBoardPositions = new long[comboCount];
+        for ( int permutation = 0; permutation < comboCount; permutation ++){
+            long newBoardPosition = 0;
+            int selector = 1;
+            for ( int position : bitToPositionMapping ){
+                if ((selector & permutation) != 0){
+                    newBoardPosition = newBoardPosition | (1L << position);
+                }
+                selector = selector << 1;
+            }
+            possibleBoardPositions[permutation] = newBoardPosition;
+        }
+        return possibleBoardPositions;
+    }
+
     public static long getMoves(PieceType type, int placeValue, long piecePlacements){
         long northMask = 0xFF00000000000000L;
         long eastMask  = 0x0101010101010101L;
@@ -39,31 +77,14 @@ public class RookAndBishopMovesUtil {
         }
     }
 
-    public static long[] getAllPossiblePiecePlacements(long preMask){
-        int bitCount = Long.bitCount(preMask);
-        int [] bitToPositionMapping = new int[bitCount];
-        int i = 0;
-        while ( preMask != 0 ){
-            bitToPositionMapping[i++] = BitPositionUtil.getLastBitPlaceValue(preMask);
-            preMask = preMask & (preMask - 1);
+    public static long getPieceMask(PieceType pieceType, int placeValue){
+        if ( pieceType == PieceType.ROOK ) {
+            return getRookMask(placeValue);
         }
-        int comboCount = 1 << bitCount;
-        long [] possibleBoardPositions = new long[comboCount];
-        for ( int permutation = 0; permutation < comboCount; permutation ++){
-            long newBoardPosition = 0;
-            int selector = 1;
-            for ( int position : bitToPositionMapping ){
-                if ((selector & permutation) != 0){
-                    newBoardPosition = newBoardPosition | (1L << position);
-                }
-                selector = selector << 1;
-            }
-            possibleBoardPositions[permutation] = newBoardPosition;
-        }
-        return possibleBoardPositions;
+        return getBishopMask(placeValue);
     }
 
-    public static long getRookMask(int placeValue, boolean preMask){
+    public static long getRookMask(int placeValue){
         long fileH = 0x0101010101010101L;
         long rank0 = 0x00000000000000FFL;
         long fileHWithoutEdges = 0x0001010101010100L;
@@ -72,9 +93,6 @@ public class RookAndBishopMovesUtil {
         int file = placeValue % 8;
         int rank = placeValue / 8;
         long mask = ((fileH << file ) ^ (rank0 << (rank * 8)));
-        if ( ! preMask ){
-            return mask;
-        }
         mask = mask & (~ border);
         if ( file == 0 || file == 7 ) {
             mask = mask | (fileHWithoutEdges << file);
@@ -86,7 +104,7 @@ public class RookAndBishopMovesUtil {
         return mask;
     }
 
-    public static long getBishopMask(int placeValue, boolean preMask){
+    public static long getBishopMask(int placeValue){
         long position = 1L << placeValue;
         long mask = 0;
         long leftDiagonalSeed  = 0x80;
@@ -106,6 +124,6 @@ public class RookAndBishopMovesUtil {
             leftDiagonalSelector = (leftDiagonalSelector << 8) | leftDiagonalSeed;
             rightDiagonalSelector = (rightDiagonalSelector << 8) | rightDiagonalSeed;
         }
-        return preMask ? mask & ~border : mask;
+        return mask & ~border;
     }
 }

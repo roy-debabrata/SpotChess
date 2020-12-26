@@ -1,8 +1,8 @@
 package com.debabrata.spotchess.magics;
 
 public class BitPositionUtil {
-    private static long deBruijnMagic = 0x0218a3a4dab967efL;
-    private static int [] magicTranslate = {
+    private static final long deBruijnMagic = 0x0218a3a4dab967efL;
+    private static final int [] magicTranslate = {
             0,  1,  2,  7,  3, 13,  8, 19,
             4, 27, 14, 45,  9, 30, 20, 51,
             5, 17, 25, 28, 15, 37, 46, 39,
