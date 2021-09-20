@@ -4,11 +4,15 @@ package com.debabrata.spotchess.types;
  * @version 2.0
  * @author Debabrata Roy
  * comment Storing Rooks, Queens and Bishops in two variable seems like a good idea. I am sure a lot of
- * engines must use this as it seems so basic. Not sure if its smart to jumble up the Knights, Kings and Pawns
- * but it did save 4 bytes which seems like a lot at this moment but I might regret it later.
+ * engines must use this as it seems so basic. Not sure if it's smart to jumble up the Knights, Kings and Pawns,
+ * but it did save 4 bytes which seems like a lot at this moment though I might regret it later.
  * That said, progress is change.
+ *
+ * Making class final to please the JVM inlining gods. Ideally we would like to make all the methods "inline" but that's
+ * not a thing in java (even in C/C++ it's just a suggestion to the compiler that can be ignored), so I right now I'll
+ * just make GameState final. In case we do make GameState non-final we'll make all methods in it final.
  */
-public class GameState {
+public final class GameState {
     /* Piece positions represent where the pieces are placed. */
     private long whitePieces;
     private long blackPieces;
@@ -20,15 +24,24 @@ public class GameState {
     /* Game state stores other state variables associated with the game. */
     private int gameState;
 
-    /* Last 7 bits (mask 0x0000007F) are for storing the count of reversible half moves. Read up on 50 move rule.
-     * Next 4 bits (mask 0x00000780) are used to store the file for the last en-passant move.
-     *                            1000 being a file and 0001 being h file.
-     * For the following positions 1 will represent can castle and 0 represents can't castle.
-     * 0x00000800 = white can castle with left rook
-     * 0x00001000 = white can castle with right rook
-     * 0x00002000 = black can castle with left rook
-     * 0x00004000 = black can castle with right rook
-     * 0x00008000 = white to move. 0 at this position means it's white's turn, 1 means it's black's turn. */
+    /* Last 8 bits (mask 0x000000FF) are for storing the count of reversible half moves. Read up on 50 move rule.
+     * Next 8 bits (mask 0x0000FF00) are to store the pawns eligible to take some pawn en-passant.
+     *                            So, say a white pawn moved from rank 2 to 4. These 8 bits will hold all the 4th rank
+     *                            black pawns that can take that pawn. So say c4 was played and there are black pawns on
+     *                            both b4 and d4 then the 8 bits will contain 01010000. If it's white's move it will
+     *                            have a similar content but for white's 5th rank pawns.
+     * Next 8 bits (mask 0x00FF0000) are to store the pawn that will be taken as a result of the en-passant move.
+     *                            So, in the last example that pawn was c4, so these 8 bits will contain 00100000.
+     *                            When it's white's move it will contain black's 5th rank pawn it can take and when
+     *                            it's black's move it will contain white's 4th rank pawn that can be taken by black.
+     * For the following positions 0 will represent can castle and 1 represents can't castle.
+     * 0x01000000 = white can castle with left rook
+     * 0x02000000 = black can castle with left rook
+     * 0x04000000 = white can castle with right rook
+     * 0x08000000 = black can castle with right rook
+     * 0x10000000 = Sets whose move it is. 0 at this position means it's white's turn, 1 means it's black's turn.
+     *
+     * At beginning of any regular chess game the gameState will have 0. This sets all flags to their initial state. */
 
     public GameState( boolean empty ){
         /* Standard board representation for normal standard game.
@@ -43,8 +56,8 @@ public class GameState {
             knightsAndKings = 0x4A0000000000004AL;
             rooksAndQueens = 0x9100000000000091L;
             queensAndBishops = 0x3400000000000034L;
-            /* All flags are set to one. */
-            gameState = 0x1F800;
+            /* The default position of flags are such that at the beginning of a regular chess game the flags are 0. */
+            gameState = 0;
         }
     }
 
@@ -147,11 +160,11 @@ public class GameState {
     }
 
     public boolean isDrawByFiftyMoveRule(){
-        return getReversibleHalfMoveCount() == 100;
+        return (gameState & 0x000000FF) >= 100;
     }
 
     public int getReversibleHalfMoveCount(){
-        return gameState & 0x0000007F;
+        return gameState & 0x000000FF;
     }
 
     public void incrementReversibleHalfMoveCount(){
@@ -159,14 +172,29 @@ public class GameState {
     }
 
     public void resetReversibleHalfMoveCount(){
-        gameState = gameState & 0xFFFFFF80;
+        gameState = gameState & 0xFFFFFF00;
     }
 
     /**
-     * @return 0 for no pawn can be taken en passant file; 1 to 8 for h to a file.
+     * @return pawns that can capture some pawn en-passant.
      */
-    public int getEnPassantFile(){
-        return (0x00000780 & gameState) >>> 7;
+    public long getPawnsThatCanCaptureEnPassant(){
+        if ( moveOf() == Colour.WHITE ) {
+            return (0x0000FF00L & gameState) << 24 ; /* The L causes an implicit cast to long. */
+        } else {
+            return (0x0000FF00L & gameState) << 16 ;
+        }
+    }
+
+    /**
+     * @return pawn that can be captured en-passant.
+     */
+    public long getPawnToBeCapturedEnPassant(){
+        if ( moveOf() == Colour.WHITE ) {
+            return (0x00FF0000L & gameState) << 16 ; /* The L causes an implicit cast to long. */
+        } else {
+            return (0x00FF0000L & gameState) << 8 ;
+        }
     }
 
     /**
@@ -178,51 +206,53 @@ public class GameState {
     }
 
     public void resetEnPassantFile(){
-        gameState = gameState & 0xFFFFF87F;
+        gameState = gameState & 0x00FFFF00;
     }
 
     public boolean canPotentiallyCastleLeft(Colour colour){
         if ( colour == Colour.WHITE ){
-            return (gameState & 0x00000800) != 0;
+            return (gameState & 0x01000000) == 0;
         }
-        return (gameState & 0x00002000) != 0;
+        return (gameState & 0x02000000) == 0;
     }
 
     public boolean canPotentiallyCastleRight(Colour colour){
         if ( colour == Colour.WHITE ){
-            return (gameState & 0x00001000) != 0;
+            return (gameState & 0x04000000) == 0;
         }
-        return (gameState & 0x00004000) != 0;
+        return (gameState & 0x08000000) == 0;
     }
 
     public void leftRookMoved(Colour colour){
         if ( colour == Colour.WHITE ){
-            gameState = gameState ^ 0x00000800;
+            gameState = gameState | 0x01000000;
+        } else {
+            gameState = gameState | 0x02000000;
         }
-        gameState = gameState ^ 0x00002000;
     }
 
     public void rightRookMoved(Colour colour){
         if ( colour == Colour.WHITE ){
-            gameState = gameState ^ 0x00001000;
+            gameState = gameState | 0x04000000;
+        } else {
+            gameState = gameState | 0x08000000;
         }
-        gameState = gameState ^ 0x00004000;
     }
-
 
     public void kingMoved(Colour colour){
         if ( colour == Colour.WHITE ){
-            gameState = gameState & 0xFFFFE7FF;
+            gameState = gameState | 0x05000000;
+        } else {
+            gameState = gameState | 0x0A000000;
         }
-        gameState = gameState & 0xFFFF9FFF;
     }
 
     public Colour moveOf(){
-        return (gameState & 0x00008000) == 0 ? Colour.WHITE : Colour.BLACK;
+        return (gameState & 0x10000000) == 0 ? Colour.WHITE : Colour.BLACK;
     }
 
     public void toggleMoveOf(){
-        gameState = gameState ^ 0x00008000;
+        gameState = gameState ^ 0x10000000;
     }
 
     public Colour getPieceColour(int placeValue) {
@@ -242,7 +272,8 @@ public class GameState {
         return getPieceType( 1L << placeValue );
     }
 
-    public PieceType getPieceType(long position) {
+    /* Avoids an explicit for check no piece as we know there is a piece at the position. */
+    public PieceType getPieceTypeOfKnownPiece(long position) {
         if ( (position & pawnsAndKnights) != 0L ){
             if ( (position & knightsAndKings) != 0L ){
                 return PieceType.KNIGHT;
@@ -258,9 +289,13 @@ public class GameState {
         if ( (position & rooksAndQueens) != 0L ){
             return PieceType.ROOK;
         }
-        if ( (position & knightsAndKings) != 0L ){
-            return PieceType.KING;
+        return PieceType.KING;
+    }
+
+    public PieceType getPieceType(long position) {
+        if (((position & (whitePieces | blackPieces)) == 0L)) {
+            return null;
         }
-        return null;
+        return getPieceTypeOfKnownPiece(position);
     }
 }

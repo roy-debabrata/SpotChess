@@ -14,7 +14,7 @@ public class GameStatePrinter {
     private static boolean SWITCH_COLOURS = true;
     private static boolean USE_UNICODE_CHESS_PIECES = true;
 
-    private static String BUFFER_BETWEEN_BOARDS = "          ";
+    private static final String BUFFER_BETWEEN_BOARDS = "          ";
 
     public static void printBitBoards(long ... boards){
         long mask = 0xFF00000000000000L;
@@ -22,10 +22,7 @@ public class GameStatePrinter {
         for ( int i = 0; i < 8; i++ ){
             for (long board : boards) {
                 long eightDigitBinary = (board & mask) >>> shift;
-                String formattedString = String.format("%8s", Long.toBinaryString(eightDigitBinary))
-                        .replace(" ", "0")
-                        .replace("", " ")
-                        .trim();
+                String formattedString = eightBinaryDigitsToString((int)eightDigitBinary);
                 System.out.print(formattedString);
                 System.out.print(BUFFER_BETWEEN_BOARDS);
             }
@@ -33,6 +30,13 @@ public class GameStatePrinter {
             mask = mask >>> 8;
             shift -= 8;
         }
+    }
+
+    public static String eightBinaryDigitsToString (int eightDigitBinary){
+        return String.format("%8s", Integer.toBinaryString(eightDigitBinary))
+                .replace(" ", "0")
+                .replace("", " ")
+                .trim();
     }
 
     public static void printGameStateBitBoards( GameState gameState ){
@@ -59,8 +63,8 @@ public class GameStatePrinter {
 
     public static List<String> getAdditionalBoardStateInfo(GameState gameState){
         List<String> stateInfo = new ArrayList<>();
+        stateInfo.add("To move : " + gameState.moveOf().name());
         stateInfo.add("Reversible Half-Move Count: " + gameState.getReversibleHalfMoveCount());
-        stateInfo.add("En-passant file: " + gameState.getEnPassantFile());
         String castleInfo = gameState.canPotentiallyCastleLeft(Colour.WHITE) ?
                 (gameState.canPotentiallyCastleRight(Colour.WHITE) ? "both sides." : "left side.")
                 : (gameState.canPotentiallyCastleRight(Colour.WHITE) ? "right side." : "neither side.");
@@ -69,6 +73,11 @@ public class GameStatePrinter {
                 (gameState.canPotentiallyCastleRight(Colour.BLACK) ? "both sides." : "left side.")
                 : (gameState.canPotentiallyCastleRight(Colour.BLACK) ? "right side." : "neither side.");
         stateInfo.add("Black can potentially castle " + castleInfo);
+        /* En-passant */
+        int enPassantFlag = (0x0000FF00 & gameState.getGameState()) >> 8;
+        stateInfo.add("En-passant takers: " + eightBinaryDigitsToString(enPassantFlag));
+        enPassantFlag = (0x00FF0000 & gameState.getGameState()) >> 16;
+        stateInfo.add("En-passant taken : " + eightBinaryDigitsToString(enPassantFlag));
         return stateInfo;
     }
 
