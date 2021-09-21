@@ -5,19 +5,28 @@ import com.debabrata.spotchess.types.PieceType;
 public class RookAndBishopMovesUtil {
     public static long[] getAllPossibleMovesCombinations(PieceType pieceType, int placeValue ){
         long mask = getPieceMask(pieceType, placeValue);
-        long [] combos = getAllPossiblePiecePlacements(mask);
-        long [] moves  = new long[combos.length];
-        for ( int i = 0; i < combos.length; i++ ){
-            moves[i] = getMoves(pieceType, placeValue, combos[i]);
+        long [] pieceCombinations = getAllPossiblepieceCombinations(mask);
+        return getAllPossibleMovesCombinations(pieceType, placeValue, pieceCombinations);
+    }
+
+    public static long[] getAllPossibleMovesCombinations(PieceType pieceType, int placeValue, long[] pieceCombinations){
+        long [] moves  = new long[pieceCombinations.length];
+        for ( int i = 0; i < pieceCombinations.length; i++ ){
+            moves[i] = getMoves(pieceType, placeValue, pieceCombinations[i]);
         }
         return moves;
     }
 
-    /* Counting up from 0 and using least significant n bits as unique combinations,
-    *  we map each of those bits to a bit on the mask. Using an int to count up we can
-    *  map up to 32 bits which is more than enough for our purposes. Anything larger can't
-    *  be stored in an array in any case. */
-    public static long[] getAllPossiblePiecePlacements(long preMask){
+    /**
+     * Generate all possible combination of piece placements on the bit positions marked by the preMask.
+     * Counting up from 0 and using least significant n bits as unique combinations, we map each of those bits to a bit
+     * on the mask. Using an int to count up we can map up to 32 bits which is more than enough for our purposes.
+     * No single piece attack as many positions.
+     *
+     * @param preMask gives the region for which to generate all possible combinations of values.
+     *                Must not contain more than 32 active bits.
+     * @return an array containing bitboards of all combinations of bits of the preMask. */
+    public static long[] getAllPossiblepieceCombinations(long preMask){
         int bitCount = Long.bitCount(preMask);
         int [] bitToPositionMapping = new int[bitCount];
         int i = 0;
@@ -41,30 +50,33 @@ public class RookAndBishopMovesUtil {
         return possibleBoardPositions;
     }
 
-    public static long getMoves(PieceType type, int placeValue, long piecePlacements){
+    public static long getMoves(PieceType type, int placeValue, long pieceCombinations){
         long northMask = 0xFF00000000000000L;
         long eastMask  = 0x0101010101010101L;
         long southMask = 0x00000000000000FFL;
         long westMask  = 0x8080808080808080L;
         if ( type == PieceType.ROOK ){
-            return rayFill( placeValue, piecePlacements, 1, westMask)
-                    ^ rayFill( placeValue, piecePlacements, 8, northMask)
-                    ^ rayFill( placeValue, piecePlacements, -1, eastMask)
-                    ^ rayFill( placeValue, piecePlacements, -8, southMask);
+            return rayFill( placeValue, pieceCombinations, 1, westMask)
+                    ^ rayFill( placeValue, pieceCombinations, 8, northMask)
+                    ^ rayFill( placeValue, pieceCombinations, -1, eastMask)
+                    ^ rayFill( placeValue, pieceCombinations, -8, southMask);
         } else if ( type == PieceType.BISHOP ){
-            return rayFill( placeValue, piecePlacements, 9, northMask | westMask)
-                    ^ rayFill( placeValue, piecePlacements, 7, northMask | eastMask)
-                    ^ rayFill( placeValue, piecePlacements, -9, southMask | eastMask)
-                    ^ rayFill( placeValue, piecePlacements, -7, southMask | westMask);
+            return rayFill( placeValue, pieceCombinations, 9, northMask | westMask)
+                    ^ rayFill( placeValue, pieceCombinations, 7, northMask | eastMask)
+                    ^ rayFill( placeValue, pieceCombinations, -9, southMask | eastMask)
+                    ^ rayFill( placeValue, pieceCombinations, -7, southMask | westMask);
         }
         return 0;
     }
 
-    public static long rayFill(int placeValue, long piecePlacements, int shift, long rayEdgeMask){
+    /* Works by shifting 1 bit at "placeValue" by "shift" bits (this essentially give the ray its direction) and
+     * it keeps going till it hits either an edge defined by "rayEdgeMask" or a piece in the "pieceCombinations". If
+     * correct edge mask is provided it will return from within the while loop. */
+    public static long rayFill(int placeValue, long pieceCombinations, int shift, long rayEdgeMask){
         long moves = 0;
         long currentPosition = 1L << placeValue;
-        while ( true ){
-            if ((currentPosition & rayEdgeMask) != 0 || (currentPosition & piecePlacements) != 0){
+        while ( currentPosition != 0 ){
+            if ((currentPosition & rayEdgeMask) != 0 || (currentPosition & pieceCombinations) != 0){
                 moves = moves | currentPosition;
                 return moves;
             }
@@ -75,6 +87,7 @@ public class RookAndBishopMovesUtil {
                 currentPosition = currentPosition << shift;
             }
         }
+        throw new RuntimeException("Check: " + placeValue + ", " + pieceCombinations + ", " + shift + ", " + rayEdgeMask);
     }
 
     public static long getPieceMask(PieceType pieceType, int placeValue){

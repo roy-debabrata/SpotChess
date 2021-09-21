@@ -160,7 +160,7 @@ public final class GameState {
     }
 
     public boolean isDrawByFiftyMoveRule(){
-        return (gameState & 0x000000FF) >= 100;
+        return getReversibleHalfMoveCount() >= 100;
     }
 
     public int getReversibleHalfMoveCount(){
@@ -197,13 +197,7 @@ public final class GameState {
         }
     }
 
-    /**
-     * @param rowNum 0 for no pawn can be taken en passant; 1 to 8 for h to a file.
-     *               This method will misbehave for values outside (0,8).
-     */
-    public void setEnPassantFile(int rowNum){
-        gameState = ((gameState & 0xFFFFF87F) | ((rowNum & 0xF) << 7 ));
-    }
+    //TODO: Think through how we can set the "pawnsThatCanCaptureEnPassant" and "pawnToBeCapturedEnPassant".
 
     public void resetEnPassantFile(){
         gameState = gameState & 0x00FFFF00;
