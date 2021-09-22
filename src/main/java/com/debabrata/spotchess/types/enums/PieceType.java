@@ -1,4 +1,4 @@
-package com.debabrata.spotchess.types;
+package com.debabrata.spotchess.types.enums;
 
 public enum PieceType {
     KING('K'),

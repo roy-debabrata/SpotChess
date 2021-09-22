@@ -1,4 +1,4 @@
-package com.debabrata.spotchess.types;
+package com.debabrata.spotchess.types.enums;
 
 public enum Colour {
     WHITE(0), BLACK(1);

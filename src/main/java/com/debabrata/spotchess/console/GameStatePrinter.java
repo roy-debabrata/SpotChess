@@ -1,8 +1,8 @@
 package com.debabrata.spotchess.console;
 
 import com.debabrata.spotchess.types.GameState;
-import com.debabrata.spotchess.types.Colour;
-import com.debabrata.spotchess.types.PieceType;
+import com.debabrata.spotchess.types.enums.Colour;
+import com.debabrata.spotchess.types.enums.PieceType;
 
 import java.util.ArrayList;
 import java.util.List;

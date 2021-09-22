@@ -1,6 +1,6 @@
 package com.debabrata.spotchess.magics;
 
-import com.debabrata.spotchess.types.PieceType;
+import com.debabrata.spotchess.types.enums.PieceType;
 
 public class RookAndBishopMovesUtil {
     public static long[] getAllPossibleMovesCombinations(PieceType pieceType, int placeValue ){

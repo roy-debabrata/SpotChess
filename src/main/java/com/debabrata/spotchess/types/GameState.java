@@ -1,5 +1,8 @@
 package com.debabrata.spotchess.types;
 
+import com.debabrata.spotchess.types.enums.Colour;
+import com.debabrata.spotchess.types.enums.PieceType;
+
 /**
  * @version 2.0
  * @author Debabrata Roy
