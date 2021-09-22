@@ -5,11 +5,13 @@ import java.util.Scanner;
 /**
  * This is not a generic implementation of a for B(k,n) with k symbols with permutations of n length within
  * De Bruijn sequence of k^n length. This is for bitboards so, B(2, 6) so we can have 64 digit binary numbers.
- * <p>
+ *
  * I have also of late and quiet painfully, I must mention, realized that you need to begin with 0. This is because
  * our shortcut of choice (multiply by single bit long to get unique new numbers) doesn't rotate the De Bruijn Sequence
  * but left shifts it. The problem with that is that the last numbers are necessarily trailed by additional zeros.
  * This can create a lot of conflict scenarios in the last 6 digits.
+ *
+ * Contemplate on "(longContainingSingleBit * deBruijnMagic) >>> 58)" you'll get what I mean in the last para.
  */
 public class DeBruijnSequenceGenerator {
     public static void main(String[] args) {
@@ -54,10 +56,10 @@ public class DeBruijnSequenceGenerator {
         }
     }
 
-    private static boolean sequenceSearch(int firstLink, int currentLink, int currentDepth) {
+    private static boolean sequenceSearch(int firstLink, int currentLink, int remainingNodes) {
         if (links[2][currentLink] >= 0)
             return false; /* Link has been used before */
-        if (currentDepth == 1) {
+        if (remainingNodes == 1) {
             /* This is the last number */
             if (firstLink != links[0][currentLink] && firstLink != links[1][currentLink]) {
                 /* This last number doesn't loop back to the firstLink. Circuit not found.
@@ -73,12 +75,12 @@ public class DeBruijnSequenceGenerator {
             return findSequenceNumber == ++sequencesFound;
         } else {
             links[2][currentLink] = links[0][currentLink]; /* We try the first potential neighbour. */
-            boolean found = sequenceSearch(firstLink, links[0][currentLink], currentDepth - 1);
+            boolean found = sequenceSearch(firstLink, links[0][currentLink], remainingNodes - 1);
             if (found) {
                 return true;
             }
             links[2][currentLink] = links[1][currentLink]; /* We try the second potential neighbour. */
-            found = sequenceSearch(firstLink, links[1][currentLink], currentDepth - 1);
+            found = sequenceSearch(firstLink, links[1][currentLink], remainingNodes - 1);
             if (found) {
                 return true;
             }
@@ -121,7 +123,7 @@ public class DeBruijnSequenceGenerator {
             return;
         }
 
-        System.out.printf("Our Magic Debruijn Sequence = 0x%016xL \n", magic);
+        System.out.printf("Our Magic De Bruijn Sequence = 0x%016XL \n", magic);
         int count = 0;
         System.out.println("int [] magicTranslate = { ");
         for (int x : resultArray) {

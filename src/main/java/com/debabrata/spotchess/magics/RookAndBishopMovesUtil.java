@@ -5,7 +5,7 @@ import com.debabrata.spotchess.types.PieceType;
 public class RookAndBishopMovesUtil {
     public static long[] getAllPossibleMovesCombinations(PieceType pieceType, int placeValue ){
         long mask = getPieceMask(pieceType, placeValue);
-        long [] pieceCombinations = getAllPossiblepieceCombinations(mask);
+        long [] pieceCombinations = getAllPossiblePieceCombinations(mask);
         return getAllPossibleMovesCombinations(pieceType, placeValue, pieceCombinations);
     }
 
@@ -26,7 +26,7 @@ public class RookAndBishopMovesUtil {
      * @param preMask gives the region for which to generate all possible combinations of values.
      *                Must not contain more than 32 active bits.
      * @return an array containing bitboards of all combinations of bits of the preMask. */
-    public static long[] getAllPossiblepieceCombinations(long preMask){
+    public static long[] getAllPossiblePieceCombinations(long preMask){
         int bitCount = Long.bitCount(preMask);
         int [] bitToPositionMapping = new int[bitCount];
         int i = 0;
