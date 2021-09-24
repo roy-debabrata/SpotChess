@@ -1,4 +1,4 @@
-package com.debabrata.spotchess.generators;
+package com.debabrata.spotchess.tools;
 
 import java.util.Scanner;
 

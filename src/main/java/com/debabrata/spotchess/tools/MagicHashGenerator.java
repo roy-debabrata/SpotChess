@@ -1,4 +1,4 @@
-package com.debabrata.spotchess.generators;
+package com.debabrata.spotchess.tools;
 
 import com.debabrata.spotchess.magics.RookAndBishopMovesUtil;
 import com.debabrata.spotchess.types.enums.PieceType;
@@ -24,8 +24,8 @@ public class MagicHashGenerator {
     private static long TOOL_BENCHMARKING_MAGICS_TRIED;
 
     public static void main(String[] args) {
-        runForSinglePosition();
-        //runForAllPositions();
+        //runForSinglePosition();
+        runForAllPositions();
     }
 
 
@@ -89,13 +89,13 @@ public class MagicHashGenerator {
         for (int i = 0; i < magicNumberShiftTargets.length; i++ ) {
             shiftArray.append(magicNumberShiftTargets[i]).append(",");
             if ( piece == PieceType.ROOK ) {
-                occupancyArray.append(formatLongToHexLiteral(RookAndBishopMovesUtil.getRookMask(i))).append(",");
+                occupancyArray.append(formatLongToHexLiteral(RookAndBishopMovesUtil.getRookMask(i))).append(", ");
             } else {
-                occupancyArray.append(formatLongToHexLiteral(RookAndBishopMovesUtil.getBishopMask(i))).append(",");
+                occupancyArray.append(formatLongToHexLiteral(RookAndBishopMovesUtil.getBishopMask(i))).append(", ");
             }
         }
         System.out.println(shiftArray + "\b};");
-        System.out.println(occupancyArray + "\b};");
+        System.out.println(occupancyArray + "\b\b};");
 
         System.out.print("magicNumber" + capitalCasePieceName + "[] = {");
 
