@@ -63,7 +63,7 @@ public class GameStatePrinter {
 
     public static List<String> getAdditionalBoardStateInfo(GameState gameState){
         List<String> stateInfo = new ArrayList<>();
-        stateInfo.add("To move : " + gameState.moveOf().name());
+        stateInfo.add("To move : " + (gameState.whiteToMove()? Colour.WHITE.name() : Colour.BLACK.name()));
         stateInfo.add("Reversible Half-Move Count: " + gameState.getReversibleHalfMoveCount());
         String castleInfo = gameState.canPotentiallyCastleLeft(Colour.WHITE) ?
                 (gameState.canPotentiallyCastleRight(Colour.WHITE) ? "both sides." : "left side.")

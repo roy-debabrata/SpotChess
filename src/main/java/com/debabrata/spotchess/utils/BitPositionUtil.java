@@ -1,4 +1,4 @@
-package com.debabrata.spotchess.magics;
+package com.debabrata.spotchess.utils;
 
 public class BitPositionUtil {
     private static final long deBruijnMagic = 0x0218A3A4DAB967EFL;

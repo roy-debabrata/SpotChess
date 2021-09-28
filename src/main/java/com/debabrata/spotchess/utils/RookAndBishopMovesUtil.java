@@ -1,4 +1,4 @@
-package com.debabrata.spotchess.magics;
+package com.debabrata.spotchess.utils;
 
 import com.debabrata.spotchess.types.enums.PieceType;
 

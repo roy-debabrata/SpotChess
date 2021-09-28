@@ -1,6 +1,6 @@
 package com.debabrata.spotchess.tools;
 
-import com.debabrata.spotchess.magics.RookAndBishopMovesUtil;
+import com.debabrata.spotchess.utils.RookAndBishopMovesUtil;
 import com.debabrata.spotchess.types.enums.PieceType;
 
 import java.util.*;
