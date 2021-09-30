@@ -1,5 +1,7 @@
 package com.debabrata.spotchess.utils;
 
+import com.debabrata.spotchess.types.enums.PieceType;
+
 /**
  * @version 2.0
  * @author Debabrata Roy
@@ -18,6 +20,10 @@ package com.debabrata.spotchess.utils;
  *          0x00020000 Right castle.
  *          0x00040000 En passant move.
  *          0x00080000 Double pawn move.
+ *          0x00100000 Pawn promotes to Queen.
+ *          0x00200000 Pawn promotes to Knight.
+ *          0x00400000 Pawn promotes to Bishop.
+ *          0x00800000 Pawn promotes to Rook.
  *
  *          0 can stand as an uninitialized move as a move from h1 to h1 doesn't make any sense in chess. To understand
  *          the orientation of the board please read the comments in GameState.
@@ -41,6 +47,20 @@ public class MoveIntUtil {
 
     public static boolean isRightCastle(int move) {
         return (move & 0x00020000) != 0;
+    }
+
+    public static boolean isPromotion(int move) {
+        return (move & 0x00F00000) != 0;
+    }
+
+    public static PieceType promotesTo(int move) {
+        switch ( move & 0x00F00000 ) {
+            case 0x00100000 : return PieceType.QUEEN;
+            case 0x00200000 : return PieceType.KNIGHT;
+            case 0x00300000 : return PieceType.BISHOP;
+            case 0x00400000 : return PieceType.ROOK;
+        }
+        return null;
     }
 
     public static boolean isEnPassant(int move) {
@@ -69,5 +89,17 @@ public class MoveIntUtil {
 
     public static int newPawnDoubleMove(int from, int to) {
         return (to << 8) | from | 0x00080000;
+    }
+
+    public static int newPawnPromotion(int from, int to, PieceType promoteTo) {
+        switch ( promoteTo ) {
+            case QUEEN  : return (to << 8) | from | 0x00100000;
+            case KNIGHT : return (to << 8) | from | 0x00200000;
+            case BISHOP : return (to << 8) | from | 0x00400000;
+            case ROOK   : return (to << 8) | from | 0x00800000;
+            case PAWN   :
+            case KING   : throw new RuntimeException("A pawn cannot promote to " + promoteTo.name());
+        }
+        throw new RuntimeException("Invalid promotion choice " + promoteTo);
     }
 }

@@ -5,16 +5,16 @@ import com.debabrata.spotchess.types.enums.Colour;
 import com.debabrata.spotchess.types.enums.PieceType;
 
 /**
- * @version 2.0
  * @author Debabrata Roy
  * comment Storing Rooks, Queens and Bishops in two variable seems like a good idea. I am sure a lot of
  * engines must use this as it seems so basic. Not sure if it's smart to jumble up the Knights, Kings and Pawns,
  * but it did save 4 bytes which seems like a lot at this moment though I might regret it later.
  * That said, progress is change.
- *
+ * <p>
  * Making class final to please the JVM inlining gods. Ideally we would like to make all the methods "inline" but that's
  * not a thing in java (even in C/C++ it's just a suggestion to the compiler that can be ignored), so I right now I'll
  * just make GameState final. In case we do make GameState non-final we'll make all methods in it final.
+ * @version 2.0
  */
 public final class GameState {
     /* Piece positions represent where the pieces are placed. */
@@ -47,7 +47,7 @@ public final class GameState {
      *
      * At beginning of any regular chess game the gameState will have 0. This sets all flags to their initial state. */
 
-    public GameState(){
+    public GameState() {
         /* Standard board representation for normal standard game. The board representation is
          * Little-Endian Rank, Big-Endian File Mapping (LERBEF). For an illustration check out the following:
          * https://www.chessprogramming.org/Bibob and look at the image labeled "LERBEF"
@@ -73,28 +73,28 @@ public final class GameState {
         this.gameState = gameState.gameState;
     }
 
-    public long getQueens(){
+    public long getQueens() {
         return queensAndBishops & rooksAndQueens;
     }
 
-    public long getBishops(){
-        return queensAndBishops & ( ~ rooksAndQueens );
+    public long getBishops() {
+        return queensAndBishops & (~rooksAndQueens);
     }
 
-    public long getRooks(){
-        return rooksAndQueens & ( ~ queensAndBishops );
+    public long getRooks() {
+        return rooksAndQueens & (~queensAndBishops);
     }
 
-    public long getKnights(){
+    public long getKnights() {
         return knightsAndKings & pawnsAndKnights;
     }
 
-    public long getKings(){
-        return knightsAndKings & ( ~ pawnsAndKnights );
+    public long getKings() {
+        return knightsAndKings & (~pawnsAndKnights);
     }
 
-    public long getPawns(){
-        return pawnsAndKnights & ( ~ knightsAndKings );
+    public long getPawns() {
+        return pawnsAndKnights & (~knightsAndKings);
     }
 
     public long getWhitePieces() {
@@ -125,7 +125,7 @@ public final class GameState {
         return gameState;
     }
 
-    public long selectWhitePieces(long pieces){
+    public long selectWhitePieces(long pieces) {
         return this.whitePieces & pieces;
     }
 
@@ -133,41 +133,45 @@ public final class GameState {
         return this.blackPieces & pieces;
     }
 
-    public boolean isDrawByFiftyMoveRule(){
+    public boolean isDrawByFiftyMoveRule() {
         return getReversibleHalfMoveCount() >= 100;
     }
 
-    public int getReversibleHalfMoveCount(){
+    public int getReversibleHalfMoveCount() {
         return gameState & 0x000000FF;
     }
 
-    public void incrementReversibleHalfMoveCount(){
-        gameState ++;
+    public void incrementReversibleHalfMoveCount() {
+        gameState++;
     }
 
-    public void resetReversibleHalfMoveCount(){
+    public void resetReversibleHalfMoveCount() {
         gameState = gameState & 0xFFFFFF00;
+    }
+
+    public boolean enPassantAvailable() {
+        return (0x00FFFF00L & gameState) != 0;
     }
 
     /**
      * @return pawns that can capture some pawn en-passant.
      */
-    public long getPawnsThatCanCaptureEnPassant(){
-        if ( whiteToMove() ) {
-            return (0x0000FF00L & gameState) << 24 ; /* The L causes an implicit cast to long. */
+    public long getPawnsThatCanCaptureEnPassant(boolean whiteToMove) {
+        if (whiteToMove) {
+            return (0x0000FF00L & gameState) << 24; /* The L causes an implicit cast to long. */
         } else {
-            return (0x0000FF00L & gameState) << 16 ;
+            return (0x0000FF00L & gameState) << 16;
         }
     }
 
     /**
      * @return pawn that can be captured en-passant.
      */
-    public long getPawnToBeCapturedEnPassant(boolean whiteToMove){
-        if ( whiteToMove ) {
-            return (0x00FF0000L & gameState) << 16 ; /* The L causes an implicit cast to long. */
+    public long getPawnToBeCapturedEnPassant(boolean whiteToMove) {
+        if (whiteToMove) {
+            return (0x00FF0000L & gameState) << 16; /* The L causes an implicit cast to long. */
         } else {
-            return (0x00FF0000L & gameState) << 8 ;
+            return (0x00FF0000L & gameState) << 8;
         }
     }
 
@@ -175,55 +179,55 @@ public final class GameState {
         long adjacentPositions = ((pawnMovedTo << 1) | (pawnMovedTo >> 1)) & 0x000000FFFF000000L;
         if (whiteToMove) {
             adjacentPositions = adjacentPositions & blackPieces & getPawns();
-            if ( adjacentPositions != 0 ) {
+            if (adjacentPositions != 0) {
                 gameState = gameState | (int) (adjacentPositions >>> 16);
                 gameState = gameState | (int) (pawnMovedTo >>> 8);
             }
         } else {
             adjacentPositions = adjacentPositions & whitePieces & getPawns();
-            if ( adjacentPositions != 0 ) {
+            if (adjacentPositions != 0) {
                 gameState = gameState | (int) (adjacentPositions >>> 24);
                 gameState = gameState | (int) (pawnMovedTo >>> 16);
             }
         }
     }
 
-    public void resetEnPassantStatusData(){
+    public void resetEnPassantStatusData() {
         gameState = gameState & 0xFF0000FF;
     }
 
-    public boolean canPotentiallyCastleLeft(Colour colour){
-        if ( colour == Colour.WHITE ){
+    public boolean canPotentiallyCastleLeft(Colour colour) {
+        if (colour == Colour.WHITE) {
             return (gameState & 0x01000000) == 0;
         }
         return (gameState & 0x02000000) == 0;
     }
 
-    public boolean canPotentiallyCastleRight(Colour colour){
-        if ( colour == Colour.WHITE ){
+    public boolean canPotentiallyCastleRight(Colour colour) {
+        if (colour == Colour.WHITE) {
             return (gameState & 0x04000000) == 0;
         }
         return (gameState & 0x08000000) == 0;
     }
 
-    public void leftRookMoved(boolean whiteToMove){
-        if ( whiteToMove ){
+    public void leftRookMoved(boolean whiteToMove) {
+        if (whiteToMove) {
             gameState = gameState | 0x01000000;
         } else {
             gameState = gameState | 0x02000000;
         }
     }
 
-    public void rightRookMoved(boolean whiteToMove){
-        if ( whiteToMove ){
+    public void rightRookMoved(boolean whiteToMove) {
+        if (whiteToMove) {
             gameState = gameState | 0x04000000;
         } else {
             gameState = gameState | 0x08000000;
         }
     }
 
-    public void kingMoved(boolean whiteToMove){
-        if ( whiteToMove ){
+    public void kingMoved(boolean whiteToMove) {
+        if (whiteToMove) {
             gameState = gameState | 0x05000000;
         } else {
             gameState = gameState | 0x0A000000;
@@ -232,47 +236,47 @@ public final class GameState {
 
     /**
      * @return true if it's white's turn to move false if it's black's turn to move.
-     * */
-    public boolean whiteToMove(){
+     */
+    public boolean whiteToMove() {
         return (gameState & 0x10000000) == 0;
     }
 
-    public void toggleWhiteToMove(){
+    public void toggleWhiteToMove() {
         gameState = gameState ^ 0x10000000;
     }
 
     public Colour getPieceColour(int placeValue) {
-        return getPieceColour( 1L << placeValue );
+        return getPieceColour(1L << placeValue);
     }
 
     public Colour getPieceColour(long position) {
-        if ( (position & whitePieces) != 0L ){
+        if ((position & whitePieces) != 0L) {
             return Colour.WHITE;
-        } else if ( (position & blackPieces) != 0L ){
+        } else if ((position & blackPieces) != 0L) {
             return Colour.BLACK;
         }
         return null;
     }
 
     public PieceType getPieceType(int placeValue) {
-        return getPieceType( 1L << placeValue );
+        return getPieceType(1L << placeValue);
     }
 
     /* Avoids an explicit for check no piece as we know there is a piece at the position. */
     public PieceType getPieceTypeOfKnownPiece(long position) {
-        if ( (position & pawnsAndKnights) != 0L ){
-            if ( (position & knightsAndKings) != 0L ){
+        if ((position & pawnsAndKnights) != 0L) {
+            if ((position & knightsAndKings) != 0L) {
                 return PieceType.KNIGHT;
             }
             return PieceType.PAWN;
         }
-        if ( (position & queensAndBishops) != 0L ){
-            if ( (position & rooksAndQueens) != 0L ){
+        if ((position & queensAndBishops) != 0L) {
+            if ((position & rooksAndQueens) != 0L) {
                 return PieceType.QUEEN;
             }
             return PieceType.BISHOP;
         }
-        if ( (position & rooksAndQueens) != 0L ){
+        if ((position & rooksAndQueens) != 0L) {
             return PieceType.ROOK;
         }
         return PieceType.KING;
@@ -286,10 +290,10 @@ public final class GameState {
     }
 
     /* We rely on passed moves to be legal. We do not perform any move sanity checks. To avoid inconsistent board states
-    *  make sure:
-    *  1. The piece you want to move exists.
-    *  2. You're not taking a piece of your own colour.
-    *  3. It's the move of the side you're trying to make the move for. */
+     *  make sure:
+     *  1. The piece you want to move exists.
+     *  2. You're not taking a piece of your own colour.
+     *  3. It's the move of the side you're trying to make the move for. */
     public void makeMove(int move) {
         long from = 1L << MoveIntUtil.getFrom(move);
         long to = 1L << MoveIntUtil.getTo(move);
@@ -297,23 +301,23 @@ public final class GameState {
         boolean captures = false;
         boolean pawnMoves = false;
         boolean whiteToMove = whiteToMove();
-        if ( whiteToMove ) {
+        if (whiteToMove) {
             whitePieces = whitePieces ^ fromOrTo;
-            if ( (blackPieces & to) != 0 ) {
+            if ((blackPieces & to) != 0) {
                 /* Black piece captured. */
                 blackPieces = blackPieces ^ to;
                 captures = true;
             }
         } else {
             blackPieces = blackPieces ^ fromOrTo;
-            if ( (whitePieces & to) != 0 ) {
+            if ((whitePieces & to) != 0) {
                 /* White piece captured. */
                 whitePieces = whitePieces ^ to;
                 captures = true;
             }
         }
         /* Removing piece to be captured. */
-        if ( captures ) {
+        if (captures) {
             /* TODO: Test if this is faster or doing a ladder check like the one done below with ladder checks will be faster.*/
             long notTo = ~to;
             pawnsAndKnights = pawnsAndKnights & notTo;
@@ -322,31 +326,31 @@ public final class GameState {
             queensAndBishops = queensAndBishops & notTo;
         }
         /* Actually making the move for the piece. */
-        if ( (pawnsAndKnights & from) != 0 ) {
+        if ((pawnsAndKnights & from) != 0) {
             /* It's a pawn/knight. */
             pawnsAndKnights = pawnsAndKnights ^ fromOrTo;
-            if ( (knightsAndKings & from) != 0 ) {
+            if ((knightsAndKings & from) != 0) {
                 /* It's a knight. */
                 knightsAndKings = knightsAndKings ^ fromOrTo;
             } else {
                 /* It's a pawn. */
                 pawnMoves = true;
             }
-        } else if ( (rooksAndQueens & from) != 0 ) {
+        } else if ((rooksAndQueens & from) != 0) {
             /* It's a rook/queen. */
             rooksAndQueens = rooksAndQueens ^ fromOrTo;
-            if ( (queensAndBishops & from) != 0 ) {
+            if ((queensAndBishops & from) != 0) {
                 /* It's a queen. */
                 queensAndBishops = queensAndBishops ^ fromOrTo;
             } else {
                 /* It's a rook. We update rook castling flags. */
-                if ( (0x8000000000000080L & from) != 0 ) {
+                if ((0x8000000000000080L & from) != 0) {
                     leftRookMoved(whiteToMove);
-                } else if ( (0x0100000000000001L & from) != 0 ) {
+                } else if ((0x0100000000000001L & from) != 0) {
                     rightRookMoved(whiteToMove);
                 }
             }
-        } else if ( (queensAndBishops & from) != 0 ) {
+        } else if ((queensAndBishops & from) != 0) {
             /* It's a bishop. */
             queensAndBishops = queensAndBishops ^ fromOrTo;
         } else {
@@ -354,9 +358,9 @@ public final class GameState {
             knightsAndKings = knightsAndKings ^ fromOrTo;
             /* We update king castling flags. */
             kingMoved(whiteToMove);
-            if ( MoveIntUtil.isCastle(move) ) {
-                if ( MoveIntUtil.isLeftCastle(move) ) {
-                    if ( whiteToMove ) {
+            if (MoveIntUtil.isCastle(move)) {
+                if (MoveIntUtil.isLeftCastle(move)) {
+                    if (whiteToMove) {
                         whitePieces = whitePieces ^ 0x0000000000000090L;
                         rooksAndQueens = rooksAndQueens ^ 0x0000000000000090L;
                     } else {
@@ -364,7 +368,7 @@ public final class GameState {
                         rooksAndQueens = rooksAndQueens ^ 0x9000000000000000L;
                     }
                 } else {
-                    if ( whiteToMove ) {
+                    if (whiteToMove) {
                         whitePieces = whitePieces ^ 0x0000000000000005L;
                         rooksAndQueens = rooksAndQueens ^ 0x0000000000000005L;
                     } else {
@@ -375,7 +379,7 @@ public final class GameState {
             }
         }
         /* Deal with en-passant. */
-        if ( pawnMoves && MoveIntUtil.isEnPassant(move) ) {
+        if (pawnMoves && MoveIntUtil.isEnPassant(move)) {
             long toBeTakenEP = getPawnToBeCapturedEnPassant(whiteToMove);
             if (whiteToMove) {
                 /* Black pawn captured en passant. */
@@ -387,16 +391,70 @@ public final class GameState {
             pawnsAndKnights = pawnsAndKnights ^ toBeTakenEP;
         }
         resetEnPassantStatusData();
-        if ( pawnMoves && MoveIntUtil.isDoublePawnMove(move) ) {
+        if (pawnMoves && MoveIntUtil.isDoublePawnMove(move)) {
             setEnPassantStatusData(to, whiteToMove);
         }
+        /* Dealing with prawn promotions. */
+        if (pawnMoves && MoveIntUtil.isPromotion(move)) {
+            PieceType promoteTo = MoveIntUtil.promotesTo(move);
+            pawnsAndKnights = pawnsAndKnights ^ to; /* Removing the pawn. Next we place a piece. */
+            switch (promoteTo) {
+                case QUEEN:
+                    queensAndBishops = queensAndBishops | to;
+                    rooksAndQueens = rooksAndQueens | to;
+                    break;
+                case KNIGHT:
+                    knightsAndKings = knightsAndKings | to;
+                    pawnsAndKnights = pawnsAndKnights | to;
+                    break;
+                case BISHOP:
+                    queensAndBishops = queensAndBishops | to;
+                    break;
+                case ROOK:
+                    rooksAndQueens = rooksAndQueens | to;
+            }
+        }
+
         /* Updating reversible half-move count. */
-        if ( captures || pawnMoves ) {
+        if (captures || pawnMoves) {
             resetReversibleHalfMoveCount();
         } else {
             incrementReversibleHalfMoveCount();
         }
         /* Toggling player to move. */
         toggleWhiteToMove();
+    }
+
+    /* Checks that the board state is not inconsistent. It's a useful method for testing. */
+    public boolean checkSanity() {
+        if ((whitePieces & blackPieces) != 0) {
+            return false; /* No piece can be both black and white. */
+        }
+        long allPiecesByColour = whitePieces | blackPieces;
+        long allPiecesByType = pawnsAndKnights | knightsAndKings | rooksAndQueens | queensAndBishops;
+        if (allPiecesByColour != allPiecesByType) {
+            return false; /* Mismatch in pieces by colour and by piece type. */
+        }
+        long pawnsKnightsAndKings = pawnsAndKnights | knightsAndKings;
+        long rooksQueensAndBishops = rooksAndQueens | queensAndBishops;
+        if ((pawnsKnightsAndKings & rooksQueensAndBishops) != 0) {
+            return false; /* These groups of pieces don't belong together. */
+        }
+        long kings = knightsAndKings & (~pawnsAndKnights);
+        if (Long.bitCount(kings & whitePieces) != 1 || Long.bitCount(kings & blackPieces) != 1) {
+            return false; /* More or less than 1 king for a side. */
+        }
+        long pawnsToBeCapturedEP = getPawnToBeCapturedEnPassant(whiteToMove());
+        long pawnsThatCanCaptureEP = getPawnsThatCanCaptureEnPassant(whiteToMove());
+        if (Long.bitCount(pawnsToBeCapturedEP) > 1) {
+            return false; /* Multiple pawns cannot be captured en passant at once. */
+        }
+        if (Long.bitCount(pawnsThatCanCaptureEP) > 2) {
+            return false; /* More than two pawns cannot capture a pawn en passant at once. */
+        }
+        if ((pawnsToBeCapturedEP == 0) != (pawnsThatCanCaptureEP == 0)) {
+            return false; /* When pawns can be taken en passant takers must be available and vice versa. */
+        }
+        return true;
     }
 }

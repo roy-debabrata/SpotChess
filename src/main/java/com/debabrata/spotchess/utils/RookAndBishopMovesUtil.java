@@ -26,12 +26,12 @@ public class RookAndBishopMovesUtil {
             59,59,59,59,59,59,59,59,58,59,59,59,59,59,59,58
     };
 
-    public static long fetchRookMoves(int placeValue, long boardPosition) {
+    public static long getRookMoves(int placeValue, long boardPosition) {
         int index = (int)(((boardPosition & rookMask[placeValue]) * rookMagic[placeValue]) >>> rookShift[placeValue]);
         return rookAttacksCache[placeValue][index];
     }
 
-    public static long fetchBishopMoves(int placeValue, long boardPosition) {
+    public static long getBishopMoves(int placeValue, long boardPosition) {
         int index = (int)(((boardPosition & bishopMask[placeValue]) * bishopMagic[placeValue]) >>> bishopShift[placeValue]);
         return bishopAttacksCache[placeValue][index];
     }
