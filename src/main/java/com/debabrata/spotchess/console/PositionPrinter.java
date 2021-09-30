@@ -1,17 +1,17 @@
 package com.debabrata.spotchess.console;
 
-import com.debabrata.spotchess.types.GameState;
+import com.debabrata.spotchess.types.Position;
 import com.debabrata.spotchess.types.enums.Colour;
 import com.debabrata.spotchess.types.enums.PieceType;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class GameStatePrinter {
+public class PositionPrinter {
 
     private static boolean SHOW_BITBOARDS = true;
     private static boolean SHOW_ADDITIONAL_INFO = true;
-    private static boolean SWITCH_COLOURS = true;
+    private static boolean SWITCH_PIECE_ICON_COLOURS = true;
     private static boolean USE_UNICODE_CHESS_PIECES = true;
 
     private static final String BUFFER_BETWEEN_BOARDS = "          ";
@@ -39,53 +39,53 @@ public class GameStatePrinter {
                 .trim();
     }
 
-    public static void printGameStateBitBoards( GameState gameState ){
+    public static void printPositionBitBoards(Position position){
         System.out.println();
         System.out.println( "White Pieces   " + BUFFER_BETWEEN_BOARDS
                 + "Pawns and Knights" + BUFFER_BETWEEN_BOARDS + "\b\b"
                 + "Knights and Kings");
         printBitBoards(
-                gameState.getWhitePieces(),
-                gameState.getPawnsAndKnights(),
-                gameState.getKnightsAndKings()
+                position.getWhitePieces(),
+                position.getPawnsAndKnights(),
+                position.getKnightsAndKings()
                 );
         System.out.println("\n");
         System.out.println( "Black Pieces   " + BUFFER_BETWEEN_BOARDS
                 + "Queens and Bishops" + BUFFER_BETWEEN_BOARDS + "\b\b\b"
                 + "Rooks and Queens");
         printBitBoards(
-                gameState.getBlackPieces(),
-                gameState.getQueensAndBishops(),
-                gameState.getRooksAndQueens()
+                position.getBlackPieces(),
+                position.getQueensAndBishops(),
+                position.getRooksAndQueens()
         );
         System.out.println("\n");
     }
 
-    public static List<String> getAdditionalBoardStateInfo(GameState gameState){
+    public static List<String> getAdditionalStateInfo(Position position){
         List<String> stateInfo = new ArrayList<>();
-        stateInfo.add("To move : " + (gameState.whiteToMove()? Colour.WHITE.name() : Colour.BLACK.name()));
-        stateInfo.add("Reversible Half-Move Count: " + gameState.getReversibleHalfMoveCount());
-        String castleInfo = gameState.canPotentiallyCastleLeft(Colour.WHITE) ?
-                (gameState.canPotentiallyCastleRight(Colour.WHITE) ? "both sides." : "left side.")
-                : (gameState.canPotentiallyCastleRight(Colour.WHITE) ? "right side." : "neither side.");
+        stateInfo.add("To move : " + (position.whiteToMove()? Colour.WHITE.name() : Colour.BLACK.name()));
+        stateInfo.add("Reversible Half-Move Count: " + position.getReversibleHalfMoveCount());
+        String castleInfo = position.canPotentiallyCastleLeft(Colour.WHITE) ?
+                (position.canPotentiallyCastleRight(Colour.WHITE) ? "both sides." : "left side.")
+                : (position.canPotentiallyCastleRight(Colour.WHITE) ? "right side." : "neither side.");
         stateInfo.add("White can potentially castle " + castleInfo);
-        castleInfo = gameState.canPotentiallyCastleLeft(Colour.BLACK) ?
-                (gameState.canPotentiallyCastleRight(Colour.BLACK) ? "both sides." : "left side.")
-                : (gameState.canPotentiallyCastleRight(Colour.BLACK) ? "right side." : "neither side.");
+        castleInfo = position.canPotentiallyCastleLeft(Colour.BLACK) ?
+                (position.canPotentiallyCastleRight(Colour.BLACK) ? "both sides." : "left side.")
+                : (position.canPotentiallyCastleRight(Colour.BLACK) ? "right side." : "neither side.");
         stateInfo.add("Black can potentially castle " + castleInfo);
         /* En-passant */
-        int enPassantFlag = (0x0000FF00 & gameState.getGameState()) >> 8;
+        int enPassantFlag = (0x0000FF00 & position.getFlags()) >> 8;
         stateInfo.add("En-passant takers: " + eightBinaryDigitsToString(enPassantFlag));
-        enPassantFlag = (0x00FF0000 & gameState.getGameState()) >> 16;
+        enPassantFlag = (0x00FF0000 & position.getFlags()) >> 16;
         stateInfo.add("En-passant taken : " + eightBinaryDigitsToString(enPassantFlag));
         return stateInfo;
     }
 
-    public static String getConsolePrintableBoard(GameState gameState){
+    public static String getConsolePrintableBoard(Position position){
         StringBuilder board = new StringBuilder();
         for ( int i = 63; i >= 0; i-- ){
-            Colour colour = gameState.getPieceColour(i);
-            PieceType type = gameState.getPieceType(i);
+            Colour colour = position.getPieceColour(i);
+            PieceType type = position.getPieceType(i);
 
             getChessSymbol(colour, type);
             board.append(getChessSymbol(colour, type));
@@ -110,13 +110,13 @@ public class GameStatePrinter {
         SHOW_ADDITIONAL_INFO = !SHOW_ADDITIONAL_INFO;
     }
 
-    public static void printGameState(GameState gameState){
+    public static void printPosition(Position position){
 
         if ( SHOW_BITBOARDS ){
-            printGameStateBitBoards(gameState);
+            printPositionBitBoards(position);
         }
-        String board = getConsolePrintableBoard(gameState);
-        List<String> additionalInfo = getAdditionalBoardStateInfo(gameState);
+        String board = getConsolePrintableBoard(position);
+        List<String> additionalInfo = getAdditionalStateInfo(position);
 
         String [] lines = board.split("\\n");
         int select = additionalInfo.size() - lines.length;
@@ -137,7 +137,7 @@ public class GameStatePrinter {
             return '.';
         }
         if (USE_UNICODE_CHESS_PIECES) {
-            if ((colour == Colour.WHITE) ^ SWITCH_COLOURS) {
+            if ((colour == Colour.WHITE) ^ SWITCH_PIECE_ICON_COLOURS) {
                 switch (piece) {
                     case PAWN:
                         return '♙';

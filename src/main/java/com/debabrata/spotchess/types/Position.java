@@ -13,10 +13,10 @@ import com.debabrata.spotchess.types.enums.PieceType;
  * <p>
  * Making class final to please the JVM inlining gods. Ideally we would like to make all the methods "inline" but that's
  * not a thing in java (even in C/C++ it's just a suggestion to the compiler that can be ignored), so I right now I'll
- * just make GameState final. In case we do make GameState non-final we'll make all methods in it final.
+ * just make Position final. In case we do make Position non-final we'll make all methods in it final.
  * @version 2.0
  */
-public final class GameState {
+public final class Position {
     /* Piece positions represent where the pieces are placed. */
     private long whitePieces;
     private long blackPieces;
@@ -25,8 +25,8 @@ public final class GameState {
     private long rooksAndQueens;
     private long queensAndBishops;
 
-    /* Game state stores other state variables associated with the game. */
-    private int gameState;
+    /* Flags store other state variables associated with the game. */
+    private int flags;
 
     /* Last 8 bits (mask 0x000000FF) are for storing the count of reversible half moves. Read up on 50 move rule.
      * Next 8 bits (mask 0x0000FF00) are to store the pawns eligible to take some pawn en-passant.
@@ -45,9 +45,9 @@ public final class GameState {
      * 0x08000000 = black can castle with right rook
      * 0x10000000 = Sets whose move it is. 0 at this position means it's white's turn, 1 means it's black's turn.
      *
-     * At beginning of any regular chess game the gameState will have 0. This sets all flags to their initial state. */
+     * At beginning of any regular chess game the flags will have 0. This sets all flags to their initial state. */
 
-    public GameState() {
+    public Position() {
         /* Standard board representation for normal standard game. The board representation is
          * Little-Endian Rank, Big-Endian File Mapping (LERBEF). For an illustration check out the following:
          * https://www.chessprogramming.org/Bibob and look at the image labeled "LERBEF"
@@ -60,17 +60,17 @@ public final class GameState {
         rooksAndQueens = 0x9100000000000091L;
         queensAndBishops = 0x3400000000000034L;
         /* The default position of flags are such that at the beginning of a regular chess game the flags are 0. */
-        gameState = 0;
+        flags = 0;
     }
 
-    public GameState(GameState gameState) {
-        this.whitePieces = gameState.whitePieces;
-        this.blackPieces = gameState.blackPieces;
-        this.pawnsAndKnights = gameState.pawnsAndKnights;
-        this.knightsAndKings = gameState.knightsAndKings;
-        this.rooksAndQueens = gameState.rooksAndQueens;
-        this.queensAndBishops = gameState.queensAndBishops;
-        this.gameState = gameState.gameState;
+    public Position(Position position) {
+        this.whitePieces = position.whitePieces;
+        this.blackPieces = position.blackPieces;
+        this.pawnsAndKnights = position.pawnsAndKnights;
+        this.knightsAndKings = position.knightsAndKings;
+        this.rooksAndQueens = position.rooksAndQueens;
+        this.queensAndBishops = position.queensAndBishops;
+        this.flags = position.flags;
     }
 
     public long getQueens() {
@@ -121,8 +121,8 @@ public final class GameState {
         return queensAndBishops;
     }
 
-    public int getGameState() {
-        return gameState;
+    public int getFlags() {
+        return flags;
     }
 
     public long selectWhitePieces(long pieces) {
@@ -138,19 +138,19 @@ public final class GameState {
     }
 
     public int getReversibleHalfMoveCount() {
-        return gameState & 0x000000FF;
+        return flags & 0x000000FF;
     }
 
     public void incrementReversibleHalfMoveCount() {
-        gameState++;
+        flags++;
     }
 
     public void resetReversibleHalfMoveCount() {
-        gameState = gameState & 0xFFFFFF00;
+        flags = flags & 0xFFFFFF00;
     }
 
     public boolean enPassantAvailable() {
-        return (0x00FFFF00L & gameState) != 0;
+        return (0x00FFFF00L & flags) != 0;
     }
 
     /**
@@ -158,9 +158,9 @@ public final class GameState {
      */
     public long getPawnsThatCanCaptureEnPassant(boolean whiteToMove) {
         if (whiteToMove) {
-            return (0x0000FF00L & gameState) << 24; /* The L causes an implicit cast to long. */
+            return (0x0000FF00L & flags) << 24; /* The L causes an implicit cast to long. */
         } else {
-            return (0x0000FF00L & gameState) << 16;
+            return (0x0000FF00L & flags) << 16;
         }
     }
 
@@ -169,9 +169,9 @@ public final class GameState {
      */
     public long getPawnToBeCapturedEnPassant(boolean whiteToMove) {
         if (whiteToMove) {
-            return (0x00FF0000L & gameState) << 16; /* The L causes an implicit cast to long. */
+            return (0x00FF0000L & flags) << 16; /* The L causes an implicit cast to long. */
         } else {
-            return (0x00FF0000L & gameState) << 8;
+            return (0x00FF0000L & flags) << 8;
         }
     }
 
@@ -180,57 +180,57 @@ public final class GameState {
         if (whiteToMove) {
             adjacentPositions = adjacentPositions & blackPieces & getPawns();
             if (adjacentPositions != 0) {
-                gameState = gameState | (int) (adjacentPositions >>> 16);
-                gameState = gameState | (int) (pawnMovedTo >>> 8);
+                flags = flags | (int) (adjacentPositions >>> 16);
+                flags = flags | (int) (pawnMovedTo >>> 8);
             }
         } else {
             adjacentPositions = adjacentPositions & whitePieces & getPawns();
             if (adjacentPositions != 0) {
-                gameState = gameState | (int) (adjacentPositions >>> 24);
-                gameState = gameState | (int) (pawnMovedTo >>> 16);
+                flags = flags | (int) (adjacentPositions >>> 24);
+                flags = flags | (int) (pawnMovedTo >>> 16);
             }
         }
     }
 
     public void resetEnPassantStatusData() {
-        gameState = gameState & 0xFF0000FF;
+        flags = flags & 0xFF0000FF;
     }
 
     public boolean canPotentiallyCastleLeft(Colour colour) {
         if (colour == Colour.WHITE) {
-            return (gameState & 0x01000000) == 0;
+            return (flags & 0x01000000) == 0;
         }
-        return (gameState & 0x02000000) == 0;
+        return (flags & 0x02000000) == 0;
     }
 
     public boolean canPotentiallyCastleRight(Colour colour) {
         if (colour == Colour.WHITE) {
-            return (gameState & 0x04000000) == 0;
+            return (flags & 0x04000000) == 0;
         }
-        return (gameState & 0x08000000) == 0;
+        return (flags & 0x08000000) == 0;
     }
 
     public void leftRookMoved(boolean whiteToMove) {
         if (whiteToMove) {
-            gameState = gameState | 0x01000000;
+            flags = flags | 0x01000000;
         } else {
-            gameState = gameState | 0x02000000;
+            flags = flags | 0x02000000;
         }
     }
 
     public void rightRookMoved(boolean whiteToMove) {
         if (whiteToMove) {
-            gameState = gameState | 0x04000000;
+            flags = flags | 0x04000000;
         } else {
-            gameState = gameState | 0x08000000;
+            flags = flags | 0x08000000;
         }
     }
 
     public void kingMoved(boolean whiteToMove) {
         if (whiteToMove) {
-            gameState = gameState | 0x05000000;
+            flags = flags | 0x05000000;
         } else {
-            gameState = gameState | 0x0A000000;
+            flags = flags | 0x0A000000;
         }
     }
 
@@ -238,11 +238,11 @@ public final class GameState {
      * @return true if it's white's turn to move false if it's black's turn to move.
      */
     public boolean whiteToMove() {
-        return (gameState & 0x10000000) == 0;
+        return (flags & 0x10000000) == 0;
     }
 
     public void toggleWhiteToMove() {
-        gameState = gameState ^ 0x10000000;
+        flags = flags ^ 0x10000000;
     }
 
     public Colour getPieceColour(int placeValue) {

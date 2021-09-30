@@ -26,7 +26,7 @@ import com.debabrata.spotchess.types.enums.PieceType;
  *          0x00800000 Pawn promotes to Rook.
  *
  *          0 can stand as an uninitialized move as a move from h1 to h1 doesn't make any sense in chess. To understand
- *          the orientation of the board please read the comments in GameState.
+ *          the orientation of the board please read the comments in Position.
  */
 public class MoveIntUtil {
     public static int getFrom(int move) {

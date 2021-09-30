@@ -1,6 +1,6 @@
 package com.debabrata.spotchess.utils;
 
-import com.debabrata.spotchess.types.GameState;
+import com.debabrata.spotchess.types.Position;
 import com.debabrata.spotchess.types.enums.PieceType;
 
 import java.util.ArrayList;
@@ -9,7 +9,7 @@ import java.util.List;
 public class MoveUtil {
     /* Right now we want to think about getting an application with a simple min-max search with alpha-beta pruning.
        We'll have to re-organize some of this for move ordering and other considerations. */
-    public int addMovesToBuffer(GameState position, int[] moveBuffer, int startWritingAt ) {
+    public int addMovesToBuffer(Position position, int[] moveBuffer, int startWritingAt ) {
         boolean whiteToMove = position.whiteToMove();
         long ourPieces, enemyPieces;
         if ( whiteToMove ) {
@@ -209,13 +209,12 @@ public class MoveUtil {
         return startWritingAt;
     }
 
-    public List<Integer> getMovesInPosition(GameState position) {
+    public List<Integer> getMovesInPosition(Position position) {
         List<Integer> result = new ArrayList<>();
         int [] moves = new int[300];
         addMovesToBuffer(position, moves, 0);
-        int pos = 0;
-        while ( moves[pos] != -1 ) {
-            int move = moves[pos++];
+        int pos = 0, move;
+        while ((move = moves[pos++]) != -1) {
             if ( move == 0 ) {
                 continue;
             }
