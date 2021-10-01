@@ -9,7 +9,7 @@ import java.util.List;
 public class MoveUtil {
     /* Right now we want to think about getting an application with a simple min-max search with alpha-beta pruning.
        We'll have to re-organize some of this for move ordering and other considerations. */
-    public int addMovesToBuffer(Position position, int[] moveBuffer, int startWritingAt ) {
+    public static int addMovesToBuffer(Position position, int[] moveBuffer, int startWritingAt ) {
         boolean whiteToMove = position.whiteToMove();
         long ourPieces, enemyPieces;
         if ( whiteToMove ) {
@@ -209,7 +209,7 @@ public class MoveUtil {
         return startWritingAt;
     }
 
-    public List<Integer> getMovesInPosition(Position position) {
+    public static List<Integer> getMovesInPosition(Position position) {
         List<Integer> result = new ArrayList<>();
         int [] moves = new int[300];
         addMovesToBuffer(position, moves, 0);

@@ -5,5 +5,5 @@ import com.debabrata.spotchess.types.Position;
 public interface NotationType {
     int getMove(Position position, String notation);
     String getNotation(Position position, int move);
-
+    boolean confirmFormat(String moveNotation);
 }

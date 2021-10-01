@@ -57,8 +57,8 @@ public class MoveIntUtil {
         switch ( move & 0x00F00000 ) {
             case 0x00100000 : return PieceType.QUEEN;
             case 0x00200000 : return PieceType.KNIGHT;
-            case 0x00300000 : return PieceType.BISHOP;
-            case 0x00400000 : return PieceType.ROOK;
+            case 0x00400000 : return PieceType.BISHOP;
+            case 0x00800000 : return PieceType.ROOK;
         }
         return null;
     }

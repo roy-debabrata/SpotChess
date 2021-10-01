@@ -105,6 +105,10 @@ public final class Position {
         return blackPieces;
     }
 
+    public long getAllPieces() {
+        return whitePieces | blackPieces;
+    }
+
     public long getPawnsAndKnights() {
         return pawnsAndKnights;
     }
