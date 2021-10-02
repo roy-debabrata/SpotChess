@@ -33,22 +33,22 @@ public class MoveUtil {
                 long pawn = rank7Pawns & -rank7Pawns;
                 int from = BitPositionUtil.getBitPlaceValue(pawn);
                 if ( ((pawn << 7) & 0x7F7F7F7F7F7F7F7FL & enemyPieces) != 0 ) {
-                    moveBuffer[startWritingAt++] = MoveIntUtil.newPawnPromotion(from, from + 7, PieceType.QUEEN);
-                    moveBuffer[startWritingAt++] = MoveIntUtil.newPawnPromotion(from, from + 7, PieceType.KNIGHT);
-                    moveBuffer[startWritingAt++] = MoveIntUtil.newPawnPromotion(from, from + 7, PieceType.BISHOP);
-                    moveBuffer[startWritingAt++] = MoveIntUtil.newPawnPromotion(from, from + 7, PieceType.ROOK);
+                    moveBuffer[startWritingAt++] = MoveInitUtil.newPawnPromotion(from, from + 7, PieceType.QUEEN);
+                    moveBuffer[startWritingAt++] = MoveInitUtil.newPawnPromotion(from, from + 7, PieceType.KNIGHT);
+                    moveBuffer[startWritingAt++] = MoveInitUtil.newPawnPromotion(from, from + 7, PieceType.BISHOP);
+                    moveBuffer[startWritingAt++] = MoveInitUtil.newPawnPromotion(from, from + 7, PieceType.ROOK);
                 }
                 if ( ((pawn << 9) & enemyPieces) != 0 ) {
-                    moveBuffer[startWritingAt++] = MoveIntUtil.newPawnPromotion(from, from + 9, PieceType.QUEEN);
-                    moveBuffer[startWritingAt++] = MoveIntUtil.newPawnPromotion(from, from + 9, PieceType.KNIGHT);
-                    moveBuffer[startWritingAt++] = MoveIntUtil.newPawnPromotion(from, from + 9, PieceType.BISHOP);
-                    moveBuffer[startWritingAt++] = MoveIntUtil.newPawnPromotion(from, from + 9, PieceType.ROOK);
+                    moveBuffer[startWritingAt++] = MoveInitUtil.newPawnPromotion(from, from + 9, PieceType.QUEEN);
+                    moveBuffer[startWritingAt++] = MoveInitUtil.newPawnPromotion(from, from + 9, PieceType.KNIGHT);
+                    moveBuffer[startWritingAt++] = MoveInitUtil.newPawnPromotion(from, from + 9, PieceType.BISHOP);
+                    moveBuffer[startWritingAt++] = MoveInitUtil.newPawnPromotion(from, from + 9, PieceType.ROOK);
                 }
                 if ( ((pawn << 8) & notPieces) != 0 ) {
-                    moveBuffer[startWritingAt++] = MoveIntUtil.newPawnPromotion(from, from + 8, PieceType.QUEEN);
-                    moveBuffer[startWritingAt++] = MoveIntUtil.newPawnPromotion(from, from + 8, PieceType.KNIGHT);
-                    moveBuffer[startWritingAt++] = MoveIntUtil.newPawnPromotion(from, from + 8, PieceType.BISHOP);
-                    moveBuffer[startWritingAt++] = MoveIntUtil.newPawnPromotion(from, from + 8, PieceType.ROOK);
+                    moveBuffer[startWritingAt++] = MoveInitUtil.newPawnPromotion(from, from + 8, PieceType.QUEEN);
+                    moveBuffer[startWritingAt++] = MoveInitUtil.newPawnPromotion(from, from + 8, PieceType.KNIGHT);
+                    moveBuffer[startWritingAt++] = MoveInitUtil.newPawnPromotion(from, from + 8, PieceType.BISHOP);
+                    moveBuffer[startWritingAt++] = MoveInitUtil.newPawnPromotion(from, from + 8, PieceType.ROOK);
                 }
                 rank7Pawns = rank7Pawns & (rank7Pawns - 1);
             }
@@ -59,23 +59,23 @@ public class MoveUtil {
             long leftCaptures  = ((pawns << 9) & 0xFEFEFEFEFEFEFEFEL) & enemyPieces;
             while ( rightCaptures != 0 ) {
                 int toPlaceValue = BitPositionUtil.getLastBitPlaceValue(rightCaptures);
-                moveBuffer[startWritingAt++] = MoveIntUtil.newMove(toPlaceValue - 7, toPlaceValue);
+                moveBuffer[startWritingAt++] = MoveInitUtil.newMove(toPlaceValue - 7, toPlaceValue);
                 rightCaptures = rightCaptures & ( rightCaptures - 1 );
             }
             while ( leftCaptures != 0 ) {
                 int toPlaceValue = BitPositionUtil.getLastBitPlaceValue(leftCaptures);
-                moveBuffer[startWritingAt++] = MoveIntUtil.newMove(toPlaceValue - 9, toPlaceValue);
+                moveBuffer[startWritingAt++] = MoveInitUtil.newMove(toPlaceValue - 9, toPlaceValue);
                 leftCaptures = leftCaptures & ( leftCaptures - 1 );
             }
             while ( straightMoves != 0 ) {
                 int toPlaceValue = BitPositionUtil.getLastBitPlaceValue(straightMoves);
-                moveBuffer[startWritingAt++] = MoveIntUtil.newMove(toPlaceValue - 8, toPlaceValue);
+                moveBuffer[startWritingAt++] = MoveInitUtil.newMove(toPlaceValue - 8, toPlaceValue);
                 straightMoves = straightMoves & ( straightMoves - 1 );
             }
             /* Taking care of white's double moves. */
             while ( doubleMoves != 0 ) {
                 int toPlaceValue = BitPositionUtil.getLastBitPlaceValue(doubleMoves);
-                moveBuffer[startWritingAt++] = MoveIntUtil.newPawnDoubleMove(toPlaceValue - 16, toPlaceValue);
+                moveBuffer[startWritingAt++] = MoveInitUtil.newPawnDoubleMove(toPlaceValue - 16, toPlaceValue);
                 doubleMoves = doubleMoves & ( doubleMoves - 1 );
             }
         } else {
@@ -87,22 +87,22 @@ public class MoveUtil {
                 long pawn = rank7Pawns & -rank7Pawns;
                 int from = BitPositionUtil.getBitPlaceValue(pawn);
                 if ( ((pawn >>> 7) & 0x7F7F7F7F7F7F7F7FL & enemyPieces) != 0 ) {
-                    moveBuffer[startWritingAt++] = MoveIntUtil.newPawnPromotion(from, from - 7, PieceType.QUEEN);
-                    moveBuffer[startWritingAt++] = MoveIntUtil.newPawnPromotion(from, from - 7, PieceType.KNIGHT);
-                    moveBuffer[startWritingAt++] = MoveIntUtil.newPawnPromotion(from, from - 7, PieceType.BISHOP);
-                    moveBuffer[startWritingAt++] = MoveIntUtil.newPawnPromotion(from, from - 7, PieceType.ROOK);
+                    moveBuffer[startWritingAt++] = MoveInitUtil.newPawnPromotion(from, from - 7, PieceType.QUEEN);
+                    moveBuffer[startWritingAt++] = MoveInitUtil.newPawnPromotion(from, from - 7, PieceType.KNIGHT);
+                    moveBuffer[startWritingAt++] = MoveInitUtil.newPawnPromotion(from, from - 7, PieceType.BISHOP);
+                    moveBuffer[startWritingAt++] = MoveInitUtil.newPawnPromotion(from, from - 7, PieceType.ROOK);
                 }
                 if ( ((pawn >>> 9) & enemyPieces) != 0 ) {
-                    moveBuffer[startWritingAt++] = MoveIntUtil.newPawnPromotion(from, from - 9, PieceType.QUEEN);
-                    moveBuffer[startWritingAt++] = MoveIntUtil.newPawnPromotion(from, from - 9, PieceType.KNIGHT);
-                    moveBuffer[startWritingAt++] = MoveIntUtil.newPawnPromotion(from, from - 9, PieceType.BISHOP);
-                    moveBuffer[startWritingAt++] = MoveIntUtil.newPawnPromotion(from, from - 9, PieceType.ROOK);
+                    moveBuffer[startWritingAt++] = MoveInitUtil.newPawnPromotion(from, from - 9, PieceType.QUEEN);
+                    moveBuffer[startWritingAt++] = MoveInitUtil.newPawnPromotion(from, from - 9, PieceType.KNIGHT);
+                    moveBuffer[startWritingAt++] = MoveInitUtil.newPawnPromotion(from, from - 9, PieceType.BISHOP);
+                    moveBuffer[startWritingAt++] = MoveInitUtil.newPawnPromotion(from, from - 9, PieceType.ROOK);
                 }
                 if ( ((pawn >>> 8) & notPieces) != 0 ) {
-                    moveBuffer[startWritingAt++] = MoveIntUtil.newPawnPromotion(from, from - 8, PieceType.QUEEN);
-                    moveBuffer[startWritingAt++] = MoveIntUtil.newPawnPromotion(from, from - 8, PieceType.KNIGHT);
-                    moveBuffer[startWritingAt++] = MoveIntUtil.newPawnPromotion(from, from - 8, PieceType.BISHOP);
-                    moveBuffer[startWritingAt++] = MoveIntUtil.newPawnPromotion(from, from - 8, PieceType.ROOK);
+                    moveBuffer[startWritingAt++] = MoveInitUtil.newPawnPromotion(from, from - 8, PieceType.QUEEN);
+                    moveBuffer[startWritingAt++] = MoveInitUtil.newPawnPromotion(from, from - 8, PieceType.KNIGHT);
+                    moveBuffer[startWritingAt++] = MoveInitUtil.newPawnPromotion(from, from - 8, PieceType.BISHOP);
+                    moveBuffer[startWritingAt++] = MoveInitUtil.newPawnPromotion(from, from - 8, PieceType.ROOK);
                 }
                 rank7Pawns = rank7Pawns & (rank7Pawns - 1);
             }
@@ -113,23 +113,23 @@ public class MoveUtil {
             long leftCaptures  = ((pawns >> 7) & 0xFEFEFEFEFEFEFEFEL) & enemyPieces;
             while ( rightCaptures != 0 ) {
                 int toPlaceValue = BitPositionUtil.getLastBitPlaceValue(rightCaptures);
-                moveBuffer[startWritingAt++] = MoveIntUtil.newMove(toPlaceValue + 9, toPlaceValue);
+                moveBuffer[startWritingAt++] = MoveInitUtil.newMove(toPlaceValue + 9, toPlaceValue);
                 rightCaptures = rightCaptures & ( rightCaptures - 1 );
             }
             while ( leftCaptures != 0 ) {
                 int toPlaceValue = BitPositionUtil.getLastBitPlaceValue(leftCaptures);
-                moveBuffer[startWritingAt++] = MoveIntUtil.newMove(toPlaceValue + 7, toPlaceValue);
+                moveBuffer[startWritingAt++] = MoveInitUtil.newMove(toPlaceValue + 7, toPlaceValue);
                 leftCaptures = leftCaptures & ( leftCaptures - 1 );
             }
             while ( straightMoves != 0 ) {
                 int toPlaceValue = BitPositionUtil.getLastBitPlaceValue(straightMoves);
-                moveBuffer[startWritingAt++] = MoveIntUtil.newMove(toPlaceValue + 8, toPlaceValue);
+                moveBuffer[startWritingAt++] = MoveInitUtil.newMove(toPlaceValue + 8, toPlaceValue);
                 straightMoves = straightMoves & ( straightMoves - 1 );
             }
             /* Taking care of white's double moves. */
             while ( doubleMoves != 0 ) {
                 int toPlaceValue = BitPositionUtil.getLastBitPlaceValue(doubleMoves);
-                moveBuffer[startWritingAt++] = MoveIntUtil.newPawnDoubleMove(toPlaceValue + 16, toPlaceValue);
+                moveBuffer[startWritingAt++] = MoveInitUtil.newPawnDoubleMove(toPlaceValue + 16, toPlaceValue);
                 doubleMoves = doubleMoves & ( doubleMoves - 1 );
             }
         }
@@ -139,11 +139,11 @@ public class MoveUtil {
             int from = BitPositionUtil.getBitPlaceValue(position.getPawnsThatCanCaptureEnPassant(whiteToMove));
             long toPos = position.getPawnToBeCapturedEnPassant(whiteToMove);
             int to = BitPositionUtil.getLastBitPlaceValue(toPos);
-            moveBuffer[startWritingAt++] = MoveIntUtil.newEnPassant(from, to);
+            moveBuffer[startWritingAt++] = MoveInitUtil.newEnPassant(from, to);
             toPos = toPos & (toPos - 1);
             if ( toPos != 0 ) {
                 to = BitPositionUtil.getLastBitPlaceValue(toPos);
-                moveBuffer[startWritingAt++] = MoveIntUtil.newEnPassant(from, to);
+                moveBuffer[startWritingAt++] = MoveInitUtil.newEnPassant(from, to);
             }
         }
 
@@ -155,7 +155,7 @@ public class MoveUtil {
             moves = moves & notOurPieces;
             while ( moves != 0 ) {
                 int toPlaceValue = BitPositionUtil.getLastBitPlaceValue(moves);
-                moveBuffer[startWritingAt++] = MoveIntUtil.newMove(fromPlaceValue, toPlaceValue);
+                moveBuffer[startWritingAt++] = MoveInitUtil.newMove(fromPlaceValue, toPlaceValue);
                 moves = moves & ( moves - 1 );
             }
             queensAndBishops = queensAndBishops & (queensAndBishops - 1);
@@ -169,7 +169,7 @@ public class MoveUtil {
             moves = moves & notOurPieces;
             while ( moves != 0 ) {
                 int toPlaceValue = BitPositionUtil.getLastBitPlaceValue(moves);
-                moveBuffer[startWritingAt++] = MoveIntUtil.newMove(fromPlaceValue, toPlaceValue);
+                moveBuffer[startWritingAt++] = MoveInitUtil.newMove(fromPlaceValue, toPlaceValue);
                 moves = moves & ( moves - 1 );
             }
             rooksAndQueens = rooksAndQueens & (rooksAndQueens - 1);
@@ -183,7 +183,7 @@ public class MoveUtil {
             moves = moves & notOurPieces;
             while ( moves != 0 ) {
                 int toPlaceValue = BitPositionUtil.getLastBitPlaceValue(moves);
-                moveBuffer[startWritingAt++] = MoveIntUtil.newMove(fromPlaceValue, toPlaceValue);
+                moveBuffer[startWritingAt++] = MoveInitUtil.newMove(fromPlaceValue, toPlaceValue);
                 moves = moves & ( moves - 1 );
             }
             knights = knights & (knights - 1);
@@ -196,7 +196,7 @@ public class MoveUtil {
         moves = moves & notOurPieces;
         while (moves != 0) {
             int toPlaceValue = BitPositionUtil.getLastBitPlaceValue(moves);
-            moveBuffer[startWritingAt++] = MoveIntUtil.newMove(kingFrom, toPlaceValue);
+            moveBuffer[startWritingAt++] = MoveInitUtil.newMove(kingFrom, toPlaceValue);
             moves = moves & (moves - 1);
         }
 

@@ -9,39 +9,33 @@ public class RookAndBishopMovesUtil {
     public static final long [] rookMagic =    {0x0480002081104000L, 0x0240004010086000L, 0x0480200082191000L, 0x1880100080440800L, 0x2100050002104800L, 0x0200090810040600L, 0x0100008402000100L, 0x0600020081440021L, 0x4000800090400020L, 0x0804400050002000L, 0x0412003020820042L, 0x0002002200400810L, 0x8012808084000800L, 0x0108808004000600L, 0x500300C100260004L, 0x0000801100104080L, 0x00AA928004204002L, 0x0A70024020004000L, 0x1301010040126000L, 0x2004808010020804L, 0x0221010012080004L, 0x084101000804000EL, 0x2E80808046000100L, 0x1000160004228051L, 0x2002C00080098030L, 0x0200200080400584L, 0x1103100080200080L, 0x0030001100490120L, 0x1003004500100800L, 0x4200040080800600L, 0x00013A0400281009L, 0x0010108200064409L, 0x004000A848800880L, 0x0401400081802000L, 0x0024200080801000L, 0x0034411062000A00L, 0x0202080101000411L, 0x1A00810200800400L, 0x1118080114001012L, 0x2000124402000081L, 0x0020904000208000L, 0x0A20005004A0C000L, 0x08220020B0820040L, 0x48220B00D0010020L, 0x0028000C01808028L, 0x048A000824020050L, 0x8102180221840010L, 0x210C1C8449020004L, 0x008000A440098080L, 0x0380804008210100L, 0x8400100081600080L, 0x0000210088500500L, 0x2402040008008280L, 0x108080A400820080L, 0x0000801100060080L, 0x0A8300E285140200L, 0x202084C200110322L, 0x4401006042118602L, 0x010200600A108042L, 0x0021001000052009L, 0x0201001410080023L, 0x0502001081040802L, 0x0000320490280104L, 0x0000022400411882L};
     public static final long [] bishopMagic =  {0x942001020800408CL, 0x0662080200AE0008L, 0x0421281888800100L, 0x02609201400C0600L, 0x0025104108401009L, 0x0886021004082C00L, 0x0005080202205860L, 0x00C3004800880800L, 0x5004080224480202L, 0x080B429202020200L, 0x024C084801002000L, 0x0200144101201214L, 0x0020040420016000L, 0x68000228200808A0L, 0x8800006808341006L, 0x060A0600D1045004L, 0x2010604004280084L, 0x2004012008020240L, 0x0108401004044870L, 0x1208030404200800L, 0x0002800400A02008L, 0x0200800808030800L, 0x0A82041100A22010L, 0x405C8800240C0200L, 0x8208400220420204L, 0x0001900004040800L, 0x0102080082480440L, 0x2280404104010200L, 0x08008C0080802002L, 0x0114046004100408L, 0x8118840002220260L, 0x0002202030840104L, 0x105220608050A204L, 0x0806101000040100L, 0x1C10304808040800L, 0x40004008A1020200L, 0x0250060600102008L, 0x0001100100282404L, 0x8048180888150882L, 0x8020810148160200L, 0x4802016018082000L, 0x0110A08808022011L, 0x000200104804A400L, 0x0660004050400200L, 0x0010080100400400L, 0x0140080081000020L, 0x0208020440500401L, 0x0244582081080022L, 0x2009080210043010L, 0xA000820105200000L, 0x8400A60201048208L, 0x0004808021880182L, 0x000006502A020000L, 0x0000400801410810L, 0x004202480A108024L, 0x1050020804408188L, 0x40020080C8080450L, 0x800020210C0A2100L, 0x0050088314010404L, 0x0250040028940410L, 0x0102001088902400L, 0x00107010A0019100L, 0x0814400208810301L, 0xAB40042802002020L};
 
-    public static long [][] rookAttacksCache = new long[64][];
-    public static long [][] bishopAttacksCache = new long[64][];
+    public static final long [][] rookAttacksCache = new long[64][];
+    public static final long [][] bishopAttacksCache = new long[64][];
 
-    public static int [] rookShift = {
+    public static final int [] rookShift = {
             52,53,53,53,53,53,53,52,53,54,54,54,54,54,54,53,
             53,54,54,54,54,54,54,53,53,54,54,54,54,54,54,53,
             53,54,54,54,54,54,54,53,53,54,54,54,54,54,54,53,
             53,54,54,54,54,54,54,53,52,53,53,53,53,53,53,52
     };
 
-    public static int [] bishopShift = {
+    public static final int [] bishopShift = {
             58,59,59,59,59,59,59,58,59,59,59,59,59,59,59,59,
             59,59,57,57,57,57,59,59,59,59,57,55,55,57,59,59,
             59,59,57,55,55,57,59,59,59,59,57,57,57,57,59,59,
             59,59,59,59,59,59,59,59,58,59,59,59,59,59,59,58
     };
 
-    public static long getRookMoves(int placeValue, long boardPosition) {
-        int index = (int)(((boardPosition & rookMask[placeValue]) * rookMagic[placeValue]) >>> rookShift[placeValue]);
-        return rookAttacksCache[placeValue][index];
+    static {
+        setupMoveTables(); /* Makes sense to do it here. */
     }
 
-    public static long getBishopMoves(int placeValue, long boardPosition) {
-        int index = (int)(((boardPosition & bishopMask[placeValue]) * bishopMagic[placeValue]) >>> bishopShift[placeValue]);
-        return bishopAttacksCache[placeValue][index];
+    private static void setupMoveTables() {
+        setupMoveTable(PieceType.ROOK, rookMask, rookMagic, rookShift, rookAttacksCache);
+        setupMoveTable(PieceType.BISHOP, bishopMask, bishopMagic, bishopShift, bishopAttacksCache);
     }
 
-    public static void setupCaches() {
-        setupCache(PieceType.ROOK, rookMask, rookMagic, rookShift, rookAttacksCache);
-        setupCache(PieceType.BISHOP, bishopMask, bishopMagic, bishopShift, bishopAttacksCache);
-    }
-
-    private static void setupCache( PieceType piece, long [] masks, long [] magics, int[] shift, long [][] targetCache ){
+    private static void setupMoveTable(PieceType piece, long [] masks, long [] magics, int[] shift, long [][] targetCache ){
         for ( int i = 0; i < 64; i ++ ) {
             long[] pieceCombinations = getAllPossiblePieceCombinations(masks[i]);
             long[] moveCombinations = getAllPossibleMovesCombinations(piece, i, pieceCombinations);
@@ -62,6 +56,16 @@ public class RookAndBishopMovesUtil {
                 targetCache[i][index] = moveCombinations[j];
             }
         }
+    }
+
+    public static long getRookMoves(int placeValue, long boardPosition) {
+        int index = (int)(((boardPosition & rookMask[placeValue]) * rookMagic[placeValue]) >>> rookShift[placeValue]);
+        return rookAttacksCache[placeValue][index];
+    }
+
+    public static long getBishopMoves(int placeValue, long boardPosition) {
+        int index = (int)(((boardPosition & bishopMask[placeValue]) * bishopMagic[placeValue]) >>> bishopShift[placeValue]);
+        return bishopAttacksCache[placeValue][index];
     }
 
     public static long[] getAllPossibleMovesCombinations(PieceType pieceType, int placeValue, long[] pieceCombinations){

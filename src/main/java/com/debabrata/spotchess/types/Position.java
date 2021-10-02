@@ -1,6 +1,6 @@
 package com.debabrata.spotchess.types;
 
-import com.debabrata.spotchess.utils.MoveIntUtil;
+import com.debabrata.spotchess.utils.MoveInitUtil;
 import com.debabrata.spotchess.types.enums.Colour;
 import com.debabrata.spotchess.types.enums.PieceType;
 
@@ -299,8 +299,8 @@ public final class Position {
      *  2. You're not taking a piece of your own colour.
      *  3. It's the move of the side you're trying to make the move for. */
     public void makeMove(int move) {
-        long from = 1L << MoveIntUtil.getFrom(move);
-        long to = 1L << MoveIntUtil.getTo(move);
+        long from = 1L << MoveInitUtil.getFrom(move);
+        long to = 1L << MoveInitUtil.getTo(move);
         long fromOrTo = to | from;
         boolean captures = false;
         boolean pawnMoves = false;
@@ -339,6 +339,37 @@ public final class Position {
             } else {
                 /* It's a pawn. */
                 pawnMoves = true;
+                /* Deal with en-passant. */
+                if (MoveInitUtil.isEnPassant(move)) {
+                    long toBeTakenEP = getPawnToBeCapturedEnPassant(whiteToMove);
+                    if (whiteToMove) {
+                        /* Black pawn captured en passant. */
+                        blackPieces = blackPieces ^ toBeTakenEP;
+                    } else {
+                        /* White pawn captured en passant. */
+                        whitePieces = whitePieces ^ toBeTakenEP;
+                    }
+                    pawnsAndKnights = pawnsAndKnights ^ toBeTakenEP;
+                } else if (MoveInitUtil.isPromotion(move)) {
+                    /* Dealing with prawn promotions. */
+                    PieceType promoteTo = MoveInitUtil.promotesTo(move);
+                    pawnsAndKnights = pawnsAndKnights ^ to; /* Removing the pawn. Next we place a piece. */
+                    switch (promoteTo) {
+                        case QUEEN:
+                            queensAndBishops = queensAndBishops | to;
+                            rooksAndQueens = rooksAndQueens | to;
+                            break;
+                        case KNIGHT:
+                            knightsAndKings = knightsAndKings | to;
+                            pawnsAndKnights = pawnsAndKnights | to;
+                            break;
+                        case BISHOP:
+                            queensAndBishops = queensAndBishops | to;
+                            break;
+                        case ROOK:
+                            rooksAndQueens = rooksAndQueens | to;
+                    }
+                }
             }
         } else if ((rooksAndQueens & from) != 0) {
             /* It's a rook/queen. */
@@ -362,8 +393,8 @@ public final class Position {
             knightsAndKings = knightsAndKings ^ fromOrTo;
             /* We update king castling flags. */
             kingMoved(whiteToMove);
-            if (MoveIntUtil.isCastle(move)) {
-                if (MoveIntUtil.isLeftCastle(move)) {
+            if (MoveInitUtil.isCastle(move)) {
+                if (MoveInitUtil.isLeftCastle(move)) {
                     if (whiteToMove) {
                         whitePieces = whitePieces ^ 0x0000000000000090L;
                         rooksAndQueens = rooksAndQueens ^ 0x0000000000000090L;
@@ -382,41 +413,10 @@ public final class Position {
                 }
             }
         }
-        /* Deal with en-passant. */
-        if (pawnMoves && MoveIntUtil.isEnPassant(move)) {
-            long toBeTakenEP = getPawnToBeCapturedEnPassant(whiteToMove);
-            if (whiteToMove) {
-                /* Black pawn captured en passant. */
-                blackPieces = blackPieces ^ toBeTakenEP;
-            } else {
-                /* White pawn captured en passant. */
-                whitePieces = whitePieces ^ toBeTakenEP;
-            }
-            pawnsAndKnights = pawnsAndKnights ^ toBeTakenEP;
-        }
+
         resetEnPassantStatusData();
-        if (pawnMoves && MoveIntUtil.isDoublePawnMove(move)) {
+        if (pawnMoves && MoveInitUtil.isDoublePawnMove(move)) {
             setEnPassantStatusData(to, whiteToMove);
-        }
-        /* Dealing with prawn promotions. */
-        if (pawnMoves && MoveIntUtil.isPromotion(move)) {
-            PieceType promoteTo = MoveIntUtil.promotesTo(move);
-            pawnsAndKnights = pawnsAndKnights ^ to; /* Removing the pawn. Next we place a piece. */
-            switch (promoteTo) {
-                case QUEEN:
-                    queensAndBishops = queensAndBishops | to;
-                    rooksAndQueens = rooksAndQueens | to;
-                    break;
-                case KNIGHT:
-                    knightsAndKings = knightsAndKings | to;
-                    pawnsAndKnights = pawnsAndKnights | to;
-                    break;
-                case BISHOP:
-                    queensAndBishops = queensAndBishops | to;
-                    break;
-                case ROOK:
-                    rooksAndQueens = rooksAndQueens | to;
-            }
         }
 
         /* Updating reversible half-move count. */

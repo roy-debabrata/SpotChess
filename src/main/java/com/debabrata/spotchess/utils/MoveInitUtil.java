@@ -28,7 +28,7 @@ import com.debabrata.spotchess.types.enums.PieceType;
  *          0 can stand as an uninitialized move as a move from h1 to h1 doesn't make any sense in chess. To understand
  *          the orientation of the board please read the comments in Position.
  */
-public class MoveIntUtil {
+public class MoveInitUtil {
     public static int getFrom(int move) {
         return move & 0x000000FF;
     }
