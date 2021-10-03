@@ -29,7 +29,7 @@ public class StandardAlgebraicNotation implements NotationType {
             if (whiteToMove) {
                 return MoveInitUtil.newRightCastle(3, 1);
             }
-            return MoveInitUtil.newLeftCastle(59, 57);
+            return MoveInitUtil.newRightCastle(59, 57);
         }
         int endOfToCoOrdinate;
         int to;

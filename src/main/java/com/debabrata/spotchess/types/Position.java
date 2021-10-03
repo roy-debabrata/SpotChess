@@ -191,14 +191,15 @@ public final class Position {
     }
 
     private void setEnPassantStatusData(long pawnMovedTo, boolean whiteToMove) {
-        long adjacentPositions = ((pawnMovedTo << 1) | (pawnMovedTo >> 1)) & 0x000000FFFF000000L;
         if (whiteToMove) {
+            long adjacentPositions = ((pawnMovedTo << 1) | (pawnMovedTo >> 1)) & 0x00000000FF000000L;
             adjacentPositions = adjacentPositions & blackPieces & getPawns();
             if (adjacentPositions != 0) {
                 flags = flags | (int) (adjacentPositions >>> 16);
                 flags = flags | (int) (pawnMovedTo >>> 8);
             }
         } else {
+            long adjacentPositions = ((pawnMovedTo << 1) | (pawnMovedTo >> 1)) & 0x000000FF00000000L;
             adjacentPositions = adjacentPositions & whitePieces & getPawns();
             if (adjacentPositions != 0) {
                 flags = flags | (int) (adjacentPositions >>> 24);
