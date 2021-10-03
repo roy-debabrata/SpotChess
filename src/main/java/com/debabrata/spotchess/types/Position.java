@@ -333,12 +333,34 @@ public final class Position {
         }
         /* Removing piece to be captured. */
         if (captures) {
-            /* TODO: Test if this is faster or doing a ladder check like the one done below with ladder checks will be faster.*/
-            long notTo = ~to;
-            pawnsAndKnights = pawnsAndKnights & notTo;
-            knightsAndKings = knightsAndKings & notTo;
-            rooksAndQueens = rooksAndQueens & notTo;
-            queensAndBishops = queensAndBishops & notTo;
+            if ((rooksAndQueens & to) != 0) {
+                rooksAndQueens = rooksAndQueens ^ to;
+                if ((queensAndBishops & to) != 0) {
+                    queensAndBishops = queensAndBishops ^ to;
+                } else {
+                    /* A rook was taken. We check if one of the unmoved rooks and update castling flags accordingly. */
+                    if ( whiteToMove ) {
+                        if ((0x8000000000000000L & to) != 0) {
+                            leftRookMoved(false);
+                        } else if ((0x0100000000000000L & to) != 0) {
+                            rightRookMoved(false);
+                        }
+                    } else {
+                        if ((0x0000000000000080L & to) != 0) {
+                            leftRookMoved(true);
+                        } else if ((0x0000000000000001L & to) != 0) {
+                            rightRookMoved(true);
+                        }
+                    }
+                }
+            } else if ((pawnsAndKnights & to) != 0) {
+                pawnsAndKnights = pawnsAndKnights ^ to;
+                if ((knightsAndKings & to) != 0) {
+                    knightsAndKings = knightsAndKings ^ to;
+                }
+            } else {
+                queensAndBishops = queensAndBishops ^ to; /* Can't take king in chess, taken piece must be a bishop. */
+            }
         }
         /* Actually making the move for the piece. */
         if ((pawnsAndKnights & from) != 0) {
@@ -390,10 +412,18 @@ public final class Position {
                 queensAndBishops = queensAndBishops ^ fromOrTo;
             } else {
                 /* It's a rook. We update rook castling flags. */
-                if ((0x8000000000000080L & from) != 0) {
-                    leftRookMoved(whiteToMove);
-                } else if ((0x0100000000000001L & from) != 0) {
-                    rightRookMoved(whiteToMove);
+                if ( whiteToMove ) {
+                    if ((0x0000000000000080L & from) != 0) {
+                        leftRookMoved(true);
+                    } else if ((0x0000000000000001L & from) != 0) {
+                        rightRookMoved(true);
+                    }
+                } else {
+                    if ((0x8000000000000000L & from) != 0) {
+                        leftRookMoved(false);
+                    } else if ((0x0100000000000000L & from) != 0) {
+                        rightRookMoved(false);
+                    }
                 }
             }
         } else if ((queensAndBishops & from) != 0) {
