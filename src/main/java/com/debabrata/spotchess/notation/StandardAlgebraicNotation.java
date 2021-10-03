@@ -97,7 +97,7 @@ public class StandardAlgebraicNotation implements NotationType {
                     if (disambiguator >= 'a' && disambiguator <= 'h') {
                         attackers = attackers & (0x0101010101010101L << ('h' - disambiguator));
                     } else if (disambiguator >= '1' && disambiguator <= '8') {
-                        attackers = attackers & (0x00000000000000FFL << ('8' - disambiguator));
+                        attackers = attackers & (0x00000000000000FFL << (8 * (disambiguator - '1')));
                     } else if (disambiguator == 'x' || disambiguator == 'X') {
                         xEncountered = true;
                     } else {
@@ -156,7 +156,7 @@ public class StandardAlgebraicNotation implements NotationType {
             } else {
                 return 0; /* Can't find taker's file. */
             }
-            if (!pieceTaken && ((position.getPawnToBeCapturedEnPassant(whiteToMove) & 1L << to) != 0)) {
+            if (!pieceTaken && ((position.getPawnLocationAfterEnPassant(whiteToMove) & 1L << to) != 0)) {
                 return MoveInitUtil.newEnPassant(from, to); /* En-passant move taken care of. */
             }
             if (!pieceTaken) {
@@ -164,12 +164,13 @@ public class StandardAlgebraicNotation implements NotationType {
             }
         }
         /* Checking for promotion. */
+        boolean reachedLastRank = (whiteToMove && to / 8 == 7) || (!whiteToMove && to / 8 == 0);
         if (endOfToCoOrdinate + 1 < notation.length()) {
             /* There's more to read. It can be +, # etc. Or it could be promotion. We check for promotion. */
             if (notation.charAt(endOfToCoOrdinate + 1) == '=') {
                 if (endOfToCoOrdinate + 2 < notation.length()) {
-                    char promotesTo = Character.toUpperCase(notation.charAt(endOfToCoOrdinate + 1));
-                    if ((whiteToMove && to / 8 == 7) || (!whiteToMove && to / 8 == 0)) {
+                    char promotesTo = Character.toUpperCase(notation.charAt(endOfToCoOrdinate + 2));
+                    if (reachedLastRank) {
                         if ( promotesTo == 'Q' ) {
                             return MoveInitUtil.newPawnPromotion(from, to, PieceType.QUEEN);
                         } else if ( promotesTo == 'N' ) {
@@ -188,6 +189,9 @@ public class StandardAlgebraicNotation implements NotationType {
                     return 0; /* No piece type mentioned after indicating promotion. */
                 }
             }
+        }
+        if (reachedLastRank) {
+            return 0; /* Doesn't promote at last rank. */
         }
         /* Not takes/takes en-passant/double move/promotion. It's a simple move. */
         return MoveInitUtil.newMove(from, to);
@@ -241,7 +245,7 @@ public class StandardAlgebraicNotation implements NotationType {
                     break;
             }
             /* Removing our own attacker from consideration. */
-            attackers = attackers ^ (1L << from);
+            attackers = attackers & ~(1L << from);
             /* We only care about attacking pieces of the same colour. */
             Colour moversColour = position.getPieceColour(from);
             if (moversColour == Colour.BLACK) {
@@ -254,7 +258,7 @@ public class StandardAlgebraicNotation implements NotationType {
                 if ((attackers & (0x0101010101010101L << (from % 8))) == 0) {
                     /* Attackers are not in the same column. */
                     notation = (char) ('h' - (from % 8)) + notation;
-                } else if ((attackers & (0x00000000000000FFL << (from / 8))) == 0) {
+                } else if ((attackers & (0x00000000000000FFL << (8 * (from / 8)))) == 0) {
                     /* Attackers are in the same column but not same row. */
                     notation = (from / 8 + 1) + notation;
                 } else {

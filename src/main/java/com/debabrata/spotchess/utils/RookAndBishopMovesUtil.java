@@ -27,7 +27,8 @@ public class RookAndBishopMovesUtil {
     };
 
     static {
-        setupMoveTables(); /* Makes sense to do it here. */
+        /* Makes sense to do it here, all methods are static and use cases break if this call is missed before use.*/
+        setupMoveTables();
     }
 
     private static void setupMoveTables() {

@@ -136,13 +136,13 @@ public class MoveUtil {
 
         /* Taking care of en-passant moves. */
         if ( position.enPassantAvailable() ) {
-            int from = BitPositionUtil.getBitPlaceValue(position.getPawnsThatCanCaptureEnPassant(whiteToMove));
-            long toPos = position.getPawnToBeCapturedEnPassant(whiteToMove);
-            int to = BitPositionUtil.getLastBitPlaceValue(toPos);
+            long fromPos = position.getPawnsThatCanCaptureEnPassant(whiteToMove);
+            int from = BitPositionUtil.getLastBitPlaceValue(fromPos);
+            int to = BitPositionUtil.getBitPlaceValue(position.getPawnLocationAfterEnPassant(whiteToMove));
             moveBuffer[startWritingAt++] = MoveInitUtil.newEnPassant(from, to);
-            toPos = toPos & (toPos - 1);
-            if ( toPos != 0 ) {
-                to = BitPositionUtil.getLastBitPlaceValue(toPos);
+            fromPos = fromPos & (fromPos - 1);
+            if ( fromPos != 0 ) {
+                from = BitPositionUtil.getLastBitPlaceValue(fromPos);
                 moveBuffer[startWritingAt++] = MoveInitUtil.newEnPassant(from, to);
             }
         }

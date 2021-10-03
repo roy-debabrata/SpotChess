@@ -179,6 +179,17 @@ public final class Position {
         }
     }
 
+    /**
+     * @return the position your pawn will end up in after taking the pawn en-passant.
+     */
+    public long getPawnLocationAfterEnPassant(boolean whiteToMove) {
+        if (whiteToMove) {
+            return (0x00FF0000L & flags) << 24; /* The L causes an implicit cast to long. */
+        } else {
+            return (0x00FF0000L & flags);
+        }
+    }
+
     private void setEnPassantStatusData(long pawnMovedTo, boolean whiteToMove) {
         long adjacentPositions = ((pawnMovedTo << 1) | (pawnMovedTo >> 1)) & 0x000000FFFF000000L;
         if (whiteToMove) {
