@@ -340,15 +340,15 @@ public final class Position {
                 } else {
                     /* A rook was taken. We check if one of the unmoved rooks and update castling flags accordingly. */
                     if ( whiteToMove ) {
-                        if ((0x8000000000000000L & to) != 0) {
+                        if (0x8000000000000000L == to) {
                             leftRookMoved(false);
-                        } else if ((0x0100000000000000L & to) != 0) {
+                        } else if (0x0100000000000000L == to) {
                             rightRookMoved(false);
                         }
                     } else {
-                        if ((0x0000000000000080L & to) != 0) {
+                        if (0x0000000000000080L == to) {
                             leftRookMoved(true);
-                        } else if ((0x0000000000000001L & to) != 0) {
+                        } else if (0x0000000000000001L == to) {
                             rightRookMoved(true);
                         }
                     }
@@ -413,15 +413,15 @@ public final class Position {
             } else {
                 /* It's a rook. We update rook castling flags. */
                 if ( whiteToMove ) {
-                    if ((0x0000000000000080L & from) != 0) {
+                    if (0x0000000000000080L == from) {
                         leftRookMoved(true);
-                    } else if ((0x0000000000000001L & from) != 0) {
+                    } else if (0x0000000000000001L == from) {
                         rightRookMoved(true);
                     }
                 } else {
-                    if ((0x8000000000000000L & from) != 0) {
+                    if (0x8000000000000000L == from) {
                         leftRookMoved(false);
-                    } else if ((0x0100000000000000L & from) != 0) {
+                    } else if (0x0100000000000000L == from) {
                         rightRookMoved(false);
                     }
                 }
