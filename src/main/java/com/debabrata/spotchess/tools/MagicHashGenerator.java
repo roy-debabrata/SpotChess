@@ -37,7 +37,7 @@ public class MagicHashGenerator {
         int earlyFailureCheckPosition = 0;
         int earlyExpectedMoveConvergence = 0;
 
-        SearchConfiguration config = new SearchConfiguration(earlyFailureCheckPosition, earlyExpectedMoveConvergence);
+        SearchConfiguration searchConfig = new SearchConfiguration(earlyFailureCheckPosition, earlyExpectedMoveConvergence);
 
         long mask = RookAndBishopMovesUtil.getPieceMask(pieceType, position);
         long[] positionCombinations = BitUtil.getAllPossibleBitCombinations(mask);
@@ -45,7 +45,7 @@ public class MagicHashGenerator {
 
         SearchScope searchScope = new SearchScope(positionCombinations, associatedMoves, targetedShiftNumber);
 
-        long magic = initiateSearch(searchScope, config);
+        long magic = initiateSearch(searchConfig, searchScope);
 
         if ( pieceType == PieceType.ROOK ) {
             System.out.println("Hash  : " + formatLongToHexLiteral(RookAndBishopMovesUtil.getRookMask(position)));
@@ -119,7 +119,7 @@ public class MagicHashGenerator {
 
             SearchScope searchScope = new SearchScope(positionCombinations, associatedMoves, targetedShiftNumber);
 
-            long magic = initiateSearch(searchScope, new SearchConfiguration());
+            long magic = initiateSearch(new SearchConfiguration(), searchScope);
             if (magic == 0) {
                 timedOutPositions.append(position).append(",");
             } else {
@@ -146,7 +146,7 @@ public class MagicHashGenerator {
     /**
      * @return Returns a magic number if one is found. Returns zero if the search times out or is invalid.
      * */
-    private static long initiateSearch(SearchScope searchScope, SearchConfiguration config) {
+    private static long initiateSearch(SearchConfiguration searchConfig, SearchScope searchScope) {
         HashMap<Long,Integer> compressibilityMap = new HashMap<>();
 
         /* Use associatedMove as a key to determine how many unique move are there in the position. */
@@ -159,7 +159,7 @@ public class MagicHashGenerator {
             return 0L; /* The requester is trying to compress the moves into a smaller array than possible. */
         }
 
-        if ( config.earlyChecksEnabled ) {
+        if ( searchConfig.earlyChecksEnabled ) {
             List<Map.Entry<Long, Integer>> list = new LinkedList<>(compressibilityMap.entrySet());
             Comparator<Map.Entry<Long, Integer>> comparator = Map.Entry.comparingByValue();
             list.sort(comparator.reversed()); /* Getting an ordered list of all the associated moves. */
@@ -179,7 +179,7 @@ public class MagicHashGenerator {
             searchScope = new SearchScope(sortedPositions, sortedMoves, searchScope.targetedShiftNumber);
         }
 
-        return magicSearchRunner(config, searchScope);
+        return magicSearchRunner(searchConfig, searchScope);
     }
 
     /**
