@@ -33,13 +33,19 @@ public class MagicHashGenerator {
     private static void runForSinglePosition() {
         PieceType pieceType = PieceType.BISHOP;
         int position = 0;
-        int targetShiftNumber = 58;
+        int targetedShiftNumber = 58;
         int earlyFailureCheckPosition = 0;
         int earlyExpectedMoveConvergence = 0;
 
         SearchConfiguration config = new SearchConfiguration(earlyFailureCheckPosition, earlyExpectedMoveConvergence);
 
-        long magic = initiateSearch(pieceType, position, targetShiftNumber, config);
+        long mask = RookAndBishopMovesUtil.getPieceMask(pieceType, position);
+        long[] positionCombinations = BitUtil.getAllPossibleBitCombinations(mask);
+        long[] associatedMoves = RookAndBishopMovesUtil.getAllPossibleMovesCombinations(pieceType, position, positionCombinations);
+
+        SearchScope searchScope = new SearchScope(positionCombinations, associatedMoves, targetedShiftNumber);
+
+        long magic = initiateSearch(searchScope, config);
 
         if ( pieceType == PieceType.ROOK ) {
             System.out.println("Hash  : " + formatLongToHexLiteral(RookAndBishopMovesUtil.getRookMask(position)));
@@ -104,13 +110,20 @@ public class MagicHashGenerator {
         long totalProcessorTimeForSearch = 0L;
         long totalMagicsTried = 0L;
 
-        for (int i = 0; i < 64; i++) {
-            int targetedShiftNumber = magicNumberShiftTargets[i];
-            long magic = initiateSearch(piece, i, targetedShiftNumber, new SearchConfiguration());
+        for (int position = 0; position < 64; position++) {
+            int targetedShiftNumber = magicNumberShiftTargets[position];
+
+            long mask = RookAndBishopMovesUtil.getPieceMask(piece, position);
+            long[] positionCombinations = BitUtil.getAllPossibleBitCombinations(mask);
+            long[] associatedMoves = RookAndBishopMovesUtil.getAllPossibleMovesCombinations(piece, position, positionCombinations);
+
+            SearchScope searchScope = new SearchScope(positionCombinations, associatedMoves, targetedShiftNumber);
+
+            long magic = initiateSearch(searchScope, new SearchConfiguration());
             if (magic == 0) {
-                timedOutPositions.append(i).append(",");
+                timedOutPositions.append(position).append(",");
             } else {
-                magics[i] = magic;
+                magics[position] = magic;
             }
             if (TOOL_BENCHMARKING_ENABLED) {
                 totalMagicsTried += TOOL_BENCHMARKING_MAGICS_TRIED;
@@ -118,7 +131,7 @@ public class MagicHashGenerator {
                 TOOL_BENCHMARKING_TIME_SPENT = 0;
                 TOOL_BENCHMARKING_MAGICS_TRIED = 0;
             }
-            System.out.print(formatLongToHexLiteral(magics[i]) + ", ");
+            System.out.print(formatLongToHexLiteral(magics[position]) + ", ");
         }
         System.out.println("\b\b};");
 
@@ -133,20 +146,16 @@ public class MagicHashGenerator {
     /**
      * @return Returns a magic number if one is found. Returns zero if the search times out or is invalid.
      * */
-    private static long initiateSearch(PieceType piece, int position, int targetedShiftNumber, SearchConfiguration config) {
-        long mask = RookAndBishopMovesUtil.getPieceMask(piece, position);
-        long[] positionCombinations = BitUtil.getAllPossibleBitCombinations(mask);
-        long[] associatedMoves = RookAndBishopMovesUtil.getAllPossibleMovesCombinations(piece, position, positionCombinations);
-
+    private static long initiateSearch(SearchScope searchScope, SearchConfiguration config) {
         HashMap<Long,Integer> compressibilityMap = new HashMap<>();
 
         /* Use associatedMove as a key to determine how many unique move are there in the position. */
-        for (long associatedMove : associatedMoves) {
+        for (long associatedMove : searchScope.associatedMoves) {
             compressibilityMap.merge(associatedMove, 1, Integer::sum); /* We count how many times a move occurs. */
         }
 
         int addressSize = addressSizeForItems(compressibilityMap.keySet().size());
-        if ( targetedShiftNumber + addressSize > 64 ) {
+        if ( searchScope.targetedShiftNumber + addressSize > 64 ) {
             return 0L; /* The requester is trying to compress the moves into a smaller array than possible. */
         }
 
@@ -155,23 +164,21 @@ public class MagicHashGenerator {
             Comparator<Map.Entry<Long, Integer>> comparator = Map.Entry.comparingByValue();
             list.sort(comparator.reversed()); /* Getting an ordered list of all the associated moves. */
 
-            long[] sortedPositions = new long[positionCombinations.length];
-            long[] sortedMoves = new long[associatedMoves.length];
+            long[] sortedPositions = new long[searchScope.positionCombinations.length];
+            long[] sortedMoves = new long[searchScope.associatedMoves.length];
 
             int sortedArrayLoc = 0;
             for ( Map.Entry<Long, Integer> move : list ) {
-                for ( int i = 0; i < associatedMoves.length; i++ ) {
-                    if ( associatedMoves[i] == move.getKey() ) {
-                        sortedPositions[sortedArrayLoc] = positionCombinations[i];
-                        sortedMoves[sortedArrayLoc++] = associatedMoves[i];
+                for ( int i = 0; i < searchScope.associatedMoves.length; i++ ) {
+                    if ( searchScope.associatedMoves[i] == move.getKey() ) {
+                        sortedPositions[sortedArrayLoc] = searchScope.positionCombinations[i];
+                        sortedMoves[sortedArrayLoc++] = searchScope.associatedMoves[i];
                     }
                 }
             }
-            positionCombinations = sortedPositions;
-            associatedMoves = sortedMoves;
+            searchScope = new SearchScope(sortedPositions, sortedMoves, searchScope.targetedShiftNumber);
         }
 
-        SearchScope searchScope = new SearchScope(positionCombinations, associatedMoves, targetedShiftNumber);
         return magicSearchRunner(config, searchScope);
     }
 
