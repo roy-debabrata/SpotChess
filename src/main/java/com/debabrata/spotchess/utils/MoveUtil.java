@@ -31,7 +31,7 @@ public class MoveUtil {
             /* Take care of pawn promotions. */
             while ( rank7Pawns != 0 ) {
                 long pawn = rank7Pawns & -rank7Pawns;
-                int from = BitPositionUtil.getBitPlaceValue(pawn);
+                int from = BitUtil.getBitPlaceValue(pawn);
                 if ( ((pawn << 7) & 0x7F7F7F7F7F7F7F7FL & enemyPieces) != 0 ) {
                     moveBuffer[startWritingAt++] = MoveInitUtil.newPawnPromotion(from, from + 7, PieceType.QUEEN);
                     moveBuffer[startWritingAt++] = MoveInitUtil.newPawnPromotion(from, from + 7, PieceType.KNIGHT);
@@ -58,23 +58,23 @@ public class MoveUtil {
             long rightCaptures = ((pawns << 7) & 0x7F7F7F7F7F7F7F7FL) & enemyPieces;
             long leftCaptures  = ((pawns << 9) & 0xFEFEFEFEFEFEFEFEL) & enemyPieces;
             while ( rightCaptures != 0 ) {
-                int toPlaceValue = BitPositionUtil.getLastBitPlaceValue(rightCaptures);
+                int toPlaceValue = BitUtil.getLastBitPlaceValue(rightCaptures);
                 moveBuffer[startWritingAt++] = MoveInitUtil.newMove(toPlaceValue - 7, toPlaceValue);
                 rightCaptures = rightCaptures & ( rightCaptures - 1 );
             }
             while ( leftCaptures != 0 ) {
-                int toPlaceValue = BitPositionUtil.getLastBitPlaceValue(leftCaptures);
+                int toPlaceValue = BitUtil.getLastBitPlaceValue(leftCaptures);
                 moveBuffer[startWritingAt++] = MoveInitUtil.newMove(toPlaceValue - 9, toPlaceValue);
                 leftCaptures = leftCaptures & ( leftCaptures - 1 );
             }
             while ( straightMoves != 0 ) {
-                int toPlaceValue = BitPositionUtil.getLastBitPlaceValue(straightMoves);
+                int toPlaceValue = BitUtil.getLastBitPlaceValue(straightMoves);
                 moveBuffer[startWritingAt++] = MoveInitUtil.newMove(toPlaceValue - 8, toPlaceValue);
                 straightMoves = straightMoves & ( straightMoves - 1 );
             }
             /* Taking care of white's double moves. */
             while ( doubleMoves != 0 ) {
-                int toPlaceValue = BitPositionUtil.getLastBitPlaceValue(doubleMoves);
+                int toPlaceValue = BitUtil.getLastBitPlaceValue(doubleMoves);
                 moveBuffer[startWritingAt++] = MoveInitUtil.newPawnDoubleMove(toPlaceValue - 16, toPlaceValue);
                 doubleMoves = doubleMoves & ( doubleMoves - 1 );
             }
@@ -85,7 +85,7 @@ public class MoveUtil {
             /* Take care of pawn promotions. */
             while ( rank7Pawns != 0 ) {
                 long pawn = rank7Pawns & -rank7Pawns;
-                int from = BitPositionUtil.getBitPlaceValue(pawn);
+                int from = BitUtil.getBitPlaceValue(pawn);
                 if ( ((pawn >>> 7) & 0x7F7F7F7F7F7F7F7FL & enemyPieces) != 0 ) {
                     moveBuffer[startWritingAt++] = MoveInitUtil.newPawnPromotion(from, from - 7, PieceType.QUEEN);
                     moveBuffer[startWritingAt++] = MoveInitUtil.newPawnPromotion(from, from - 7, PieceType.KNIGHT);
@@ -112,23 +112,23 @@ public class MoveUtil {
             long rightCaptures = ((pawns >>> 9) & 0x7F7F7F7F7F7F7F7FL) & enemyPieces;
             long leftCaptures  = ((pawns >> 7) & 0xFEFEFEFEFEFEFEFEL) & enemyPieces;
             while ( rightCaptures != 0 ) {
-                int toPlaceValue = BitPositionUtil.getLastBitPlaceValue(rightCaptures);
+                int toPlaceValue = BitUtil.getLastBitPlaceValue(rightCaptures);
                 moveBuffer[startWritingAt++] = MoveInitUtil.newMove(toPlaceValue + 9, toPlaceValue);
                 rightCaptures = rightCaptures & ( rightCaptures - 1 );
             }
             while ( leftCaptures != 0 ) {
-                int toPlaceValue = BitPositionUtil.getLastBitPlaceValue(leftCaptures);
+                int toPlaceValue = BitUtil.getLastBitPlaceValue(leftCaptures);
                 moveBuffer[startWritingAt++] = MoveInitUtil.newMove(toPlaceValue + 7, toPlaceValue);
                 leftCaptures = leftCaptures & ( leftCaptures - 1 );
             }
             while ( straightMoves != 0 ) {
-                int toPlaceValue = BitPositionUtil.getLastBitPlaceValue(straightMoves);
+                int toPlaceValue = BitUtil.getLastBitPlaceValue(straightMoves);
                 moveBuffer[startWritingAt++] = MoveInitUtil.newMove(toPlaceValue + 8, toPlaceValue);
                 straightMoves = straightMoves & ( straightMoves - 1 );
             }
             /* Taking care of white's double moves. */
             while ( doubleMoves != 0 ) {
-                int toPlaceValue = BitPositionUtil.getLastBitPlaceValue(doubleMoves);
+                int toPlaceValue = BitUtil.getLastBitPlaceValue(doubleMoves);
                 moveBuffer[startWritingAt++] = MoveInitUtil.newPawnDoubleMove(toPlaceValue + 16, toPlaceValue);
                 doubleMoves = doubleMoves & ( doubleMoves - 1 );
             }
@@ -137,12 +137,12 @@ public class MoveUtil {
         /* Taking care of en-passant moves. */
         if ( position.enPassantAvailable() ) {
             long fromPos = position.getPawnsThatCanCaptureEnPassant(whiteToMove);
-            int from = BitPositionUtil.getLastBitPlaceValue(fromPos);
-            int to = BitPositionUtil.getBitPlaceValue(position.getPawnLocationAfterEnPassant(whiteToMove));
+            int from = BitUtil.getLastBitPlaceValue(fromPos);
+            int to = BitUtil.getBitPlaceValue(position.getPawnLocationAfterEnPassant(whiteToMove));
             moveBuffer[startWritingAt++] = MoveInitUtil.newEnPassant(from, to);
             fromPos = fromPos & (fromPos - 1);
             if ( fromPos != 0 ) {
-                from = BitPositionUtil.getLastBitPlaceValue(fromPos);
+                from = BitUtil.getLastBitPlaceValue(fromPos);
                 moveBuffer[startWritingAt++] = MoveInitUtil.newEnPassant(from, to);
             }
         }
@@ -150,11 +150,11 @@ public class MoveUtil {
         /* Queen and bishop moves. */
         long queensAndBishops = position.getQueensAndBishops() & ourPieces;
         while (queensAndBishops != 0) {
-            int fromPlaceValue = BitPositionUtil.getLastBitPlaceValue(queensAndBishops);
+            int fromPlaceValue = BitUtil.getLastBitPlaceValue(queensAndBishops);
             long moves = RookAndBishopMovesUtil.getBishopMoves(fromPlaceValue, allPieces);
             moves = moves & notOurPieces;
             while ( moves != 0 ) {
-                int toPlaceValue = BitPositionUtil.getLastBitPlaceValue(moves);
+                int toPlaceValue = BitUtil.getLastBitPlaceValue(moves);
                 moveBuffer[startWritingAt++] = MoveInitUtil.newMove(fromPlaceValue, toPlaceValue);
                 moves = moves & ( moves - 1 );
             }
@@ -164,11 +164,11 @@ public class MoveUtil {
         /* Rooks and queens moves. */
         long rooksAndQueens = position.getRooksAndQueens() & ourPieces;
         while ( rooksAndQueens != 0 ) {
-            int fromPlaceValue = BitPositionUtil.getLastBitPlaceValue(rooksAndQueens);
+            int fromPlaceValue = BitUtil.getLastBitPlaceValue(rooksAndQueens);
             long moves = RookAndBishopMovesUtil.getRookMoves(fromPlaceValue, allPieces);
             moves = moves & notOurPieces;
             while ( moves != 0 ) {
-                int toPlaceValue = BitPositionUtil.getLastBitPlaceValue(moves);
+                int toPlaceValue = BitUtil.getLastBitPlaceValue(moves);
                 moveBuffer[startWritingAt++] = MoveInitUtil.newMove(fromPlaceValue, toPlaceValue);
                 moves = moves & ( moves - 1 );
             }
@@ -178,11 +178,11 @@ public class MoveUtil {
         /* Knight moves. */
         long knights = position.getKnights() & ourPieces;
         while ( knights != 0 ) {
-            int fromPlaceValue = BitPositionUtil.getLastBitPlaceValue(knights);
+            int fromPlaceValue = BitUtil.getLastBitPlaceValue(knights);
             long moves = KingAndKnightMovesUtil.getKnightMoves(fromPlaceValue);
             moves = moves & notOurPieces;
             while ( moves != 0 ) {
-                int toPlaceValue = BitPositionUtil.getLastBitPlaceValue(moves);
+                int toPlaceValue = BitUtil.getLastBitPlaceValue(moves);
                 moveBuffer[startWritingAt++] = MoveInitUtil.newMove(fromPlaceValue, toPlaceValue);
                 moves = moves & ( moves - 1 );
             }
@@ -191,11 +191,11 @@ public class MoveUtil {
 
         /* King moves. */
         long king = position.getKings() & ourPieces;
-        int kingFrom = BitPositionUtil.getLastBitPlaceValue(king);
+        int kingFrom = BitUtil.getLastBitPlaceValue(king);
         long moves = KingAndKnightMovesUtil.getKingMoves(kingFrom);
         moves = moves & notOurPieces;
         while (moves != 0) {
-            int toPlaceValue = BitPositionUtil.getLastBitPlaceValue(moves);
+            int toPlaceValue = BitUtil.getLastBitPlaceValue(moves);
             moveBuffer[startWritingAt++] = MoveInitUtil.newMove(kingFrom, toPlaceValue);
             moves = moves & (moves - 1);
         }

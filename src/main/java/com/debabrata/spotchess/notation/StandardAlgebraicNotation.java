@@ -3,7 +3,7 @@ package com.debabrata.spotchess.notation;
 import com.debabrata.spotchess.types.Position;
 import com.debabrata.spotchess.types.enums.Colour;
 import com.debabrata.spotchess.types.enums.PieceType;
-import com.debabrata.spotchess.utils.BitPositionUtil;
+import com.debabrata.spotchess.utils.BitUtil;
 import com.debabrata.spotchess.utils.KingAndKnightMovesUtil;
 import com.debabrata.spotchess.utils.MoveInitUtil;
 import com.debabrata.spotchess.utils.RookAndBishopMovesUtil;
@@ -110,7 +110,7 @@ public class StandardAlgebraicNotation implements NotationType {
                 if (Long.bitCount(attackers) != 1) {
                     return 0; /* Despite disambiguation there are multiple attackers or no attackers for the position. */
                 }
-                int from = BitPositionUtil.getBitPlaceValue(attackers);
+                int from = BitUtil.getBitPlaceValue(attackers);
                 return MoveInitUtil.newMove(from, to);
             }
         }

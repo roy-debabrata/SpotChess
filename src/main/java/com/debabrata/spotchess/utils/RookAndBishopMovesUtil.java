@@ -38,7 +38,7 @@ public class RookAndBishopMovesUtil {
 
     private static void setupMoveTable(PieceType piece, long [] masks, long [] magics, int[] shift, long [][] targetCache ){
         for ( int i = 0; i < 64; i ++ ) {
-            long[] pieceCombinations = getAllPossiblePieceCombinations(masks[i]);
+            long[] pieceCombinations = BitUtil.getAllPossibleBitCombinations(masks[i]);
             long[] moveCombinations = getAllPossibleMovesCombinations(piece, i, pieceCombinations);
 
             /* This could be potentially smaller if we figured out what the last used position is and store it somewhere
@@ -75,39 +75,6 @@ public class RookAndBishopMovesUtil {
             moves[i] = getMoves(pieceType, placeValue, pieceCombinations[i]);
         }
         return moves;
-    }
-
-    /**
-     * Generate all possible combination of piece placements on the bit positions marked by the preMask.
-     * Counting up from 0 and using least significant n bits as unique combinations, we map each of those bits to a bit
-     * on the mask. Using an int to count up we can map up to 32 bits which is more than enough for our purposes.
-     * No single piece attack as many positions.
-     *
-     * @param preMask gives the region for which to generate all possible combinations of values.
-     *                Must not contain more than 32 active bits.
-     * @return an array containing bitboards of all combinations of bits of the preMask. */
-    public static long[] getAllPossiblePieceCombinations(long preMask){
-        int bitCount = Long.bitCount(preMask);
-        int [] bitToPositionMapping = new int[bitCount];
-        int i = 0;
-        while ( preMask != 0 ){
-            bitToPositionMapping[i++] = BitPositionUtil.getLastBitPlaceValue(preMask);
-            preMask = preMask & (preMask - 1);
-        }
-        int comboCount = 1 << bitCount;
-        long [] possibleBoardPositions = new long[comboCount];
-        for ( int permutation = 0; permutation < comboCount; permutation ++){
-            long newBoardPosition = 0;
-            int selector = 1;
-            for ( int position : bitToPositionMapping ){
-                if ((selector & permutation) != 0){
-                    newBoardPosition = newBoardPosition | (1L << position);
-                }
-                selector = selector << 1;
-            }
-            possibleBoardPositions[permutation] = newBoardPosition;
-        }
-        return possibleBoardPositions;
     }
 
     public static long getMoves(PieceType type, int placeValue, long pieceCombinations){

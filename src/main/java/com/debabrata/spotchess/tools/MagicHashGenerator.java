@@ -1,5 +1,6 @@
 package com.debabrata.spotchess.tools;
 
+import com.debabrata.spotchess.utils.BitUtil;
 import com.debabrata.spotchess.utils.RookAndBishopMovesUtil;
 import com.debabrata.spotchess.types.enums.PieceType;
 
@@ -134,7 +135,7 @@ public class MagicHashGenerator {
      * */
     private static long initiateSearch(PieceType piece, int position, int targetedShiftNumber, SearchConfiguration config) {
         long mask = RookAndBishopMovesUtil.getPieceMask(piece, position);
-        long[] positionCombinations = RookAndBishopMovesUtil.getAllPossiblePieceCombinations(mask);
+        long[] positionCombinations = BitUtil.getAllPossibleBitCombinations(mask);
         long[] associatedMoves = RookAndBishopMovesUtil.getAllPossibleMovesCombinations(piece, position, positionCombinations);
 
         HashMap<Long,Integer> compressibilityMap = new HashMap<>();
