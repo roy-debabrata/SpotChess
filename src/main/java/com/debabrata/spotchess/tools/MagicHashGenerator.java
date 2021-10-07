@@ -36,6 +36,7 @@ public class MagicHashGenerator {
         int targetedShiftNumber = 58;
         int earlyFailureCheckPosition = 0;
         int earlyExpectedMoveConvergence = 0;
+        MagicGenerator generator = new RandomMagicGenerator();
 
         SearchConfiguration searchConfig = new SearchConfiguration(earlyFailureCheckPosition, earlyExpectedMoveConvergence);
 
@@ -45,7 +46,11 @@ public class MagicHashGenerator {
 
         SearchScope searchScope = new SearchScope(positionCombinations, associatedMoves, targetedShiftNumber);
 
-        long magic = initiateSearch(searchConfig, searchScope);
+        /* If you want to use anything other than Random Numbers for tying as magic hash just implement your own
+        *  version of MagicGenerator and pass it here. Otherwise, you can go into the code directly and change the
+        *  implementation where we are calling nextHash() and replace it with whatever you prefer. MagicGenerator
+        *  is slower obviously, but it's "neater" speaking in Java terms. */
+        long magic = initiateSearch(searchConfig, searchScope, generator);
 
         if ( pieceType == PieceType.ROOK ) {
             System.out.println("Mask  : " + formatLongToHexLiteral(RookAndBishopMovesUtil.getRookMask(position)));
@@ -118,7 +123,7 @@ public class MagicHashGenerator {
 
             SearchScope searchScope = new SearchScope(positionCombinations, associatedMoves, targetedShiftNumber);
 
-            long magic = initiateSearch(new SearchConfiguration(), searchScope);
+            long magic = initiateSearch(new SearchConfiguration(), searchScope, new RandomMagicGenerator());
             if (magic == 0) {
                 timedOutPositions.append(position).append(",");
             } else {
@@ -139,7 +144,7 @@ public class MagicHashGenerator {
     /**
      * @return Returns a magic number if one is found. Returns zero if the search times out or is invalid.
      * */
-    private static long initiateSearch(SearchConfiguration searchConfig, SearchScope searchScope) {
+    private static long initiateSearch(SearchConfiguration searchConfig, SearchScope searchScope, MagicGenerator generator) {
         HashMap<Long,Integer> compressibilityMap = new HashMap<>();
 
         /* Use associatedMove as a key to determine how many unique move are there in the position. */
@@ -172,13 +177,13 @@ public class MagicHashGenerator {
             searchScope = new SearchScope(sortedPositions, sortedMoves, searchScope.targetedShiftNumber);
         }
 
-        return magicSearchRunner(searchConfig, searchScope);
+        return magicSearchRunner(searchConfig, searchScope, generator);
     }
 
     /**
      * @return Returns a magic number if one is found. Returns zero if the search times out.
      * */
-    public static long magicSearchRunner(SearchConfiguration searchConfig, SearchScope searchScope) {
+    public static long magicSearchRunner(SearchConfiguration searchConfig, SearchScope searchScope, MagicGenerator generator) {
         AtomicBoolean commonStop = new AtomicBoolean();
         AtomicLong returnMagic = new AtomicLong();
 
@@ -191,13 +196,13 @@ public class MagicHashGenerator {
                 ThreadLocal<Long> startTime = new ThreadLocal<>();
                 startTime.set(System.currentTimeMillis());
 
+                int threadNumber = Integer.parseInt(Thread.currentThread().getName());
+
                 outer: while ( ! commonStop.get() ) {
                     for ( int i = 0; i < TRY_AT_ONCE_COUNT; i++ ) {
                         /* We want to avoid large sparse regions in our number. That's known to work best, but I don't
                          * understand the mathematics behind it. Refer, www.chessprogramming.org/Looking_for_Magics */
-                        long potentialMagic = ThreadLocalRandom.current().nextLong()
-                                                    & ThreadLocalRandom.current().nextLong()
-                                                    & ThreadLocalRandom.current().nextLong();
+                        long potentialMagic = generator.nextPotentialMagic(threadNumber);
 
                         boolean isMagic = isNumberMagic(searchConfig, searchScope , potentialMagic);
                         if ( isMagic ) {
@@ -328,6 +333,19 @@ public class MagicHashGenerator {
             System.out.printf("Magics tried per milli second = %.2f\n",
                     (double) TOOL_BENCHMARKING_MAGICS_TRIED.get()/TOOL_BENCHMARKING_TIME_SPENT.get());
             System.out.println("Early cut-off crossed = " + TOOL_BENCHMARKING_CUTOFF_CROSSED.get());
+        }
+    }
+
+    private interface MagicGenerator {
+        long nextPotentialMagic(int threadNumber);
+    }
+
+    private static class RandomMagicGenerator implements MagicGenerator {
+        @Override
+        public final long nextPotentialMagic(int threadNumber) {
+            return ThreadLocalRandom.current().nextLong()
+                    & ThreadLocalRandom.current().nextLong()
+                    & ThreadLocalRandom.current().nextLong();
         }
     }
 
