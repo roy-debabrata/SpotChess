@@ -21,14 +21,14 @@ public class MagicHashGenerator {
     private static final int TRY_AT_ONCE_COUNT = 100000;
     private static final int ATTEMPT_TIMEOUT = 10000;
     private static final boolean TOOL_BENCHMARKING_ENABLED = true;
-    private static long TOOL_BENCHMARKING_TIME_SPENT;
-    private static long TOOL_BENCHMARKING_MAGICS_TRIED;
+    private static final AtomicLong TOOL_BENCHMARKING_TIME_SPENT = new AtomicLong();
+    private static final AtomicLong TOOL_BENCHMARKING_MAGICS_TRIED = new AtomicLong();
+    private static final AtomicLong TOOL_BENCHMARKING_CUTOFF_CROSSED = new AtomicLong();
 
     public static void main(String[] args) {
         //runForSinglePosition();
         runForAllPositions();
     }
-
 
     private static void runForSinglePosition() {
         PieceType pieceType = PieceType.BISHOP;
@@ -48,19 +48,19 @@ public class MagicHashGenerator {
         long magic = initiateSearch(searchConfig, searchScope);
 
         if ( pieceType == PieceType.ROOK ) {
-            System.out.println("Hash  : " + formatLongToHexLiteral(RookAndBishopMovesUtil.getRookMask(position)));
+            System.out.println("Mask  : " + formatLongToHexLiteral(RookAndBishopMovesUtil.getRookMask(position)));
         } else {
-            System.out.println("Hash  : " + formatLongToHexLiteral(RookAndBishopMovesUtil.getBishopMask(position)));
+            System.out.println("Mask  : " + formatLongToHexLiteral(RookAndBishopMovesUtil.getBishopMask(position)));
         }
         if ( magic != 0L ) {
             System.out.println("Magic : " + formatLongToHexLiteral(magic));
+            System.out.println("Utilization : "
+                    + getUtilization(magic, positionCombinations, targetedShiftNumber) + "/" + positionCombinations.length);
         } else {
             System.out.println("Timed out/invalid search.");
         }
 
-        printBenchmarkingResult(TOOL_BENCHMARKING_TIME_SPENT, TOOL_BENCHMARKING_MAGICS_TRIED);
-        TOOL_BENCHMARKING_TIME_SPENT = 0;
-        TOOL_BENCHMARKING_MAGICS_TRIED = 0;
+        printBenchmarkingResult();
     }
 
     /* Just run this method if you need a quick set of values. Or set a higher shifts, but set ATTEMPT_TIMEOUT accordingly. */
@@ -84,6 +84,8 @@ public class MagicHashGenerator {
     }
 
     private static void findAndDisplayMagicsFor(PieceType piece, int[] magicNumberShiftTargets) {
+        resetBenchmarkingData();
+
         String capitalCasePieceName = piece == PieceType.BISHOP ? "Bishop" : "Rook";
         long[] magics = new long[64];
 
@@ -107,9 +109,6 @@ public class MagicHashGenerator {
         System.out.print("magicNumber" + capitalCasePieceName + "[] = {");
 
         /* Finding magics. */
-        long totalProcessorTimeForSearch = 0L;
-        long totalMagicsTried = 0L;
-
         for (int position = 0; position < 64; position++) {
             int targetedShiftNumber = magicNumberShiftTargets[position];
 
@@ -125,12 +124,6 @@ public class MagicHashGenerator {
             } else {
                 magics[position] = magic;
             }
-            if (TOOL_BENCHMARKING_ENABLED) {
-                totalMagicsTried += TOOL_BENCHMARKING_MAGICS_TRIED;
-                totalProcessorTimeForSearch += TOOL_BENCHMARKING_TIME_SPENT;
-                TOOL_BENCHMARKING_TIME_SPENT = 0;
-                TOOL_BENCHMARKING_MAGICS_TRIED = 0;
-            }
             System.out.print(formatLongToHexLiteral(magics[position]) + ", ");
         }
         System.out.println("\b\b};");
@@ -139,7 +132,7 @@ public class MagicHashGenerator {
             System.out.println("Couldn't figure for the following positions. " + timedOutPositions + "\b. Timed out/not possible.");
         }
 
-        printBenchmarkingResult(totalProcessorTimeForSearch, totalMagicsTried);
+        printBenchmarkingResult();
         System.out.println("\n");
     }
 
@@ -162,7 +155,7 @@ public class MagicHashGenerator {
         if ( searchConfig.earlyChecksEnabled ) {
             List<Map.Entry<Long, Integer>> list = new LinkedList<>(compressibilityMap.entrySet());
             Comparator<Map.Entry<Long, Integer>> comparator = Map.Entry.comparingByValue();
-            list.sort(comparator.reversed()); /* Getting an ordered list of all the associated moves. */
+            list.sort(comparator); /* Getting an ordered list of all the associated moves. */
 
             long[] sortedPositions = new long[searchScope.positionCombinations.length];
             long[] sortedMoves = new long[searchScope.associatedMoves.length];
@@ -186,13 +179,11 @@ public class MagicHashGenerator {
      * @return Returns a magic number if one is found. Returns zero if the search times out.
      * */
     public static long magicSearchRunner(SearchConfiguration searchConfig, SearchScope searchScope) {
-        TOOL_BENCHMARKING_TIME_SPENT = 0;
-        TOOL_BENCHMARKING_MAGICS_TRIED = 0;
-
         AtomicBoolean commonStop = new AtomicBoolean();
         AtomicLong returnMagic = new AtomicLong();
-        AtomicLong totalRuntimeOfThreads = new AtomicLong();
-        AtomicLong totalMagicsTriedCount = new AtomicLong();
+
+        /* Adding shutdown hook for handling kill signals. */
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> commonStop.set(true)));
 
         class MagicLookup implements Runnable {
             @Override
@@ -213,17 +204,17 @@ public class MagicHashGenerator {
                             returnMagic.set(potentialMagic);
                             commonStop.set(true); /* Letting other threads know we have found a magic.*/
                             if ( TOOL_BENCHMARKING_ENABLED ) {
-                                totalMagicsTriedCount.addAndGet(i + 1);
+                                TOOL_BENCHMARKING_MAGICS_TRIED.addAndGet(i + 1);
                             }
                             break outer;
                         }
                     }
                     if ( TOOL_BENCHMARKING_ENABLED ) {
-                        totalMagicsTriedCount.addAndGet(TRY_AT_ONCE_COUNT);
+                        TOOL_BENCHMARKING_MAGICS_TRIED.addAndGet(TRY_AT_ONCE_COUNT);
                     }
                 }
                 if ( TOOL_BENCHMARKING_ENABLED ) {
-                    totalRuntimeOfThreads.addAndGet(System.currentTimeMillis() - startTime.get());
+                    TOOL_BENCHMARKING_TIME_SPENT.addAndGet(System.currentTimeMillis() - startTime.get());
                 }
             }
         }
@@ -247,10 +238,6 @@ public class MagicHashGenerator {
                     running = running | threads[i].getState() != Thread.State.TERMINATED;
                 }
                 if ( ! running ) {
-                    if ( TOOL_BENCHMARKING_ENABLED ) {
-                        TOOL_BENCHMARKING_TIME_SPENT = totalRuntimeOfThreads.get();
-                        TOOL_BENCHMARKING_MAGICS_TRIED = totalMagicsTriedCount.get();
-                    }
                     return returnMagic.get();
                 } else {
                     if ( System.currentTimeMillis() - startTime >= ATTEMPT_TIMEOUT ) {
@@ -276,6 +263,7 @@ public class MagicHashGenerator {
                 if ( moveConvergence < searchConfig.earlyExpectedMoveConvergence ) {
                     return false;
                 }
+                TOOL_BENCHMARKING_CUTOFF_CROSSED.addAndGet(1);
             }
             int position = (int)((searchScope.positionCombinations[i] * potentialMagic) >>> searchScope.targetedShiftNumber);
             if (position >= occupations.length) {
@@ -290,6 +278,20 @@ public class MagicHashGenerator {
             }
         }
         return true;
+    }
+
+    /**
+     * @return The max utilized position of the storage space.
+     **/
+    public static int getUtilization(long magic, long[] positionCombinations, int shift) {
+        int maxPosition = 0;
+        for (long positionCombination : positionCombinations){
+            int position = (int)((positionCombination * magic) >>> shift);
+            if (position > maxPosition) {
+                maxPosition = position;
+            }
+        }
+        return maxPosition;
     }
 
     /* Returns how many bits of addresses are required to hold n items. */
@@ -312,12 +314,20 @@ public class MagicHashGenerator {
         return "0x" + String.format("%016X", number) + "L";
     }
 
-    private static void printBenchmarkingResult(long totalProcessorTimeForSearch, long totalMagicsTried) {
+    private static void resetBenchmarkingData() {
+        TOOL_BENCHMARKING_TIME_SPENT.set(0);
+        TOOL_BENCHMARKING_MAGICS_TRIED.set(0);
+        TOOL_BENCHMARKING_CUTOFF_CROSSED.set(0);
+    }
+
+    private static void printBenchmarkingResult() {
         if (TOOL_BENCHMARKING_ENABLED) {
             System.out.println("Benchmarking information : ");
-            System.out.println("Processor time for the set = " + totalProcessorTimeForSearch);
-            System.out.println("Total number of magics tried = " + totalMagicsTried);
-            System.out.printf("Magics tried per milli second = %.2f\n", (double) totalMagicsTried / totalProcessorTimeForSearch);
+            System.out.println("Processor time for the set = " + TOOL_BENCHMARKING_TIME_SPENT.get());
+            System.out.println("Total number of magics tried = " + TOOL_BENCHMARKING_MAGICS_TRIED.get());
+            System.out.printf("Magics tried per milli second = %.2f\n",
+                    (double) TOOL_BENCHMARKING_MAGICS_TRIED.get()/TOOL_BENCHMARKING_TIME_SPENT.get());
+            System.out.println("Early cut-off crossed = " + TOOL_BENCHMARKING_CUTOFF_CROSSED.get());
         }
     }
 
