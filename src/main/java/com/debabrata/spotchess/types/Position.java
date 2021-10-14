@@ -83,7 +83,7 @@ public final class Position {
 
     /* We don't addPieces and removePieces in engine. We use this to only setup the board for trying out positions. */
     public boolean addPiece(Colour colour, PieceType piece, int placeValue) {
-        if (placeValue < 0 || placeValue > 63 || null == colour) {
+        if (null == colour || null == piece || placeValue < 0 || placeValue > 63) {
             return false;
         }
         removePiece(placeValue); /* If some piece already exists at the position we remove it. */
