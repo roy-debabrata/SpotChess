@@ -145,7 +145,7 @@ public class StandardAlgebraicNotation implements NotationType {
         if (from == 0) {
             char takerFile = notation.charAt(0);
             if (takerFile >= 'a' && takerFile <= 'h') {
-                if (notation.charAt(1) != 'x' && notation.charAt(1) != 'X') {
+                if (Character.toLowerCase(notation.charAt(1)) != 'x' && Character.toLowerCase(notation.charAt(2)) != 'x') {
                     return 0; /* We expect a taker. We see no takes in notation. */
                 }
                 if (whiteToMove) {
@@ -218,7 +218,11 @@ public class StandardAlgebraicNotation implements NotationType {
         }
         if (pieceType == PieceType.PAWN) {
             if (MoveInitUtil.isPromotion(move)) {
-                notation = notation + "=" + MoveInitUtil.promotesTo(move).getNotation();
+                PieceType promotesTo = MoveInitUtil.promotesTo(move);
+                if (null == promotesTo) {
+                    throw new RuntimeException("Invalid promotion!");
+                }
+                notation = notation + "=" + promotesTo.getNotation();
             }
         } else {
             /* We calculate as if the attacker is at the attacked position. Then we find all legal moves it can make

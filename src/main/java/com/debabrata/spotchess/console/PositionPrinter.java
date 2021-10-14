@@ -65,13 +65,13 @@ public class PositionPrinter {
         List<String> stateInfo = new ArrayList<>();
         stateInfo.add("To move : " + (position.whiteToMove()? Colour.WHITE.name() : Colour.BLACK.name()));
         stateInfo.add("Reversible Half-Move Count: " + position.getReversibleHalfMoveCount());
-        String castleInfo = position.canPotentiallyCastleLeft(Colour.WHITE) ?
-                (position.canPotentiallyCastleRight(Colour.WHITE) ? "both sides." : "left side.")
-                : (position.canPotentiallyCastleRight(Colour.WHITE) ? "right side." : "neither side.");
+        String castleInfo = position.canPotentiallyCastleLeft(true) ?
+                (position.canPotentiallyCastleRight(true) ? "both sides." : "left side.")
+                : (position.canPotentiallyCastleRight(true) ? "right side." : "neither side.");
         stateInfo.add("White can potentially castle " + castleInfo);
-        castleInfo = position.canPotentiallyCastleLeft(Colour.BLACK) ?
-                (position.canPotentiallyCastleRight(Colour.BLACK) ? "both sides." : "left side.")
-                : (position.canPotentiallyCastleRight(Colour.BLACK) ? "right side." : "neither side.");
+        castleInfo = position.canPotentiallyCastleLeft(false) ?
+                (position.canPotentiallyCastleRight(false) ? "both sides." : "left side.")
+                : (position.canPotentiallyCastleRight(false) ? "right side." : "neither side.");
         stateInfo.add("Black can potentially castle " + castleInfo);
         /* En-passant */
         int enPassantFlag = (0x0000FF00 & position.getFlags()) >> 8;

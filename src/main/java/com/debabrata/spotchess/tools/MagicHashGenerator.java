@@ -48,7 +48,7 @@ public class MagicHashGenerator {
 
         /* If you want to use anything other than Random Numbers for tying as magic hash just implement your own
         *  version of MagicGenerator and pass it here. Otherwise, you can go into the code directly and change the
-        *  implementation where we are calling nextHash() and replace it with whatever you prefer. MagicGenerator
+        *  implementation where we are calling nextPotentialMagic() and replace it with whatever you prefer. MagicGenerator
         *  is slower obviously, but it's "neater" speaking in Java terms. */
         long magic = initiateSearch(searchConfig, searchScope, generator);
 

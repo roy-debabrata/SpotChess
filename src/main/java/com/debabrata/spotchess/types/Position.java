@@ -1,5 +1,6 @@
 package com.debabrata.spotchess.types;
 
+import com.debabrata.spotchess.types.enums.GameType;
 import com.debabrata.spotchess.utils.MoveInitUtil;
 import com.debabrata.spotchess.types.enums.Colour;
 import com.debabrata.spotchess.types.enums.PieceType;
@@ -10,11 +11,15 @@ import com.debabrata.spotchess.types.enums.PieceType;
  * engines must use this as it seems so basic. Not sure if it's smart to jumble up the Knights, Kings and Pawns,
  * but it did save 4 bytes which seems like a lot at this moment though I might regret it later.
  * That said, progress is change.
- * <p>
+ *
  * Making class final to please the JVM inlining gods. Ideally we would like to make all the methods "inline" but that's
  * not a thing in java (even in C/C++ it's just a suggestion to the compiler that can be ignored), so I right now I'll
  * just make Position final. In case we do make Position non-final we'll make all methods in it final.
- * @version 2.0
+ *
+ * The board representation at any position follows Little-Endian Rank, Big-Endian File Mapping (LERBEF).
+ * For an illustration check out the following:
+ * https://www.chessprogramming.org/Bibob and look at the image labeled "LERBEF"
+ * We use this scheme because it feels more intuitive to me rather than for any performance reasons.
  */
 public final class Position {
     /* Piece positions represent where the pieces are placed. */
@@ -25,10 +30,8 @@ public final class Position {
     private long rooksAndQueens;
     private long queensAndBishops;
 
-    /* Flags store other state variables associated with the game. */
-    private int flags;
-
-    /* Last 8 bits (mask 0x000000FF) are for storing the count of reversible half moves. Read up on 50 move rule.
+    /* Flags store other state variables associated with the game.
+     * Last 8 bits (mask 0x000000FF) are for storing the count of reversible half moves. Read up on 50 move rule.
      * Next 8 bits (mask 0x0000FF00) are to store the pawns eligible to take some pawn en-passant.
      *                            So, say a white pawn moved from rank 2 to 4. These 8 bits will hold all the 4th rank
      *                            black pawns that can take that pawn. So say c4 was played and there are black pawns on
@@ -46,21 +49,26 @@ public final class Position {
      * 0x10000000 = Sets whose move it is. 0 at this position means it's white's turn, 1 means it's black's turn.
      *
      * At beginning of any regular chess game the flags will have 0. This sets all flags to their initial state. */
+    private int flags;
 
     public Position() {
-        /* Standard board representation for normal standard game. The board representation is
-         * Little-Endian Rank, Big-Endian File Mapping (LERBEF). For an illustration check out the following:
-         * https://www.chessprogramming.org/Bibob and look at the image labeled "LERBEF"
-         * We use this scheme because it feels more intuitive to me rather than for any performance reasons. */
+    }
 
-        whitePieces = 0x000000000000FFFFL;
-        blackPieces = 0xFFFF000000000000L;
-        pawnsAndKnights = 0x42FF00000000FF42L;
-        knightsAndKings = 0x4A0000000000004AL;
-        rooksAndQueens = 0x9100000000000091L;
-        queensAndBishops = 0x3400000000000034L;
-        /* The default position of flags are such that at the beginning of a regular chess game the flags are 0. */
-        flags = 0;
+    public Position(GameType gameType) {
+        switch (gameType) {
+            case NO_CASTLE:
+                flags = 0x0F000000; /* We disable castling with all four rooks. */
+            case STANDARD:
+                whitePieces = 0x000000000000FFFFL;
+                blackPieces = 0xFFFF000000000000L;
+                pawnsAndKnights = 0x42FF00000000FF42L;
+                knightsAndKings = 0x4A0000000000004AL;
+                rooksAndQueens = 0x9100000000000091L;
+                queensAndBishops = 0x3400000000000034L;
+                break;
+            default:
+                throw new UnsupportedOperationException("Unsupported game type selected");
+        }
     }
 
     public Position(Position position) {
@@ -71,6 +79,63 @@ public final class Position {
         this.rooksAndQueens = position.rooksAndQueens;
         this.queensAndBishops = position.queensAndBishops;
         this.flags = position.flags;
+    }
+
+    /* We don't addPieces and removePieces in engine. We use this to only setup the board for trying out positions. */
+    public boolean addPiece(Colour colour, PieceType piece, int placeValue) {
+        if (placeValue < 0 || placeValue > 63 || null == colour) {
+            return false;
+        }
+        removePiece(placeValue); /* If some piece already exists at the position we remove it. */
+        long position = 1L << placeValue;
+        if(colour == Colour.WHITE) {
+            whitePieces = whitePieces ^ position;
+        } else {
+            blackPieces = blackPieces ^ position;
+        }
+        if(piece == PieceType.KNIGHT || piece == PieceType.PAWN) {
+            pawnsAndKnights = pawnsAndKnights ^ position;
+        }
+        if(piece == PieceType.KNIGHT || piece == PieceType.KING) {
+            knightsAndKings = knightsAndKings ^ position;
+        }
+        if(piece == PieceType.QUEEN || piece == PieceType.BISHOP) {
+            queensAndBishops = queensAndBishops ^ position;
+        }
+        if(piece == PieceType.QUEEN || piece == PieceType.ROOK) {
+            rooksAndQueens = rooksAndQueens ^ position;
+        }
+        return true;
+    }
+
+    public boolean removePiece(int placeValue) {
+        if (placeValue < 0 || placeValue > 63) {
+            return false; /* PlaceValue outside board. */
+        }
+        long position = 1L << placeValue;
+        if ((position & whitePieces) != 0 ) {
+            whitePieces = whitePieces ^ position;
+        } else if ((position & blackPieces) != 0){
+            blackPieces = blackPieces ^ position;
+        } else {
+            return false; /* No piece to remove. */
+        }
+        if ((pawnsAndKnights & position) != 0) {
+            pawnsAndKnights = pawnsAndKnights ^ position;
+            if ((knightsAndKings & position) != 0) {
+                knightsAndKings = knightsAndKings ^ position;
+            }
+        } else if ((rooksAndQueens & position) != 0) {
+            rooksAndQueens = rooksAndQueens ^ position;
+            if ((queensAndBishops & position) != 0) {
+                queensAndBishops = queensAndBishops ^ position;
+            }
+        } else if ((queensAndBishops & position) != 0) {
+            queensAndBishops = queensAndBishops ^ position;
+        } else {
+            knightsAndKings = knightsAndKings ^ position;
+        }
+        return true;
     }
 
     public long getQueens() {
@@ -212,15 +277,22 @@ public final class Position {
         flags = flags & 0xFF0000FF;
     }
 
-    public boolean canPotentiallyCastleLeft(Colour colour) {
-        if (colour == Colour.WHITE) {
+    public boolean canPotentiallyCastle(boolean whiteToMove) {
+        if (whiteToMove) {
+            return (flags & 0x05000000) == 0;
+        }
+        return (flags & 0x0A000000) == 0;
+    }
+
+    public boolean canPotentiallyCastleLeft(boolean whiteToMove) {
+        if (whiteToMove) {
             return (flags & 0x01000000) == 0;
         }
         return (flags & 0x02000000) == 0;
     }
 
-    public boolean canPotentiallyCastleRight(Colour colour) {
-        if (colour == Colour.WHITE) {
+    public boolean canPotentiallyCastleRight(boolean whiteToMove) {
+        if (whiteToMove) {
             return (flags & 0x04000000) == 0;
         }
         return (flags & 0x08000000) == 0;
@@ -502,5 +574,19 @@ public final class Position {
             return false; /* When pawns can be taken en passant takers must be available and vice versa. */
         }
         return true;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Position position = (Position) o;
+        return  whitePieces == position.whitePieces &&
+                blackPieces == position.blackPieces &&
+                pawnsAndKnights == position.pawnsAndKnights &&
+                knightsAndKings == position.knightsAndKings &&
+                rooksAndQueens == position.rooksAndQueens &&
+                queensAndBishops == position.queensAndBishops &&
+                flags == position.flags;
     }
 }
