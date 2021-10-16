@@ -1,4 +1,4 @@
-package com.debabrata.spotchess.notation;
+package com.debabrata.spotchess.support.notation.move;
 
 import com.debabrata.spotchess.types.Position;
 import com.debabrata.spotchess.types.enums.Colour;
@@ -8,7 +8,7 @@ import com.debabrata.spotchess.utils.KingAndKnightMovesUtil;
 import com.debabrata.spotchess.utils.MoveInitUtil;
 import com.debabrata.spotchess.utils.RookAndBishopMovesUtil;
 
-public class StandardAlgebraicNotation implements NotationType {
+public class StandardAlgebraicNotation implements MoveNotation {
     @Override
     public int getMove(Position position, String notation) {
         /* We don't do all checks for legality, only enough to avoid misinterpretation. */

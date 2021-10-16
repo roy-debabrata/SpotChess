@@ -1,7 +1,7 @@
 package com.debabrata.spotchess.support;
 
 import com.debabrata.spotchess.console.PositionPrinter;
-import com.debabrata.spotchess.notation.StandardAlgebraicNotation;
+import com.debabrata.spotchess.support.notation.move.StandardAlgebraicNotation;
 import com.debabrata.spotchess.types.Position;
 import com.debabrata.spotchess.types.enums.Colour;
 import com.debabrata.spotchess.types.enums.PieceType;
