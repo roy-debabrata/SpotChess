@@ -279,9 +279,9 @@ public final class Position {
 
     public boolean canPotentiallyCastle(boolean whiteToMove) {
         if (whiteToMove) {
-            return (flags & 0x05000000) == 0;
+            return (flags & 0x05000000) != 0x05000000;
         }
-        return (flags & 0x0A000000) == 0;
+        return (flags & 0x0A000000) != 0x0A000000;
     }
 
     public boolean canPotentiallyCastleLeft(boolean whiteToMove) {
@@ -572,6 +572,9 @@ public final class Position {
         }
         if ((pawnsToBeCapturedEP == 0) != (pawnsThatCanCaptureEP == 0)) {
             return false; /* When pawns can be taken en passant takers must be available and vice versa. */
+        }
+        if ((getPawns() & 0xFF000000000000FFL) != 0) {
+            return false; /* Pawn on the last rank. */
         }
         return true;
     }

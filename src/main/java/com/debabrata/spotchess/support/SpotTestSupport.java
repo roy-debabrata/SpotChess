@@ -1,8 +1,12 @@
 package com.debabrata.spotchess.support;
 
+import com.debabrata.spotchess.console.PositionPrinter;
+import com.debabrata.spotchess.notation.StandardAlgebraicNotation;
 import com.debabrata.spotchess.types.Position;
 import com.debabrata.spotchess.types.enums.Colour;
 import com.debabrata.spotchess.types.enums.PieceType;
+
+import java.util.List;
 
 public class SpotTestSupport {
     public static final Square a1= new Square(7);
@@ -70,22 +74,65 @@ public class SpotTestSupport {
     public static final Square g8= new Square(57);
     public static final Square h8= new Square(56);
 
+    /**
+     * @param position position in which the move needs to be made.
+     * @param move standard algebraic notation of the move to be made.
+     * @return true if it's a legal move and was successfully made. False otherwise.
+     */
+    public static boolean move(Position position, String move) {
+        assert null != position && null != move;
+
+        StandardAlgebraicNotation sanProcessor = new StandardAlgebraicNotation();
+        int moveInt = sanProcessor.getMove(position, move);
+
+        if (moveInt == 0) {
+            return false;
+        }
+
+        position.makeMove(moveInt);
+        return true;
+    }
+
     public static Position position(WhitePiecePositions whitePieces, BlackPiecePositions blackPieces, Colour toMove) {
         Position position = new Position();
         for (PiecePositions piecePosition : whitePieces.piecePositions) {
             for (Square square : piecePosition.squares) {
-                position.addPiece(Colour.WHITE, piecePosition.pieceType, square.placeValue);
+                boolean success = position.addPiece(Colour.WHITE, piecePosition.pieceType, square.placeValue);
+                assert success;
             }
         }
         for (PiecePositions piecePosition : blackPieces.piecePositions) {
             for (Square square : piecePosition.squares) {
-                position.addPiece(Colour.BLACK, piecePosition.pieceType, square.placeValue);
+                boolean success = position.addPiece(Colour.BLACK, piecePosition.pieceType, square.placeValue);
+                assert success;
             }
         }
         assert null != toMove;
         if (toMove == Colour.BLACK) {
             position.toggleWhiteToMove();
         }
+        /* Check if the castling flags make sense. */
+        if (position.getPieceType(e1.placeValue) != PieceType.KING || position.getPieceColour(e1.placeValue) != Colour.WHITE) {
+            position.kingMoved(true);
+        } else {
+            if (position.getPieceType(a1.placeValue) != PieceType.ROOK || position.getPieceColour(a1.placeValue) != Colour.WHITE) {
+                position.leftRookMoved(true);
+            }
+            if (position.getPieceType(h1.placeValue) != PieceType.ROOK || position.getPieceColour(h1.placeValue) != Colour.WHITE) {
+                position.rightRookMoved(true);
+            }
+        }
+        if (position.getPieceType(e8.placeValue) != PieceType.KING || position.getPieceColour(e8.placeValue) != Colour.BLACK) {
+            position.kingMoved(false);
+        } else {
+            if (position.getPieceType(a8.placeValue) != PieceType.ROOK || position.getPieceColour(a8.placeValue) != Colour.BLACK) {
+                position.leftRookMoved(false);
+            }
+            if (position.getPieceType(h8.placeValue) != PieceType.ROOK || position.getPieceColour(h8.placeValue) != Colour.BLACK) {
+                position.rightRookMoved(false);
+            }
+        }
+        assert position.checkSanity();
         return position;
     }
 
@@ -148,6 +195,55 @@ public class SpotTestSupport {
         final PiecePositions [] piecePositions;
         private BlackPiecePositions(PiecePositions [] piecePositions) {
             this.piecePositions = piecePositions;
+        }
+    }
+
+    public static void assertEquals(Position expectedPosition, Position actualPosition) {
+        if (expectedPosition == actualPosition) {
+            return; /* They are the same object, or they are both null. */
+        }
+        if (actualPosition == null) {
+            throw new AssertionError("Actual position is null, expected is not.");
+        }
+        if (expectedPosition == null) {
+            throw new AssertionError("Expected position is null, actual is not.");
+        }
+        boolean piecesAreDifferent =
+                expectedPosition.getWhitePieces() != actualPosition.getWhitePieces() ||
+                expectedPosition.getBlackPieces() != actualPosition.getBlackPieces() ||
+                expectedPosition.getPawnsAndKnights()  != actualPosition.getPawnsAndKnights() ||
+                expectedPosition.getKnightsAndKings()  != actualPosition.getKnightsAndKings() ||
+                expectedPosition.getRooksAndQueens()   != actualPosition.getRooksAndQueens()  ||
+                expectedPosition.getQueensAndBishops() != actualPosition.getQueensAndBishops();
+        if (piecesAreDifferent) {
+            String expectedBoard = PositionPrinter.getConsolePrintableBoard(expectedPosition, true);
+            String actualBoard = PositionPrinter.getConsolePrintableBoard(actualPosition, true);
+            System.out.println("Expected: \n" + expectedBoard + "\n\nActual:\n" + actualBoard);
+            throw new AssertionError("Actual and expected have different piece positions.");
+        }
+    }
+
+    public static void assertStrictlyEquals(Position expectedPosition, Position actualPosition) {
+        assertEquals(expectedPosition, actualPosition);
+        if (expectedPosition.getFlags() == actualPosition.getFlags()) {
+            return;
+        }
+        List<String> flagInfoExpected = PositionPrinter.getAdditionalStateInfo(expectedPosition);
+        List<String> flagInfoActual = PositionPrinter.getAdditionalStateInfo(actualPosition);
+
+        StringBuilder message = new StringBuilder();
+        for (int i = 0; i < flagInfoExpected.size(); i++) {
+            if (! flagInfoExpected.get(i).equals(flagInfoActual.get(i))) {
+                if (message.length() == 0){
+                    message.append(flagInfoExpected.get(i)).append(" vs ").append(flagInfoActual.get(i));
+                } else {
+                    message.append("; ").append(flagInfoExpected.get(i)).append(" vs ").append(flagInfoActual.get(i));
+                }
+            }
+        }
+
+        if (message.length() > 0) {
+            throw new AssertionError(message.toString());
         }
     }
 }

@@ -81,14 +81,14 @@ public class PositionPrinter {
         return stateInfo;
     }
 
-    public static String getConsolePrintableBoard(Position position){
+    public static String getConsolePrintableBoard(Position position, boolean useUnicodeSymbols){
         StringBuilder board = new StringBuilder();
         for ( int i = 63; i >= 0; i-- ){
             Colour colour = position.getPieceColour(i);
             PieceType type = position.getPieceType(i);
 
-            getChessSymbol(colour, type);
-            board.append(getChessSymbol(colour, type));
+            getChessSymbol(colour, type, useUnicodeSymbols);
+            board.append(getChessSymbol(colour, type, useUnicodeSymbols));
             board.append(" ");
 
             if ( i % 8 == 0 ){
@@ -115,7 +115,7 @@ public class PositionPrinter {
         if ( SHOW_BITBOARDS ){
             printPositionBitBoards(position);
         }
-        String board = getConsolePrintableBoard(position);
+        String board = getConsolePrintableBoard(position, USE_UNICODE_CHESS_PIECES);
         List<String> additionalInfo = getAdditionalStateInfo(position);
 
         String [] lines = board.split("\\n");
@@ -132,11 +132,11 @@ public class PositionPrinter {
         }
     }
 
-    private static char getChessSymbol(Colour colour, PieceType piece ) {
+    private static char getChessSymbol(Colour colour, PieceType piece, boolean useUnicodeSymbols) {
         if ( colour == null && piece == null ) {
             return '.';
         }
-        if (USE_UNICODE_CHESS_PIECES) {
+        if (useUnicodeSymbols) {
             if ((colour == Colour.WHITE) ^ SWITCH_PIECE_ICON_COLOURS) {
                 switch (piece) {
                     case PAWN:
