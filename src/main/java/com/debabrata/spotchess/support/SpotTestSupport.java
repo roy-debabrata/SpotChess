@@ -216,8 +216,8 @@ public class SpotTestSupport {
                 expectedPosition.getRooksAndQueens()   != actualPosition.getRooksAndQueens()  ||
                 expectedPosition.getQueensAndBishops() != actualPosition.getQueensAndBishops();
         if (piecesAreDifferent) {
-            String expectedBoard = PositionPrinter.getConsolePrintableBoard(expectedPosition, true);
-            String actualBoard = PositionPrinter.getConsolePrintableBoard(actualPosition, true);
+            String expectedBoard = PositionPrinter.getConsolePrintableBoard(expectedPosition, true, true);
+            String actualBoard = PositionPrinter.getConsolePrintableBoard(actualPosition, true, true);
             System.out.println("Expected: \n" + expectedBoard + "\n\nActual:\n" + actualBoard);
             throw new AssertionError("Actual and expected have different piece positions.");
         }

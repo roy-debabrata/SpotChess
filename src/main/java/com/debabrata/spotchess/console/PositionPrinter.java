@@ -9,34 +9,31 @@ import java.util.List;
 
 public class PositionPrinter {
 
-    private static boolean SHOW_BITBOARDS = true;
-    private static boolean SHOW_ADDITIONAL_INFO = true;
-    private static boolean SWITCH_PIECE_ICON_COLOURS = true;
-    private static boolean USE_UNICODE_CHESS_PIECES = true;
-
     private static final String BUFFER_BETWEEN_BOARDS = "          ";
 
-    public static void printBitBoards(long ... boards){
-        long mask = 0xFF00000000000000L;
-        long shift = 56;
-        for ( int i = 0; i < 8; i++ ){
-            for (long board : boards) {
-                long eightDigitBinary = (board & mask) >>> shift;
-                String formattedString = eightBinaryDigitsToString((int)eightDigitBinary);
-                System.out.print(formattedString);
-                System.out.print(BUFFER_BETWEEN_BOARDS);
-            }
-            System.out.println();
-            mask = mask >>> 8;
-            shift -= 8;
+    public static void printPosition(Position position){
+        if ( ConsoleDisplaySettings.showBitboards() ){
+            printPositionBitBoards(position);
         }
-    }
+        String board = getConsolePrintableBoard(
+                position,
+                ConsoleDisplaySettings.useUnicodeChessPieces(),
+                ConsoleDisplaySettings.switchPieceIconColours()
+        );
+        List<String> additionalInfo = getAdditionalStateInfo(position);
 
-    public static String eightBinaryDigitsToString (int eightDigitBinary){
-        return String.format("%8s", Integer.toBinaryString(eightDigitBinary))
-                .replace(" ", "0")
-                .replace("", " ")
-                .trim();
+        String [] lines = board.split("\\n");
+        int select = additionalInfo.size() - lines.length;
+        for ( String line : lines ){
+            System.out.print( line
+                    + BUFFER_BETWEEN_BOARDS
+            );
+            if ( ConsoleDisplaySettings.showAdditionalInfo() && select >= 0 ){
+                System.out.print(additionalInfo.get(select));
+            }
+            select++;
+            System.out.println();
+        }
     }
 
     public static void printPositionBitBoards(Position position){
@@ -81,14 +78,14 @@ public class PositionPrinter {
         return stateInfo;
     }
 
-    public static String getConsolePrintableBoard(Position position, boolean useUnicodeSymbols){
+    public static String getConsolePrintableBoard(Position position, boolean useUnicodeSymbols, boolean switchPieceColours){
         StringBuilder board = new StringBuilder();
         for ( int i = 63; i >= 0; i-- ){
             Colour colour = position.getPieceColour(i);
             PieceType type = position.getPieceType(i);
 
-            getChessSymbol(colour, type, useUnicodeSymbols);
-            board.append(getChessSymbol(colour, type, useUnicodeSymbols));
+            getChessSymbol(colour, type, useUnicodeSymbols, switchPieceColours);
+            board.append(getChessSymbol(colour, type, useUnicodeSymbols, switchPieceColours));
             board.append(" ");
 
             if ( i % 8 == 0 ){
@@ -98,46 +95,12 @@ public class PositionPrinter {
         return board.toString();
     }
 
-    public static boolean bitboardDisplaySet(){ return SHOW_BITBOARDS; }
-
-    public static void toggleBitboardDisplay(){
-        SHOW_BITBOARDS = !SHOW_BITBOARDS;
-    }
-
-    public static boolean additionalInformationDisplaySet(){ return SHOW_ADDITIONAL_INFO; }
-
-    public static void toggleAdditionalInformationDisplay(){
-        SHOW_ADDITIONAL_INFO = !SHOW_ADDITIONAL_INFO;
-    }
-
-    public static void printPosition(Position position){
-
-        if ( SHOW_BITBOARDS ){
-            printPositionBitBoards(position);
-        }
-        String board = getConsolePrintableBoard(position, USE_UNICODE_CHESS_PIECES);
-        List<String> additionalInfo = getAdditionalStateInfo(position);
-
-        String [] lines = board.split("\\n");
-        int select = additionalInfo.size() - lines.length;
-        for ( String line : lines ){
-            System.out.print( line
-                    + BUFFER_BETWEEN_BOARDS
-            );
-            if ( SHOW_ADDITIONAL_INFO && select >= 0 ){
-                System.out.print(additionalInfo.get(select));
-            }
-            select++;
-            System.out.println();
-        }
-    }
-
-    private static char getChessSymbol(Colour colour, PieceType piece, boolean useUnicodeSymbols) {
+    private static char getChessSymbol(Colour colour, PieceType piece, boolean useUnicodeSymbols, boolean switchPieceColours) {
         if ( colour == null && piece == null ) {
             return '.';
         }
         if (useUnicodeSymbols) {
-            if ((colour == Colour.WHITE) ^ SWITCH_PIECE_ICON_COLOURS) {
+            if ((colour == Colour.WHITE) ^ switchPieceColours) {
                 switch (piece) {
                     case PAWN:
                         return '♙';
@@ -182,5 +145,28 @@ public class PositionPrinter {
             }
         }
         return '\0';
+    }
+
+    public static void printBitBoards(long ... boards){
+        long mask = 0xFF00000000000000L;
+        long shift = 56;
+        for ( int i = 0; i < 8; i++ ){
+            for (long board : boards) {
+                long eightDigitBinary = (board & mask) >>> shift;
+                String formattedString = eightBinaryDigitsToString((int)eightDigitBinary);
+                System.out.print(formattedString);
+                System.out.print(BUFFER_BETWEEN_BOARDS);
+            }
+            System.out.println();
+            mask = mask >>> 8;
+            shift -= 8;
+        }
+    }
+
+    public static String eightBinaryDigitsToString (int eightDigitBinary){
+        return String.format("%8s", Integer.toBinaryString(eightDigitBinary))
+                .replace(" ", "0")
+                .replace("", " ")
+                .trim();
     }
 }
