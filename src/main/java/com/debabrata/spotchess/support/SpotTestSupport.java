@@ -6,7 +6,10 @@ import com.debabrata.spotchess.types.Position;
 import com.debabrata.spotchess.types.enums.Colour;
 import com.debabrata.spotchess.types.enums.PieceType;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.IntStream;
 
 public class SpotTestSupport {
     public static final Square a1= new Square(7);
@@ -73,25 +76,6 @@ public class SpotTestSupport {
     public static final Square f8= new Square(58);
     public static final Square g8= new Square(57);
     public static final Square h8= new Square(56);
-
-    /**
-     * @param position position in which the move needs to be made.
-     * @param move standard algebraic notation of the move to be made.
-     * @return true if it's a legal move and was successfully made. False otherwise.
-     */
-    public static boolean move(Position position, String move) {
-        assert null != position && null != move;
-
-        StandardAlgebraicNotation sanProcessor = new StandardAlgebraicNotation();
-        int moveInt = sanProcessor.getMove(position, move);
-
-        if (moveInt == 0) {
-            return false;
-        }
-
-        position.makeMove(moveInt);
-        return true;
-    }
 
     public static Position position(WhitePiecePositions whitePieces, BlackPiecePositions blackPieces, Colour toMove) {
         Position position = new Position();
@@ -168,6 +152,13 @@ public class SpotTestSupport {
         return new PiecePositions(PieceType.PAWN, positions);
     }
 
+    public static Square[] except(Square ... positions) {
+        return IntStream.range(0,64)
+                .filter(i -> Arrays.stream(positions).noneMatch(j -> j.placeValue == i))
+                .mapToObj(Square::new)
+                .toArray(Square[]::new);
+    }
+
     public static class Square {
         final int placeValue;
         Square(int placeValue) {
@@ -196,6 +187,27 @@ public class SpotTestSupport {
         private BlackPiecePositions(PiecePositions [] piecePositions) {
             this.piecePositions = piecePositions;
         }
+    }
+
+    /**
+     * @param position position in which the move needs to be made.
+     * @param moves standard algebraic notation of the move moves to be made separated by spaces.
+     * @return true if it's a legal move and was successfully made. False otherwise.
+     */
+    public static boolean move(Position position, String moves) {
+        assert null != position && null != moves;
+        String[] movesList = moves.split("\\s+");
+
+        StandardAlgebraicNotation sanProcessor = new StandardAlgebraicNotation();
+
+        for (String move : movesList) {
+            int moveInt = sanProcessor.getMove(position, move);
+            if (moveInt == 0) {
+                return false;
+            }
+            position.makeMove(moveInt);
+        }
+        return true;
     }
 
     public static void assertEquals(Position expectedPosition, Position actualPosition) {
@@ -245,5 +257,57 @@ public class SpotTestSupport {
         if (message.length() > 0) {
             throw new AssertionError(message.toString());
         }
+    }
+
+    public static void assertHasMoves(Position position, String expectedMoves, List<Integer> moveIntList) {
+        assert null != expectedMoves && null != moveIntList;
+        String[] expectedMovesArr = expectedMoves.split("\\s+");
+
+        List<String> moves = getMoveNotationList(position, moveIntList);
+        StringBuilder notFound = null;
+        for(String move: expectedMovesArr) {
+            boolean match = moves.contains(move);
+            if (!match) {
+                if (notFound == null) {
+                    notFound = new StringBuilder(move);
+                } else {
+                    notFound.append(" ").append(move);
+                }
+            }
+        }
+        if (notFound != null) {
+            throw new AssertionError("The following moves did not match - " + notFound);
+        }
+    }
+
+    public static void assertDoesNotHaveMoves(Position position, String movesNotExpected, List<Integer> moveIntList) {
+        assert null != movesNotExpected && null != moveIntList;
+        String[] unexpectedMovesArr = movesNotExpected.split("\\s+");
+
+        List<String> moves = getMoveNotationList(position, moveIntList);
+        StringBuilder found = null;
+        for(String move: unexpectedMovesArr) {
+            boolean match = moves.contains(move);
+            if (match) {
+                if (found == null) {
+                    found = new StringBuilder(move);
+                } else {
+                    found.append(" ").append(move);
+                }
+            }
+        }
+        if (found != null) {
+            throw new AssertionError("The following matched but were not expected to match - " + found);
+        }
+    }
+
+    private static List<String> getMoveNotationList(Position position, List<Integer> moveIntList) {
+        StandardAlgebraicNotation sanProcessor = new StandardAlgebraicNotation();
+        List<String> moves = new ArrayList<>();
+        for (int moveInt : moveIntList) {
+            String move = sanProcessor.getNotation(position, moveInt);
+            moves.add(move);
+        }
+        return moves;
     }
 }

@@ -10,6 +10,7 @@ public class MoveUtil {
     /* Right now we want to think about getting an application with a simple min-max search with alpha-beta pruning.
        We'll have to re-organize some of this for move ordering and other considerations. */
     public static int addMovesToBuffer(Position position, int[] moveBuffer, int startWritingAt ) {
+        // TODO: We need a isUnderCheck and addCheckedMovesToBuffer.
         boolean whiteToMove = position.whiteToMove();
         long ourPieces, enemyPieces;
         if ( whiteToMove ) {
@@ -24,7 +25,8 @@ public class MoveUtil {
         long notPieces      = ~ allPieces;
 
         /* Pawn moves. */
-        long pawns = position.getPawns() & ourPieces;
+        long allPawns = position.getPawns();
+        long pawns = allPawns & ourPieces;
         if (whiteToMove) {
             long rank7Pawns = pawns & 0x00FF000000000000L; /* These pawns are about to promote. */
             pawns = pawns ^ rank7Pawns;
@@ -148,7 +150,8 @@ public class MoveUtil {
         }
 
         /* Queen and bishop moves. */
-        long queensAndBishops = position.getQueensAndBishops() & ourPieces;
+        long allQueensAndBishops = position.getQueensAndBishops();
+        long queensAndBishops = allQueensAndBishops & ourPieces;
         while (queensAndBishops != 0) {
             int fromPlaceValue = BitUtil.getLastBitPlaceValue(queensAndBishops);
             long moves = RookAndBishopMovesUtil.getBishopMoves(fromPlaceValue, allPieces);
@@ -162,7 +165,8 @@ public class MoveUtil {
         }
 
         /* Rooks and queens moves. */
-        long rooksAndQueens = position.getRooksAndQueens() & ourPieces;
+        long allRooksAndQueens = position.getRooksAndQueens();
+        long rooksAndQueens = allRooksAndQueens & ourPieces;
         while ( rooksAndQueens != 0 ) {
             int fromPlaceValue = BitUtil.getLastBitPlaceValue(rooksAndQueens);
             long moves = RookAndBishopMovesUtil.getRookMoves(fromPlaceValue, allPieces);
@@ -176,7 +180,8 @@ public class MoveUtil {
         }
 
         /* Knight moves. */
-        long knights = position.getKnights() & ourPieces;
+        long allKnights = position.getKnights();
+        long knights = allKnights & ourPieces;
         while ( knights != 0 ) {
             int fromPlaceValue = BitUtil.getLastBitPlaceValue(knights);
             long moves = KingAndKnightMovesUtil.getKnightMoves(fromPlaceValue);
@@ -190,7 +195,8 @@ public class MoveUtil {
         }
 
         /* King moves. */
-        long king = position.getKings() & ourPieces;
+        long allKings = position.getKings();
+        long king = allKings & ourPieces;
         int kingFrom = BitUtil.getLastBitPlaceValue(king);
         long moves = KingAndKnightMovesUtil.getKingMoves(kingFrom);
         moves = moves & notOurPieces;
@@ -200,7 +206,87 @@ public class MoveUtil {
             moves = moves & (moves - 1);
         }
 
-        // TODO: Worry about checks and castling some day.
+        if (position.canPotentiallyCastle(whiteToMove)) {
+            if (whiteToMove) {
+                if (position.canPotentiallyCastleLeft(true)) {
+                    if ((allPieces & 0x0000000000000070L) == 0) {
+                        /* No pieces in the path. */
+                        if ((allKnights & enemyPieces & 0x000000000078CC00L) == 0) {
+                            /* No knights attack the path. */
+                            if ((allKings & allPawns & enemyPieces & 0x0000000000007800L) == 0) {
+                                /* No kings or pawns attack the path. */
+                                long attackers = RookAndBishopMovesUtil.getBishopMoves(4, allPieces);
+                                attackers = attackers | RookAndBishopMovesUtil.getBishopMoves(5, allPieces);
+
+                                if ((allQueensAndBishops & attackers & enemyPieces) == 0) {
+                                    attackers = RookAndBishopMovesUtil.getRookMoves(4, allPieces);
+                                    attackers = attackers | RookAndBishopMovesUtil.getRookMoves(5, allPieces);
+                                    if ((allRooksAndQueens & attackers & enemyPieces) == 0) {
+                                        moveBuffer[startWritingAt++] = MoveInitUtil.newLeftCastle(3, 5);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if (position.canPotentiallyCastleRight(true)) {
+                    if ((allPieces & 0x0000000000000006L) == 0) {
+                        if ((allKnights & enemyPieces & 0x00000000000F1900L) == 0) {
+                            if ((allKings & allPawns & enemyPieces & 0x0000000000000F00L) == 0) {
+                                long attackers = RookAndBishopMovesUtil.getBishopMoves(2, allPieces);
+                                attackers = attackers | RookAndBishopMovesUtil.getBishopMoves(1, allPieces);
+
+                                if ((allQueensAndBishops & attackers & enemyPieces) == 0) {
+                                    attackers = RookAndBishopMovesUtil.getRookMoves(2, allPieces)
+                                    /* No diagonal attackers. */;
+                                    attackers = attackers | RookAndBishopMovesUtil.getRookMoves(1, allPieces);
+                                    if ((allRooksAndQueens & attackers & enemyPieces) == 0) {
+                                        moveBuffer[startWritingAt++] = MoveInitUtil.newRightCastle(3, 1);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                if (position.canPotentiallyCastleLeft(false)) {
+                    if ((allPieces & 0x7000000000000000L) == 0) {
+                        if ((allKnights & enemyPieces & 0x00CC780000000000L) == 0) {
+                            if ((allKings & allPawns & enemyPieces & 0x0078000000000000L) == 0) {
+                                long attackers = RookAndBishopMovesUtil.getBishopMoves(60, allPieces);
+                                attackers = attackers | RookAndBishopMovesUtil.getBishopMoves(61, allPieces);
+
+                                if ((allQueensAndBishops & attackers & enemyPieces) == 0) {
+                                    attackers = RookAndBishopMovesUtil.getRookMoves(60, allPieces);
+                                    attackers = attackers | RookAndBishopMovesUtil.getRookMoves(61, allPieces);
+                                    if ((allRooksAndQueens & attackers & enemyPieces) == 0) {
+                                        moveBuffer[startWritingAt++] = MoveInitUtil.newLeftCastle(59, 61);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if (position.canPotentiallyCastleRight(false)) {
+                    if ((allPieces & 0x0600000000000000L) == 0) {
+                        if ((allKnights & enemyPieces & 0x00190F0000000000L) == 0) {
+                            if ((allKings & allPawns & enemyPieces & 0x000F000000000000L) == 0) {
+                                long attackers = RookAndBishopMovesUtil.getBishopMoves(4, allPieces);
+                                attackers = attackers | RookAndBishopMovesUtil.getBishopMoves(5, allPieces);
+
+                                if ((allQueensAndBishops & attackers & enemyPieces) == 0) {
+                                    attackers = RookAndBishopMovesUtil.getRookMoves(4, allPieces);
+                                    attackers = attackers | RookAndBishopMovesUtil.getRookMoves(4, allPieces);
+                                    if ((allRooksAndQueens & attackers & enemyPieces) == 0) {
+                                        moveBuffer[startWritingAt++] = MoveInitUtil.newRightCastle(59, 57);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         /* Putting -1 to mark the end of position where */
         moveBuffer[startWritingAt++] = -1;
