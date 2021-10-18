@@ -23,7 +23,7 @@ public class MoveUtilTest {
     }
 
     @Test
-    public void testNightsPreventingCastling(){
+    public void testKnightsPreventingCastling(){
         /* White should not have castling rights. */
         Position position = position(white(k(e1),r(a1,h1)), black(k(e8),n(e3)), Colour.WHITE);
         List<Integer> moves = MoveUtil.getMovesInPosition(position);

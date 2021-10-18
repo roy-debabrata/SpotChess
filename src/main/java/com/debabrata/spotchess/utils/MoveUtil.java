@@ -219,9 +219,11 @@ public class MoveUtil {
                                 attackers = attackers | RookAndBishopMovesUtil.getBishopMoves(5, allPieces);
 
                                 if ((allQueensAndBishops & attackers & enemyPieces) == 0) {
+                                    /* No diagonal attackers. */
                                     attackers = RookAndBishopMovesUtil.getRookMoves(4, allPieces);
                                     attackers = attackers | RookAndBishopMovesUtil.getRookMoves(5, allPieces);
                                     if ((allRooksAndQueens & attackers & enemyPieces) == 0) {
+                                        /* No lateral attackers. All checks done. */
                                         moveBuffer[startWritingAt++] = MoveInitUtil.newLeftCastle(3, 5);
                                     }
                                 }
@@ -237,8 +239,7 @@ public class MoveUtil {
                                 attackers = attackers | RookAndBishopMovesUtil.getBishopMoves(1, allPieces);
 
                                 if ((allQueensAndBishops & attackers & enemyPieces) == 0) {
-                                    attackers = RookAndBishopMovesUtil.getRookMoves(2, allPieces)
-                                    /* No diagonal attackers. */;
+                                    attackers = RookAndBishopMovesUtil.getRookMoves(2, allPieces);
                                     attackers = attackers | RookAndBishopMovesUtil.getRookMoves(1, allPieces);
                                     if ((allRooksAndQueens & attackers & enemyPieces) == 0) {
                                         moveBuffer[startWritingAt++] = MoveInitUtil.newRightCastle(3, 1);
