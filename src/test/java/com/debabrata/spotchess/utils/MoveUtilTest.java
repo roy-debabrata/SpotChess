@@ -183,7 +183,6 @@ public class MoveUtilTest {
         moves = MoveUtil.getMovesInPosition(position);
         assertHasMoves(position, "O-O-O", moves); /* This should break when we start checking for checks. */
 
-        System.out.println(PositionPrinter.getConsolePrintableBoard(position,true,true));
         position = position(white(k(e1),r(h1)),
                 black(k(e8),n(except(e1,f1,g1,h1,e8,d2,e2,e3,f3,g3,h3,h2))
                 ), Colour.WHITE);
