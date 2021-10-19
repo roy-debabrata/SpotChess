@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class SpotTestSupport {
     public static final Square a1= new Square(7);
@@ -157,6 +158,10 @@ public class SpotTestSupport {
                 .filter(i -> Arrays.stream(positions).noneMatch(j -> j.placeValue == i))
                 .mapToObj(Square::new)
                 .toArray(Square[]::new);
+    }
+
+    public static Stream<Square> squaresStream(IntStream positions) {
+        return positions.mapToObj(Square::new);
     }
 
     public static class Square {

@@ -213,7 +213,7 @@ public class MoveUtil {
                         /* No pieces in the path. */
                         if ((allKnights & enemyPieces & 0x000000000078CC00L) == 0) {
                             /* No knights attack the path. */
-                            if ((allKings & allPawns & enemyPieces & 0x0000000000007800L) == 0) {
+                            if (((allKings | allPawns) & enemyPieces & 0x0000000000007800L) == 0) {
                                 /* No kings or pawns attack the path. */
                                 long attackers = RookAndBishopMovesUtil.getBishopMoves(4, allPieces);
                                 attackers = attackers | RookAndBishopMovesUtil.getBishopMoves(5, allPieces);
@@ -234,7 +234,7 @@ public class MoveUtil {
                 if (position.canPotentiallyCastleRight(true)) {
                     if ((allPieces & 0x0000000000000006L) == 0) {
                         if ((allKnights & enemyPieces & 0x00000000000F1900L) == 0) {
-                            if ((allKings & allPawns & enemyPieces & 0x0000000000000F00L) == 0) {
+                            if (((allKings | allPawns) & enemyPieces & 0x0000000000000F00L) == 0) {
                                 long attackers = RookAndBishopMovesUtil.getBishopMoves(2, allPieces);
                                 attackers = attackers | RookAndBishopMovesUtil.getBishopMoves(1, allPieces);
 
@@ -253,7 +253,7 @@ public class MoveUtil {
                 if (position.canPotentiallyCastleLeft(false)) {
                     if ((allPieces & 0x7000000000000000L) == 0) {
                         if ((allKnights & enemyPieces & 0x00CC780000000000L) == 0) {
-                            if ((allKings & allPawns & enemyPieces & 0x0078000000000000L) == 0) {
+                            if (((allKings | allPawns) & enemyPieces & 0x0078000000000000L) == 0) {
                                 long attackers = RookAndBishopMovesUtil.getBishopMoves(60, allPieces);
                                 attackers = attackers | RookAndBishopMovesUtil.getBishopMoves(61, allPieces);
 
@@ -271,7 +271,7 @@ public class MoveUtil {
                 if (position.canPotentiallyCastleRight(false)) {
                     if ((allPieces & 0x0600000000000000L) == 0) {
                         if ((allKnights & enemyPieces & 0x00190F0000000000L) == 0) {
-                            if ((allKings & allPawns & enemyPieces & 0x000F000000000000L) == 0) {
+                            if (((allKings | allPawns) & enemyPieces & 0x000F000000000000L) == 0) {
                                 long attackers = RookAndBishopMovesUtil.getBishopMoves(4, allPieces);
                                 attackers = attackers | RookAndBishopMovesUtil.getBishopMoves(5, allPieces);
 
