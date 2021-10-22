@@ -35,6 +35,9 @@ public class MoveUtil {
         long ourRooksAndQueens = allRooksAndQueens & ourPieces;
         long ourPawns = allPawns & ourPieces;
         long ourKnights = allKnights & ourPieces;
+        long ourKing = allKings & ourPieces;
+
+        int  kingPlaceValue = BitUtil.getBitPlaceValue(ourKing);
 
         long enPassantTakers = 0;
         if (position.enPassantAvailable()){
@@ -44,9 +47,6 @@ public class MoveUtil {
         long enemyQueensAndBishops = allQueensAndBishops & enemyPieces;
         long enemyRooksAndQueens = allRooksAndQueens & enemyPieces;
 
-        long king = allKings & ourPieces;
-        int  kingPlaceValue = BitUtil.getBitPlaceValue(king);
-
         long diagonalPinners = RookAndBishopMovesUtil.getBishopPins(kingPlaceValue, allPieces);
         if ((diagonalPinners & enemyQueensAndBishops) != 0) {
             /* There is at least one potential pinner piece. */
@@ -55,9 +55,9 @@ public class MoveUtil {
             long diagonalTwo = diagonalPinners ^ diagonalOne;
             while (diagonalOne != 0) {
                 /* Pin data is stored in pairs of pinners and pinned pieces. We don't know the orientation. */
-                long pinPair = diagonalOne ^ (diagonalOne - 1);
+                long pinPair = diagonalOne & -diagonalOne;
                 diagonalOne = diagonalOne & (diagonalOne - 1);
-                pinPair = pinPair | (diagonalOne ^ (diagonalOne - 1));
+                pinPair = pinPair | (diagonalOne & -diagonalOne);
                 diagonalOne = diagonalOne & (diagonalOne - 1);
                 long pinned = pinPair & ourPieces;
                 if (pinned != 0 && (pinPair & enemyQueensAndBishops) != 0) {
@@ -116,9 +116,9 @@ public class MoveUtil {
             }
             while (diagonalTwo != 0) {
                 /* Pin data is stored in pairs of pinners and pinned pieces. We don't know the orientation. */
-                long pinPair = diagonalTwo ^ (diagonalTwo - 1);
+                long pinPair = diagonalTwo & -diagonalTwo;
                 diagonalTwo = diagonalTwo & (diagonalTwo - 1);
-                pinPair = pinPair | (diagonalTwo ^ (diagonalTwo - 1));
+                pinPair = pinPair | (diagonalTwo & -diagonalTwo);
                 diagonalTwo = diagonalTwo & (diagonalTwo - 1);
                 long pinned = pinPair & ourPieces;
                 if (pinned != 0 && (pinPair & enemyQueensAndBishops) != 0) {
@@ -132,7 +132,8 @@ public class MoveUtil {
                         if (whiteToMove) {
                             if (((pinned << 7) & pinPair) != 0) {
                                 int pawnPosition = BitUtil.getBitPlaceValue(pinned);
-                                moveBuffer[startWritingAt++] = MoveInitUtil.newMove(pawnPosition, pawnPosition + 7); /* We take the pinner. */
+                                /* We take the pinner. */
+                                moveBuffer[startWritingAt++] = MoveInitUtil.newMove(pawnPosition, pawnPosition + 7);
                                 ourPawns = ourPawns ^ pinned; /* We remove the pawn from further reckoning. */
                             } else if ((enPassantTakers & pinned) != 0) {
                                 long locationAfterEP = position.getPawnLocationAfterEnPassant(true);
@@ -146,7 +147,8 @@ public class MoveUtil {
                         } else {
                             if (((pinned >>> 7) & pinPair) != 0) {
                                 int pawnPosition = BitUtil.getBitPlaceValue(pinned);
-                                moveBuffer[startWritingAt++] = MoveInitUtil.newMove(pawnPosition, pawnPosition - 7); /* We take the pinner. */
+                                /* We take the pinner. */
+                                moveBuffer[startWritingAt++] = MoveInitUtil.newMove(pawnPosition, pawnPosition - 7);
                                 ourPawns = ourPawns ^ pinned; /* We remove the pawn from further reckoning. */
                             } else if ((enPassantTakers & pinned) != 0) {
                                 long locationAfterEP = position.getPawnLocationAfterEnPassant(true);
@@ -184,9 +186,9 @@ public class MoveUtil {
             long horizontal = lateralPinners ^ vertical;
             while (vertical != 0) {
                 /* Pin data is stored in pairs of pinners and pinned pieces. We don't know the orientation. */
-                long pinPair = vertical ^ (vertical - 1);
+                long pinPair = vertical & -vertical;
                 vertical = vertical & (vertical - 1);
-                pinPair = pinPair | (vertical ^ (vertical - 1));
+                pinPair = pinPair | (vertical & -vertical);
                 vertical = vertical & (vertical - 1);
                 long pinned = pinPair & ourPieces;
                 if (pinned != 0 && (pinPair & enemyRooksAndQueens) != 0) {
@@ -200,18 +202,22 @@ public class MoveUtil {
                         if (whiteToMove) {
                             if (((pinned << 8) & notPieces) != 0) {
                                 int pawnPosition = BitUtil.getBitPlaceValue(pinned);
-                                moveBuffer[startWritingAt++] = MoveInitUtil.newMove(pawnPosition, pawnPosition + 8); /* We push the pawn. */
+                                /* We push the pawn. */
+                                moveBuffer[startWritingAt++] = MoveInitUtil.newMove(pawnPosition, pawnPosition + 8);
                                 if (((pinned & 0x000000000000FF00L) != 0) && ((pinned << 16) & notPieces) != 0) {
-                                    moveBuffer[startWritingAt++] = MoveInitUtil.newPawnDoubleMove(pawnPosition, pawnPosition + 16); /* We double push the pawn. */
+                                    /* We double push the pawn. */
+                                    moveBuffer[startWritingAt++] = MoveInitUtil.newPawnDoubleMove(pawnPosition, pawnPosition + 16);
                                 }
                                 ourPawns = ourPawns ^ pinned; /* We remove the pawn from further reckoning. */
                             }
                         } else {
                             if (((pinned >>> 8) & notPieces) != 0) {
                                 int pawnPosition = BitUtil.getBitPlaceValue(pinned);
-                                moveBuffer[startWritingAt++] = MoveInitUtil.newMove(pawnPosition, pawnPosition - 8); /* We push the pawn. */
+                                /* We push the pawn. */
+                                moveBuffer[startWritingAt++] = MoveInitUtil.newMove(pawnPosition, pawnPosition - 8);
                                 if (((pinned & 0x00FF000000000000L) != 0) && ((pinned >>> 16) & notPieces) != 0) {
-                                    moveBuffer[startWritingAt++] = MoveInitUtil.newPawnDoubleMove(pawnPosition, pawnPosition - 16); /* We double push the pawn. */
+                                    /* We double push the pawn. */
+                                    moveBuffer[startWritingAt++] = MoveInitUtil.newPawnDoubleMove(pawnPosition, pawnPosition - 16);
                                 }
                             }
                         }
@@ -234,15 +240,16 @@ public class MoveUtil {
             }
             while (horizontal != 0) {
                 /* Pin data is stored in pairs of pinners and pinned pieces. We don't know the orientation. */
-                long pinPair = horizontal ^ (horizontal - 1);
+                long pinPair = horizontal & -horizontal;
                 horizontal = horizontal & (horizontal - 1);
-                pinPair = pinPair | (horizontal ^ (horizontal - 1));
+                pinPair = pinPair | (horizontal & -horizontal);
                 horizontal = horizontal & (horizontal - 1);
                 long pinned = pinPair & ourPieces;
                 if (pinned != 0 && (pinPair & enemyRooksAndQueens) != 0) {
                     /* One of our pieces is pinned. */
                     if ((pinned & ourQueensAndBishops) != 0) {
-                        ourQueensAndBishops = ourQueensAndBishops ^ pinned; /* We remove the queen/bishop from the reckoning. */
+                        /* We remove the queen/bishop from the reckoning. */
+                        ourQueensAndBishops = ourQueensAndBishops ^ pinned;
                     } else if ((pinned & ourKnights) != 0) {
                         ourKnights = ourKnights ^ pinned; /* We remove the knight from the reckoning. */
                     } else if ((pinned & ourPawns) != 0) {
