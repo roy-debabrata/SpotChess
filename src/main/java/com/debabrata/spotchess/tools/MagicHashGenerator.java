@@ -32,6 +32,7 @@ public class MagicHashGenerator {
 
     private static void runForSinglePosition() {
         PieceType pieceType = PieceType.BISHOP;
+        boolean pinningType = false;
         int position = 0;
         int targetedShiftNumber = 58;
         int earlyFailureCheckPosition = 0;
@@ -40,7 +41,7 @@ public class MagicHashGenerator {
 
         SearchConfiguration searchConfig = new SearchConfiguration(earlyFailureCheckPosition, earlyExpectedMoveConvergence);
 
-        long mask = RookAndBishopMovesUtil.getPieceMask(pieceType, position);
+        long mask = RookAndBishopMovesUtil.getPieceMask(pieceType, pinningType, position);
         long[] positionCombinations = BitUtil.getAllPossibleBitCombinations(mask);
         long[] associatedMoves = RookAndBishopMovesUtil.getAllPossibleMovesCombinations(pieceType, position, positionCombinations);
 
@@ -53,9 +54,9 @@ public class MagicHashGenerator {
         long magic = initiateSearch(searchConfig, searchScope, generator);
 
         if ( pieceType == PieceType.ROOK ) {
-            System.out.println("Mask  : " + formatLongToHexLiteral(RookAndBishopMovesUtil.getRookMask(position)));
+            System.out.println("Mask  : " + formatLongToHexLiteral(RookAndBishopMovesUtil.getRookMask(position, pinningType)));
         } else {
-            System.out.println("Mask  : " + formatLongToHexLiteral(RookAndBishopMovesUtil.getBishopMask(position)));
+            System.out.println("Mask  : " + formatLongToHexLiteral(RookAndBishopMovesUtil.getBishopMask(position, pinningType)));
         }
         if ( magic != 0L ) {
             System.out.println("Magic : " + formatLongToHexLiteral(magic));
@@ -83,33 +84,44 @@ public class MagicHashGenerator {
                 53,54,54,54,54,54,54,53,53,54,54,54,54,54,54,53,
                 53,54,54,54,54,54,54,53,52,53,53,53,53,53,53,52
         };
-
-        findAndDisplayMagicsFor(PieceType.BISHOP, magicNumberBishopShiftTargets);
-        findAndDisplayMagicsFor(PieceType.ROOK, magicNumberRookShiftTargets);
+        findAndDisplayMagicsFor(PieceType.BISHOP, false, magicNumberBishopShiftTargets);
+        findAndDisplayMagicsFor(PieceType.ROOK, false, magicNumberRookShiftTargets);
+        findAndDisplayMagicsFor(PieceType.BISHOP, true, magicNumberBishopShiftTargets);
+        findAndDisplayMagicsFor(PieceType.ROOK, true, magicNumberRookShiftTargets);
     }
 
-    private static void findAndDisplayMagicsFor(PieceType piece, int[] magicNumberShiftTargets) {
+    private static void findAndDisplayMagicsFor(PieceType piece, boolean pinningType, int[] magicNumberShiftTargets) {
         resetBenchmarkingData();
 
         String capitalCasePieceName = piece == PieceType.BISHOP ? "Bishop" : "Rook";
+        if (pinningType) {
+            capitalCasePieceName = capitalCasePieceName + "Pinning";
+        }
+
         long[] magics = new long[64];
 
         /* Printing shift and occupancy arrays. */
-        StringBuilder shiftArray = new StringBuilder("occupancyMask" + capitalCasePieceName + "[] = {");
-        StringBuilder occupancyArray = new StringBuilder("magicNumberShifts" + capitalCasePieceName + "[] = {");
+        StringBuilder shiftArray = new StringBuilder("magicNumberShifts" + capitalCasePieceName + "[] = {");
+        StringBuilder occupancyArray = new StringBuilder("occupancyMask" + capitalCasePieceName + "[] = {");
+        StringBuilder occupancySelectorArray = new StringBuilder("selectorMask" + capitalCasePieceName + "[] = {");
 
         StringBuilder timedOutPositions = new StringBuilder();
 
         for (int i = 0; i < magicNumberShiftTargets.length; i++ ) {
             shiftArray.append(magicNumberShiftTargets[i]).append(",");
             if ( piece == PieceType.ROOK ) {
-                occupancyArray.append(formatLongToHexLiteral(RookAndBishopMovesUtil.getRookMask(i))).append(", ");
+                occupancyArray.append(formatLongToHexLiteral(RookAndBishopMovesUtil.getRookMask(i, false))).append(", ");
+                occupancySelectorArray.append(formatLongToHexLiteral(RookAndBishopMovesUtil.getRookMask(i, true))).append(", ");
             } else {
-                occupancyArray.append(formatLongToHexLiteral(RookAndBishopMovesUtil.getBishopMask(i))).append(", ");
+                occupancyArray.append(formatLongToHexLiteral(RookAndBishopMovesUtil.getBishopMask(i, false))).append(", ");
+                occupancySelectorArray.append(formatLongToHexLiteral(RookAndBishopMovesUtil.getBishopMask(i, true))).append(", ");
             }
         }
         System.out.println(shiftArray + "\b};");
         System.out.println(occupancyArray + "\b\b};");
+        if (pinningType) {
+            System.out.println(occupancySelectorArray + "\b\b};");
+        }
 
         System.out.print("magicNumber" + capitalCasePieceName + "[] = {");
 
@@ -117,9 +129,14 @@ public class MagicHashGenerator {
         for (int position = 0; position < 64; position++) {
             int targetedShiftNumber = magicNumberShiftTargets[position];
 
-            long mask = RookAndBishopMovesUtil.getPieceMask(piece, position);
+            long mask = RookAndBishopMovesUtil.getPieceMask(piece, false, position);
             long[] positionCombinations = BitUtil.getAllPossibleBitCombinations(mask);
-            long[] associatedMoves = RookAndBishopMovesUtil.getAllPossibleMovesCombinations(piece, position, positionCombinations);
+            long[] associatedMoves;
+            if (pinningType) {
+                associatedMoves = RookAndBishopMovesUtil.getAllPossiblePinCombinations(piece, position, positionCombinations);
+            } else {
+                associatedMoves = RookAndBishopMovesUtil.getAllPossibleMovesCombinations(piece, position, positionCombinations);
+            }
 
             SearchScope searchScope = new SearchScope(positionCombinations, associatedMoves, targetedShiftNumber);
 
