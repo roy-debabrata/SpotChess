@@ -72,27 +72,29 @@ public class MoveUtil {
                             if (((pinned << 9) & pinPair) != 0) {
                                 int pawnPosition = BitUtil.getBitPlaceValue(pinned);
                                 moveBuffer[startWritingAt++] = MoveInitUtil.newMove(pawnPosition, pawnPosition + 9); /* We take the pinner. */
+                                ourPawns = ourPawns ^ pinned; /* We remove the pawn from further reckoning. */
                             } else if ((enPassantTakers & pinned) != 0) {
                                 long locationAfterEP = position.getPawnLocationAfterEnPassant(true);
                                 if ((pinned << 9) == locationAfterEP) {
                                     /* We take the pawn that could be taken en-passant without breaking the pin. */
                                     int pawnPosition = BitUtil.getBitPlaceValue(pinned);
                                     moveBuffer[startWritingAt++] = MoveInitUtil.newEnPassant(pawnPosition, pawnPosition + 9 );
-                                    enPassantTakers = enPassantTakers ^ pinned;
                                 }
+                                enPassantTakers = enPassantTakers ^ pinned;
                             }
                         } else {
                             if (((pinned >>> 9) & pinPair) != 0) {
                                 int pawnPosition = BitUtil.getBitPlaceValue(pinned);
                                 moveBuffer[startWritingAt++] = MoveInitUtil.newMove(pawnPosition, pawnPosition - 9); /* We take the pinner. */
+                                ourPawns = ourPawns ^ pinned; /* We remove the pawn from further reckoning. */
                             } else if ((enPassantTakers & pinned) != 0) {
                                 long locationAfterEP = position.getPawnLocationAfterEnPassant(true);
                                 if ((pinned >>> 9) == locationAfterEP) {
                                     /* We take the pawn that could be taken en-passant without breaking the pin. */
                                     int pawnPosition = BitUtil.getBitPlaceValue(pinned);
                                     moveBuffer[startWritingAt++] = MoveInitUtil.newEnPassant(pawnPosition, pawnPosition - 9 );
-                                    enPassantTakers = enPassantTakers ^ pinned;
                                 }
+                                enPassantTakers = enPassantTakers ^ pinned;
                             }
                         }
                     }
@@ -131,27 +133,29 @@ public class MoveUtil {
                             if (((pinned << 7) & pinPair) != 0) {
                                 int pawnPosition = BitUtil.getBitPlaceValue(pinned);
                                 moveBuffer[startWritingAt++] = MoveInitUtil.newMove(pawnPosition, pawnPosition + 7); /* We take the pinner. */
+                                ourPawns = ourPawns ^ pinned; /* We remove the pawn from further reckoning. */
                             } else if ((enPassantTakers & pinned) != 0) {
                                 long locationAfterEP = position.getPawnLocationAfterEnPassant(true);
                                 if ((pinned << 7) == locationAfterEP) {
                                     /* We take the pawn that could be taken en-passant without breaking the pin. */
                                     int pawnPosition = BitUtil.getBitPlaceValue(pinned);
                                     moveBuffer[startWritingAt++] = MoveInitUtil.newEnPassant(pawnPosition, pawnPosition + 7 );
-                                    enPassantTakers = enPassantTakers ^ pinned;
                                 }
+                                enPassantTakers = enPassantTakers ^ pinned;
                             }
                         } else {
                             if (((pinned >>> 7) & pinPair) != 0) {
                                 int pawnPosition = BitUtil.getBitPlaceValue(pinned);
                                 moveBuffer[startWritingAt++] = MoveInitUtil.newMove(pawnPosition, pawnPosition - 7); /* We take the pinner. */
+                                ourPawns = ourPawns ^ pinned; /* We remove the pawn from further reckoning. */
                             } else if ((enPassantTakers & pinned) != 0) {
                                 long locationAfterEP = position.getPawnLocationAfterEnPassant(true);
                                 if ((pinned >>> 7) == locationAfterEP) {
                                     /* We take the pawn that could be taken en-passant without breaking the pin. */
                                     int pawnPosition = BitUtil.getBitPlaceValue(pinned);
                                     moveBuffer[startWritingAt++] = MoveInitUtil.newEnPassant(pawnPosition, pawnPosition - 7 );
-                                    enPassantTakers = enPassantTakers ^ pinned;
                                 }
+                                enPassantTakers = enPassantTakers ^ pinned;
                             }
                         }
                     }
@@ -194,18 +198,19 @@ public class MoveUtil {
                     } else if ((pinned & ourPawns) != 0) {
                         /* We check if our pawn can move vertically. */
                         if (whiteToMove) {
-                            if (((pinned << 8) & notPieces) == 0) {
+                            if (((pinned << 8) & notPieces) != 0) {
                                 int pawnPosition = BitUtil.getBitPlaceValue(pinned);
                                 moveBuffer[startWritingAt++] = MoveInitUtil.newMove(pawnPosition, pawnPosition + 8); /* We push the pawn. */
-                                if (((pinned & 0x000000000000FF00L) != 0) &&((pinned << 16) & notPieces) == 0) {
+                                if (((pinned & 0x000000000000FF00L) != 0) && ((pinned << 16) & notPieces) != 0) {
                                     moveBuffer[startWritingAt++] = MoveInitUtil.newPawnDoubleMove(pawnPosition, pawnPosition + 16); /* We double push the pawn. */
                                 }
+                                ourPawns = ourPawns ^ pinned; /* We remove the pawn from further reckoning. */
                             }
                         } else {
-                            if (((pinned >>> 8) & notPieces) == 0) {
+                            if (((pinned >>> 8) & notPieces) != 0) {
                                 int pawnPosition = BitUtil.getBitPlaceValue(pinned);
                                 moveBuffer[startWritingAt++] = MoveInitUtil.newMove(pawnPosition, pawnPosition - 8); /* We push the pawn. */
-                                if (((pinned & 0x00FF000000000000L) != 0) &&((pinned >>> 16) & notPieces) == 0) {
+                                if (((pinned & 0x00FF000000000000L) != 0) && ((pinned >>> 16) & notPieces) != 0) {
                                     moveBuffer[startWritingAt++] = MoveInitUtil.newPawnDoubleMove(pawnPosition, pawnPosition - 16); /* We double push the pawn. */
                                 }
                             }
