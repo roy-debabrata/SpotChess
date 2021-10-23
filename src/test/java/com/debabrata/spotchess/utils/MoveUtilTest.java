@@ -1327,5 +1327,33 @@ public class MoveUtilTest {
             assertHasMoves(position, "Qxd2 Qd3 Qd5");
             assertDoesNotHaveMoves(position, "Qc3 Qe3 Qc4 Qe4 Qc5 Qe5 Qd1");
         }
+
+        @Test
+        public void testMisc() {
+            /* Some of these positions may not be legal. */
+            Position position = position(
+                    white(k(d5),p(b3,f3),n(b5,d3,f5),b(d7),r(b7,f7)),
+                    black(k(e7),b(a8,g1),r(d2,d8),q(a2,a5,c1,e1,g2,g5,g8)),
+                    Colour.WHITE);
+            assertNoLegalMoves(position);
+
+            position = position(
+                    white(k(e2),b(a1,g8),r(d7,d1),q(a7,a4,c8,e8,g7,g4,g1)),
+                    black(k(d4),p(b6,f6),n(b4,d6,f4),b(d2),r(b2,f2)),
+                    Colour.BLACK);
+            assertNoLegalMoves(position);
+
+            position = position(
+                    white(k(e4),p(a2,b5,c2,d6,f6,g2),n(c4,g4),b(e2,e5),r(b7,f5)),
+                    black(k(c5),p(a3,b6,d7,f7),n(c1,g1),b(a8,h6),r(b4,e8),q(b1,e1,h1,h4,h7)),
+                    Colour.WHITE);
+            assertNoLegalMoves(position);
+
+            position = position(
+                    white(k(c4),p(a6,b3,d2,f2),n(c8,g8),b(a1,h3),r(b5,e1),q(b8,e8,h8,h5,h2)),
+                    black(k(e5),p(a7,b4,c7,d3,f3,g7),n(c5,g5),b(e7,e4),r(b2,f4)),
+                    Colour.BLACK);
+            assertNoLegalMoves(position);
+        }
     }
 }
