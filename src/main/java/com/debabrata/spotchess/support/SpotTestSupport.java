@@ -265,16 +265,38 @@ public class SpotTestSupport {
         }
     }
 
+    public static void assertNoLegalMoves(Position position) {
+        if (MoveUtil.getMovesInPosition(position).size() > 0) {
+            throw new AssertionError("Has legal moves. Expected none.");
+        }
+    }
+
     public static void assertHasMoves(Position position, String expectedMoves) {
-        assert null != expectedMoves;
-        String[] expectedMovesArr = expectedMoves.split("\\s+");
+        assert null != expectedMoves && null != position && position.checkSanity();
 
-        List<Integer> moveIntList = MoveUtil.getMovesInPosition(position);
+        List<String> expectedMovesList = Arrays.asList(expectedMoves.split("\\s+"));
+        List<String> actualMoves = getMoveNotationList(position, MoveUtil.getMovesInPosition(position));
 
-        List<String> moves = getMoveNotationList(position, moveIntList);
+        compareMoves(actualMoves, expectedMovesList);
+    }
+
+    public static void assertOnlyMoves(Position position, String expectedMoves) {
+        assert null != expectedMoves && null != position && position.checkSanity();
+
+        List<String> expectedMovesList = Arrays.asList(expectedMoves.split("\\s+"));
+        List<String> actualMoves = getMoveNotationList(position, MoveUtil.getMovesInPosition(position));
+
+        if (actualMoves.size() > expectedMovesList.size()) {
+            throw new AssertionError("More moves than expected.");
+        }
+
+        compareMoves(actualMoves, expectedMovesList);
+    }
+
+    private static void compareMoves(List<String> actualMoves, List<String> expectedMoves) {
         StringBuilder notFound = null;
-        for(String move: expectedMovesArr) {
-            boolean match = moves.contains(move);
+        for(String move: expectedMoves) {
+            boolean match = actualMoves.contains(move);
             if (!match) {
                 if (notFound == null) {
                     notFound = new StringBuilder(move);
@@ -289,7 +311,7 @@ public class SpotTestSupport {
     }
 
     public static void assertDoesNotHaveMoves(Position position, String movesNotExpected) {
-        assert null != movesNotExpected;
+        assert null !=position && null != movesNotExpected && position.checkSanity();
         String[] unexpectedMovesArr = movesNotExpected.split("\\s+");
 
         List<Integer> moveIntList = MoveUtil.getMovesInPosition(position);

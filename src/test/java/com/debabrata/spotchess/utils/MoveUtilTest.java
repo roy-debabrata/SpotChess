@@ -11,7 +11,546 @@ import static com.debabrata.spotchess.support.SpotTestSupport.*;
 
 public class MoveUtilTest {
     @Nested
-    class MoveUtilPinsTest {
+    class KingMovesTest {
+        @Test
+        public void pawnsBlockedMoves() {
+            /* Making sure pawns on the other side of the board doesn't affect this side. */
+            Position position = position(white(k(b5)),black(k(a8),p(h3,h4,h5,h6,h7)),Colour.WHITE);
+            assertOnlyMoves(position,"Ka4 Ka5 Ka6 Kb6 Kc6 Kc5 Kc4 Kb4");
+
+            position = position(white(k(g5)),black(k(a8),p(a3,a4,a5,a6,a7)),Colour.WHITE);
+            assertOnlyMoves(position,"Kf4 Kf5 Kf6 Kg6 Kh6 Kh5 Kh4 Kg4");
+
+            position = position(white(k(a8),p(h3,h4,h5,h6,h7)),black(k(b5)),Colour.BLACK);
+            assertOnlyMoves(position,"Ka4 Ka5 Ka6 Kb6 Kc6 Kc5 Kc4 Kb4");
+
+            position = position(white(k(a8),p(a3,a4,a5,a6,a7)),black(k(g5)),Colour.BLACK);
+            assertOnlyMoves(position,"Kf4 Kf5 Kf6 Kg6 Kh6 Kh5 Kh4 Kg4");
+
+            /* Normal blocking moves. */
+            position = position(white(k(d4)),black(k(a8),p(b4,b5,b6,c6,d6,f5,f4)),Colour.WHITE);
+            assertOnlyMoves(position,"Kd3");
+
+            position = position(white(k(d4)),black(k(a8),p(d5,c4,e4,d3,b6,f6)),Colour.WHITE);
+            assertOnlyMoves(position,"Kc3 Ke3 Kxd5");
+
+            position = position(white(k(a1),p(e3,d3,c3,c4,c5,g4,g5)),black(k(e5)),Colour.BLACK);
+            assertOnlyMoves(position,"Ke6");
+
+            position = position(white(k(a1),p(e6,d5,f5,e4,c3,g3)),black(k(e5)),Colour.BLACK);
+            assertOnlyMoves(position,"Kd6 Kf6 Kxe4");
+        }
+
+        @Test
+        public void knightBlockedMoves() {
+            Position position = position(white(k(d4)),black(k(a1),n(c3,e5,f3)),Colour.WHITE);
+            assertOnlyMoves(position,"Kxc3 Ke3 Kc5");
+
+            position = position(white(k(a1),n(c3,e5,f3)),black(k(d4)),Colour.BLACK);
+            assertOnlyMoves(position,"Kxc3 Ke3 Kc5");
+        }
+
+        @Test
+        public void bishopBlockedMoves() {
+            Position position = position(white(k(d4)),black(k(a1),b(e2,e3,f3)),Colour.WHITE);
+            assertOnlyMoves(position,"Kc3 Ke5 Kxe3");
+
+            position = position(white(k(d4)),black(k(a1),b(b2,e2,f2,f3)),Colour.WHITE);
+            assertNoLegalMoves(position);
+
+            position = position(white(k(a1),b(e2,e3,f3)),black(k(d4)),Colour.BLACK);
+            assertOnlyMoves(position,"Kc3 Ke5 Kxe3");
+
+            position = position(white(k(a1),b(b2,e2,f2,f3)),black(k(d4)),Colour.BLACK);
+            assertNoLegalMoves(position);
+        }
+
+        @Test
+        public void rookBlockedMoves() {
+            Position position = position(white(k(d4)),black(k(a1),r(c1,e1)),Colour.WHITE);
+            assertOnlyMoves(position,"Kd3 Kd5");
+
+            position = position(white(k(d4)),black(k(a1),r(a3,a5)),Colour.WHITE);
+            assertOnlyMoves(position,"Kc4 Ke4");
+
+            position = position(white(k(d4)),black(k(a1),r(a3,a5,c4)),Colour.WHITE);
+            assertOnlyMoves(position,"Kxc4");
+
+            position = position(white(k(d4)),black(k(a1),r(a3,a5,a4)),Colour.WHITE);
+            assertNoLegalMoves(position);
+
+            position = position(white(k(a1),r(c1,e1)),black(k(d4)),Colour.BLACK);
+            assertOnlyMoves(position,"Kd3 Kd5");
+
+            position = position(white(k(a1),r(a3,a5)),black(k(d4)),Colour.BLACK);
+            assertOnlyMoves(position,"Kc4 Ke4");
+
+            position = position(white(k(a1),r(a3,a5,c4)),black(k(d4)),Colour.BLACK);
+            assertOnlyMoves(position,"Kxc4");
+
+            position = position(white(k(a1),r(a3,a5,a4)),black(k(d4)),Colour.BLACK);
+            assertNoLegalMoves(position);
+        }
+
+        @Test
+        public void queenBlockedMoves() {
+            Position position = position(white(k(d4)),black(k(a1),q(f3)),Colour.WHITE);
+            assertOnlyMoves(position,"Kc4 Ke5 Kc5");
+
+            position = position(white(k(d4)),black(k(a1),q(c5,f3)),Colour.WHITE);
+            assertOnlyMoves(position,"Kxc5");
+
+            position = position(white(k(d4)),black(k(a1),q(b5,f3)),Colour.WHITE);
+            assertNoLegalMoves(position);
+
+            position = position(white(k(a1),q(f3)),black(k(d4)),Colour.BLACK);
+            assertOnlyMoves(position,"Kc4 Ke5 Kc5");
+
+            position = position(white(k(a1),q(c5,f3)),black(k(d4)),Colour.BLACK);
+            assertOnlyMoves(position,"Kxc5");
+
+            position = position(white(k(a1),q(b5,f3)),black(k(d4)),Colour.BLACK);
+            assertNoLegalMoves(position);
+        }
+
+        @Test
+        public void kingBlockedMoves() {
+            Position position = position(white(k(d4)),black(k(b4)),Colour.WHITE);
+            assertOnlyMoves(position,"Kd5 Kd3 Ke3 Ke4 Ke5");
+
+            position = position(white(k(b4)),black(k(d4)),Colour.BLACK);
+            assertOnlyMoves(position,"Kd5 Kd3 Ke3 Ke4 Ke5");
+        }
+    }
+
+    @Nested
+    class CastlingTest {
+        @Test
+        public void testCastling() {
+            /* Should have castling rights. */
+            Position position = position(white(k(e1),r(a1,h1)), black(k(e8)), Colour.WHITE);
+            assertHasMoves(position, "O-O O-O-O");
+
+            position = position(white(k(e1)), black(k(e8),r(a8,h8)), Colour.BLACK);
+            assertHasMoves(position, "O-O O-O-O");
+        }
+
+        @Test
+        public void testKnightsPreventingCastling() {
+            /* White should not have castling rights. */
+            Position position = position(white(k(e1), r(a1, h1)), black(k(e8), n(e3)), Colour.WHITE);
+            assertDoesNotHaveMoves(position, "O-O O-O-O");
+
+            position = position(white(k(e1), r(a1, h1)), black(k(e8), n(e2)), Colour.WHITE);
+            assertDoesNotHaveMoves(position, "O-O O-O-O");
+
+            /* Checking left castle. */
+            position = position(white(k(e1), r(a1, h1)), black(k(e8), n(f2)), Colour.WHITE);
+            assertHasMoves(position, "O-O");
+            assertDoesNotHaveMoves(position, "O-O-O");
+
+            position = position(white(k(e1), r(a1, h1)), black(k(e8), n(d3)), Colour.WHITE); /* This should break when we start checking for checks. */
+            assertHasMoves(position, "O-O");
+            assertDoesNotHaveMoves(position, "O-O-O");
+
+            position = position(white(k(e1), r(a1, h1)), black(k(e8), n(c3)), Colour.WHITE);
+            assertHasMoves(position, "O-O");
+            assertDoesNotHaveMoves(position, "O-O-O");
+
+            position = position(white(k(e1), r(a1, h1)), black(k(e8), n(b3)), Colour.WHITE);
+            assertHasMoves(position, "O-O");
+            assertDoesNotHaveMoves(position, "O-O-O");
+
+            position = position(white(k(e1), r(a1, h1)), black(k(e8), n(b2)), Colour.WHITE);
+            assertHasMoves(position, "O-O");
+            assertDoesNotHaveMoves(position, "O-O-O");
+
+            position = position(white(k(e1), r(a1, h1)), black(k(e8), n(a2)), Colour.WHITE);
+            assertHasMoves(position, "O-O");
+            assertDoesNotHaveMoves(position, "O-O-O");
+
+            position = position(white(k(e1), r(a1, h1)), black(k(e8), n(a2, b2, b3, c3, d3, f2)), Colour.WHITE);
+            assertHasMoves(position, "O-O"); /* This should break when we start checking for checks. */
+            assertDoesNotHaveMoves(position, "O-O-O");
+
+            /* Checking right castle. */
+            position = position(white(k(e1), r(a1, h1)), black(k(e8), n(d2)), Colour.WHITE);
+            assertHasMoves(position, "O-O-O");
+            assertDoesNotHaveMoves(position, "O-O");
+
+            position = position(white(k(e1), r(a1, h1)), black(k(e8), n(f3)), Colour.WHITE); /* This should break when we start checking for checks. */
+            assertHasMoves(position, "O-O-O");
+            assertDoesNotHaveMoves(position, "O-O");
+
+            position = position(white(k(e1), r(a1, h1)), black(k(e8), n(g3)), Colour.WHITE);
+            assertHasMoves(position, "O-O-O");
+            assertDoesNotHaveMoves(position, "O-O");
+
+            position = position(white(k(e1), r(a1, h1)), black(k(e8), n(h3)), Colour.WHITE);
+            assertHasMoves(position, "O-O-O");
+            assertDoesNotHaveMoves(position, "O-O");
+
+            position = position(white(k(e1), r(a1, h1)), black(k(e8), n(h2)), Colour.WHITE);
+            assertHasMoves(position, "O-O-O");
+            assertDoesNotHaveMoves(position, "O-O");
+
+            position = position(white(k(e1), r(a1, h1)), black(k(e8), n(d2, f3, g3, h3, h2)), Colour.WHITE);
+            assertHasMoves(position, "O-O-O"); /* This should break when we start checking for checks. */
+            assertDoesNotHaveMoves(position, "O-O");
+
+            /* Black should not have castling rights. */
+            position = position(white(k(e1), n(e6)), black(k(e8), r(a8, h8)), Colour.BLACK);
+            assertDoesNotHaveMoves(position, "O-O O-O-O");
+
+            position = position(white(k(e1), n(e7)), black(k(e8), r(a8, h8)), Colour.BLACK);
+            assertDoesNotHaveMoves(position, "O-O O-O-O");
+
+            /* Checking left castle. */
+            position = position(white(k(e1), n(f7)), black(k(e8), r(a8, h8)), Colour.BLACK); /* This should break when we start checking for checks. */
+            assertHasMoves(position, "O-O");
+            assertDoesNotHaveMoves(position, "O-O-O");
+
+            position = position(white(k(e1), n(d6)), black(k(e8), r(a8, h8)), Colour.BLACK); /* This should break when we start checking for checks. */
+            assertHasMoves(position, "O-O");
+            assertDoesNotHaveMoves(position, "O-O-O");
+
+            position = position(white(k(e1), n(c6)), black(k(e8), r(a8, h8)), Colour.BLACK);
+            assertHasMoves(position, "O-O");
+            assertDoesNotHaveMoves(position, "O-O-O");
+
+            position = position(white(k(e1), n(b6)), black(k(e8), r(a8, h8)), Colour.BLACK);
+            assertHasMoves(position, "O-O");
+            assertDoesNotHaveMoves(position, "O-O-O");
+
+            position = position(white(k(e1), n(b7)), black(k(e8), r(a8, h8)), Colour.BLACK);
+            assertHasMoves(position, "O-O");
+            assertDoesNotHaveMoves(position, "O-O-O");
+
+            position = position(white(k(e1), n(a7)), black(k(e8), r(a8, h8)), Colour.BLACK);
+            assertHasMoves(position, "O-O");
+            assertDoesNotHaveMoves(position, "O-O-O");
+
+            position = position(white(k(e1), n(a7, b7, b6, c6, d6, f7)), black(k(e8), r(a8, h8)), Colour.BLACK);
+            assertHasMoves(position, "O-O"); /* This should break when we start checking for checks. */
+            assertDoesNotHaveMoves(position, "O-O-O");
+
+            /* Checking right castle. */
+            position = position(white(k(e1), n(d7)), black(k(e8), r(a8, h8)), Colour.BLACK);
+            assertHasMoves(position, "O-O-O");
+            assertDoesNotHaveMoves(position, "O-O");
+
+            position = position(white(k(e1), n(f6)), black(k(e8), r(a8, h8)), Colour.BLACK); /* This should break when we start checking for checks. */
+            assertHasMoves(position, "O-O-O");
+            assertDoesNotHaveMoves(position, "O-O");
+
+            position = position(white(k(e1), n(g6)), black(k(e8), r(a8, h8)), Colour.BLACK);
+            assertHasMoves(position, "O-O-O");
+            assertDoesNotHaveMoves(position, "O-O");
+
+            position = position(white(k(e1), n(h6)), black(k(e8), r(a8, h8)), Colour.BLACK);
+            assertHasMoves(position, "O-O-O");
+            assertDoesNotHaveMoves(position, "O-O");
+
+            position = position(white(k(e1), n(h7)), black(k(e8), r(a8, h8)), Colour.BLACK);
+            assertHasMoves(position, "O-O-O");
+            assertDoesNotHaveMoves(position, "O-O");
+
+            position = position(white(k(e1), n(d7, f6, g6, h6, h7)), black(k(e8), r(a8, h8)), Colour.BLACK);
+            assertHasMoves(position, "O-O-O"); /* This should break when we start checking for checks. */
+            assertDoesNotHaveMoves(position, "O-O");
+
+            /* Negative checks knight not-preventing castling. */
+            position = position(white(k(e1), r(a1)),
+                    black(k(e8), n(except(a1, b1, c1, d1, e1, e8, a2, b2, b3, c3, d3, e2, e3, f2))
+                    ), Colour.WHITE);
+            assertHasMoves(position, "O-O-O"); /* This should break when we start checking for checks. */
+
+            position = position(white(k(e1), r(h1)),
+                    black(k(e8), n(except(e1, f1, g1, h1, e8, d2, e2, e3, f3, g3, h3, h2))
+                    ), Colour.WHITE);
+            assertHasMoves(position, "O-O"); /* This should break when we start checking for checks. */
+
+            position = position(white(k(e1), n(except(a8, b8, c8, d8, e8, e1, a7, b7, b6, c6, d6, e6, e7, f7))), black(k(e8), r(a8)), Colour.BLACK);
+            assertHasMoves(position, "O-O-O"); /* This should break when we start checking for checks. */
+
+            position = position(white(k(e1), n(except(e8, f8, g8, h8, e1, d7, e7, e6, f6, g6, h6, h7))), black(k(e8), r(h8)), Colour.BLACK);
+            assertHasMoves(position, "O-O"); /* This should break when we start checking for checks. */
+        }
+
+        @Test
+        public void testKingPreventingCastling() {
+            /* White should not have castling rights. */
+            Position position = position(white(k(e1), r(a1, h1)),
+                    black(k(b2)),
+                    Colour.WHITE);
+            assertDoesNotHaveMoves(position, "O-O-O");
+            assertHasMoves(position, "O-O");
+
+            position = position(white(k(e1), r(a1, h1)),
+                    black(k(c2)),
+                    Colour.WHITE);
+            assertDoesNotHaveMoves(position, "O-O-O");
+            assertHasMoves(position, "O-O");
+
+            position = position(white(k(e1), r(a1, h1)),
+                    black(k(g2)),
+                    Colour.WHITE);
+            assertDoesNotHaveMoves(position, "O-O");
+            assertHasMoves(position, "O-O-O");
+
+            position = position(white(k(e1), r(a1, h1)),
+                    black(k(h2)),
+                    Colour.WHITE);
+            assertDoesNotHaveMoves(position, "O-O");
+            assertHasMoves(position, "O-O-O"); /* Cannot happen but we check anyway. */
+
+            /* Black should not have castling rights. */
+            position = position(white(k(b7)),
+                    black(k(e8), r(a8, h8)),
+                    Colour.BLACK);
+            assertDoesNotHaveMoves(position, "O-O-O");
+            assertHasMoves(position, "O-O");
+
+            position = position(white(k(c7)),
+                    black(k(e8), r(a8, h8)),
+                    Colour.BLACK);
+            assertDoesNotHaveMoves(position, "O-O-O");
+            assertHasMoves(position, "O-O");
+
+            position = position(white(k(g7)),
+                    black(k(e8), r(a8, h8)),
+                    Colour.BLACK);
+            assertDoesNotHaveMoves(position, "O-O");
+            assertHasMoves(position, "O-O-O");
+
+            position = position(white(k(h7)),
+                    black(k(e8), r(a8, h8)),
+                    Colour.BLACK);
+            assertDoesNotHaveMoves(position, "O-O");
+            assertHasMoves(position, "O-O-O"); /* Cannot happen but we check anyway. */
+
+            /* Negative checks opponent's king not-preventing castling. */
+            squaresStream(IntStream.range(15, 64)).forEach(
+                    sq -> {
+                        Position p = position(white(k(e1), r(a1, h1)),
+                                black(k(sq)),
+                                Colour.WHITE);
+                        assertHasMoves(p, "O-O O-O-O");
+                    }
+            );
+
+            squaresStream(IntStream.concat(IntStream.range(0, 48), IntStream.of(55))).forEach(
+                    sq -> {
+                        Position p = position(white(k(sq)),
+                                black(k(e8), r(a8, h8)),
+                                Colour.BLACK);
+                        assertHasMoves(p, "O-O O-O-O");
+                    }
+            );
+        }
+
+        @Test
+        public void testPawnsPreventingCastling() {
+            /* White should not have castling rights. */
+            Position position = position(white(k(e1), r(a1, h1)),
+                    black(k(e8), p(e2)),
+                    Colour.WHITE);
+            assertDoesNotHaveMoves(position, "O-O O-O-O");
+
+            /* Checking left castle. */
+            position = position(white(k(e1), r(a1, h1)),
+                    black(k(e8), p(b2)),
+                    Colour.WHITE);
+            assertDoesNotHaveMoves(position, "O-O-O");
+            assertHasMoves(position, "O-O");
+
+            position = position(white(k(e1), r(a1, h1)),
+                    black(k(e8), p(c2)),
+                    Colour.WHITE);
+            assertDoesNotHaveMoves(position, "O-O-O");
+            assertHasMoves(position, "O-O");
+
+            position = position(white(k(e1), r(a1, h1)),
+                    black(k(e8), p(d2)),
+                    Colour.WHITE);
+            assertDoesNotHaveMoves(position, "O-O-O");
+            assertHasMoves(position, "O-O"); /* This should break when we start checking for checks. */
+
+            /* Checking right castle. */
+            position = position(white(k(e1), r(a1, h1)),
+                    black(k(e8), p(f2)),
+                    Colour.WHITE);
+            assertDoesNotHaveMoves(position, "O-O");
+            assertHasMoves(position, "O-O-O"); /* This should break when we start checking for checks. */
+
+            position = position(white(k(e1), r(a1, h1)),
+                    black(k(e8), p(g2)),
+                    Colour.WHITE);
+            assertDoesNotHaveMoves(position, "O-O");
+            assertHasMoves(position, "O-O-O");
+
+            position = position(white(k(e1), r(a1, h1)),
+                    black(k(e8), p(h2)),
+                    Colour.WHITE);
+            assertDoesNotHaveMoves(position, "O-O");
+            assertHasMoves(position, "O-O-O");
+
+            /* Black should not have castling rights. */
+            position = position(white(k(e1), p(e7)),
+                    black(k(e8), r(a8, h8)),
+                    Colour.BLACK);
+            assertDoesNotHaveMoves(position, "O-O O-O-O");
+
+            /* Checking left castle. */
+            position = position(white(k(e1), p(b7)),
+                    black(k(e8), r(a8, h8)),
+                    Colour.BLACK);
+            assertDoesNotHaveMoves(position, "O-O-O");
+            assertHasMoves(position, "O-O");
+
+            position = position(white(k(e1), p(c7)),
+                    black(k(e8), r(a8, h8)),
+                    Colour.BLACK);
+            assertDoesNotHaveMoves(position, "O-O-O");
+            assertHasMoves(position, "O-O");
+
+            position = position(white(k(e1), p(d7)),
+                    black(k(e8), r(a8, h8)),
+                    Colour.BLACK);
+            assertDoesNotHaveMoves(position, "O-O-O");
+            assertHasMoves(position, "O-O"); /* This should break when we start checking for checks. */
+
+            /* Checking right castle. */
+            position = position(white(k(e1), p(f7)),
+                    black(k(e8), r(a8, h8)),
+                    Colour.BLACK);
+            assertDoesNotHaveMoves(position, "O-O");
+            assertHasMoves(position, "O-O-O"); /* This should break when we start checking for checks. */
+
+            position = position(white(k(e1), p(g7)),
+                    black(k(e8), r(a8, h8)),
+                    Colour.BLACK);
+            assertDoesNotHaveMoves(position, "O-O");
+            assertHasMoves(position, "O-O-O");
+
+            position = position(white(k(e1), p(h7)),
+                    black(k(e8), r(a8, h8)),
+                    Colour.BLACK);
+            assertDoesNotHaveMoves(position, "O-O");
+            assertHasMoves(position, "O-O-O");
+
+            /* Negative checks pawns not-preventing castling. */
+            position = position(white(k(e1), r(a1)),
+                    black(k(e8), p(except(a1, b1, c1, d1, e1, f1, g1, h1, b2, c2, d2, e2, a8, b8, c8, d8, e8, f8, g8, h8))),
+                    Colour.WHITE);
+            assertHasMoves(position, "O-O-O"); /* This should break when we start checking for checks. */
+
+            position = position(white(k(e1), r(h1)),
+                    black(k(e8), p(except(a1, b1, c1, d1, e1, f1, g1, h1, e2, f2, g2, h2, a8, b8, c8, d8, e8, f8, g8, h8))),
+                    Colour.WHITE);
+            assertHasMoves(position, "O-O"); /* This should break when we start checking for checks. */
+
+            position = position(white(k(e1), p(except(a1, b1, c1, d1, e1, f1, g1, h1, b7, c7, d7, e7, a8, b8, c8, d8, e8, f8, g8, h8))),
+                    black(k(e8), r(a8)),
+                    Colour.BLACK);
+            assertHasMoves(position, "O-O-O"); /* This should break when we start checking for checks. */
+
+            position = position(white(k(e1), p(except(a1, b1, c1, d1, e1, f1, g1, h1, e7, f7, g7, h7, a8, b8, c8, d8, e8, f8, g8, h8))),
+                    black(k(e8), r(h8)),
+                    Colour.BLACK);
+            assertHasMoves(position, "O-O"); /* This should break when we start checking for checks. */
+        }
+
+        @Test
+        public void testRookPreventingCastling() {
+            /* Black preventing white from castling. */
+            Position position = position(white(k(e1),r(a1,h1)),black(k(h8),r(a8)),Colour.WHITE);
+            assertHasMoves(position,"O-O-O O-O");
+
+            position = position(white(k(e1),r(a1,h1)),black(k(a8),r(b8)),Colour.WHITE);
+            assertHasMoves(position,"O-O-O O-O");
+
+            position = position(white(k(e1),r(a1,h1)),black(k(a8),r(c8)),Colour.WHITE);
+            assertHasMoves(position,"O-O");
+            assertDoesNotHaveMoves(position,"O-O-O");
+
+            position = position(white(k(e1),r(a1,h1)),black(k(a8),r(d8)),Colour.WHITE);
+            assertHasMoves(position,"O-O");
+            assertDoesNotHaveMoves(position,"O-O-O");
+
+            position = position(white(k(e1),r(a1,h1)),black(k(a8),r(e8)),Colour.WHITE);
+            assertHasMoves(position,"O-O-O O-O"); /* This should break when we start checking for checks. */
+
+            position = position(white(k(e1),r(a1,h1)),black(k(a8),r(f8)),Colour.WHITE);
+            assertHasMoves(position,"O-O-O");
+            assertDoesNotHaveMoves(position,"O-O");
+
+            position = position(white(k(e1),r(a1,h1)),black(k(a8),r(g8)),Colour.WHITE);
+            assertHasMoves(position,"O-O-O");
+            assertDoesNotHaveMoves(position,"O-O");
+
+            /* White preventing black from castling. */
+            position = position(white(k(h1),r(a1)),black(k(e8),r(a8,h8)),Colour.BLACK);
+            assertHasMoves(position,"O-O-O O-O");
+
+            position = position(white(k(a1),r(b1)),black(k(e8),r(a8,h8)),Colour.BLACK);
+            assertHasMoves(position,"O-O-O O-O");
+
+            position = position(white(k(a1),r(c1)),black(k(e8),r(a8,h8)),Colour.BLACK);
+            assertHasMoves(position,"O-O");
+            assertDoesNotHaveMoves(position,"O-O-O");
+
+            position = position(white(k(a1),r(d1)),black(k(e8),r(a8,h8)),Colour.BLACK);
+            assertHasMoves(position,"O-O");
+            assertDoesNotHaveMoves(position,"O-O-O");
+
+            position = position(white(k(a1),r(e1)),black(k(e8),r(a8,h8)),Colour.BLACK);
+            assertHasMoves(position,"O-O-O O-O"); /* This should break when we start checking for checks. */
+
+            position = position(white(k(a1),r(f1)),black(k(e8),r(a8,h8)),Colour.BLACK);
+            assertHasMoves(position,"O-O-O");
+            assertDoesNotHaveMoves(position,"O-O");
+
+            position = position(white(k(a1),r(g1)),black(k(e8),r(a8,h8)),Colour.BLACK);
+            assertHasMoves(position,"O-O-O");
+            assertDoesNotHaveMoves(position,"O-O");
+
+            position = position(white(k(a1),r(h1)),black(k(e8),r(a8,h8)),Colour.BLACK);
+            assertHasMoves(position,"O-O-O O-O");
+        }
+
+        @Test
+        public void testBishopPreventingCastling() {
+            /* Black preventing white from castling. */
+            Position position = position(white(k(e1),r(a1,h1)),black(k(a8),b(e2)),Colour.WHITE);
+            assertDoesNotHaveMoves(position,"O-O-O O-O");
+
+            position = position(white(k(e1),r(a1,h1)),black(k(a8),b(e3)),Colour.WHITE);
+            assertDoesNotHaveMoves(position,"O-O-O O-O");
+
+            position = position(white(k(e1),r(a1,h1)),black(k(a8),b(e4)),Colour.WHITE);
+            assertHasMoves(position,"O-O-O O-O");
+
+            position = position(white(k(e1),r(a1,h1)),black(k(a8),b(e5)),Colour.WHITE);
+            assertHasMoves(position,"O-O-O O-O");
+
+            /* White preventing black from castling. */
+            position = position(white(k(a1),b(e7)),black(k(e8),r(a8,h8)),Colour.BLACK);
+            assertDoesNotHaveMoves(position,"O-O-O O-O");
+
+            position = position(white(k(a1),b(e6)),black(k(e8),r(a8,h8)),Colour.BLACK);
+            assertDoesNotHaveMoves(position,"O-O-O O-O");
+
+            position = position(white(k(a1),b(e5)),black(k(e8),r(a8,h8)),Colour.BLACK);
+            assertHasMoves(position,"O-O-O O-O");
+
+            position = position(white(k(a1),b(e4)),black(k(e8),r(a8,h8)),Colour.BLACK);
+            assertHasMoves(position,"O-O-O O-O");
+        }
+    }
+
+    @Nested
+    class PinsTest {
         @Test
         public void testPinnedPawns() {
             /* Black bishop/queen pins pawn a8-h1-diagonally. */
@@ -787,345 +1326,6 @@ public class MoveUtilTest {
             position = position(white(k(a8),q(d2)), black(k(d6),q(d4)), Colour.BLACK);
             assertHasMoves(position, "Qxd2 Qd3 Qd5");
             assertDoesNotHaveMoves(position, "Qc3 Qe3 Qc4 Qe4 Qc5 Qe5 Qd1");
-        }
-    }
-
-    @Nested
-    class MoveUtilCastlingTest {
-        @Test
-        public void testCastling() {
-            /* Should have castling rights. */
-            Position position = position(white(k(e1),r(a1,h1)), black(k(e8)), Colour.WHITE);
-            assertHasMoves(position, "O-O O-O-O");
-
-            position = position(white(k(e1)), black(k(e8),r(a8,h8)), Colour.BLACK);
-            assertHasMoves(position, "O-O O-O-O");
-        }
-
-        @Test
-        public void testKnightsPreventingCastling() {
-            /* White should not have castling rights. */
-            Position position = position(white(k(e1), r(a1, h1)), black(k(e8), n(e3)), Colour.WHITE);
-            assertDoesNotHaveMoves(position, "O-O O-O-O");
-
-            position = position(white(k(e1), r(a1, h1)), black(k(e8), n(e2)), Colour.WHITE);
-            assertDoesNotHaveMoves(position, "O-O O-O-O");
-
-            /* Checking left castle. */
-            position = position(white(k(e1), r(a1, h1)), black(k(e8), n(f2)), Colour.WHITE);
-            assertHasMoves(position, "O-O");
-            assertDoesNotHaveMoves(position, "O-O-O");
-
-            position = position(white(k(e1), r(a1, h1)), black(k(e8), n(d3)), Colour.WHITE); /* This should break when we start checking for checks. */
-            assertHasMoves(position, "O-O");
-            assertDoesNotHaveMoves(position, "O-O-O");
-
-            position = position(white(k(e1), r(a1, h1)), black(k(e8), n(c3)), Colour.WHITE);
-            assertHasMoves(position, "O-O");
-            assertDoesNotHaveMoves(position, "O-O-O");
-
-            position = position(white(k(e1), r(a1, h1)), black(k(e8), n(b3)), Colour.WHITE);
-            assertHasMoves(position, "O-O");
-            assertDoesNotHaveMoves(position, "O-O-O");
-
-            position = position(white(k(e1), r(a1, h1)), black(k(e8), n(b2)), Colour.WHITE);
-            assertHasMoves(position, "O-O");
-            assertDoesNotHaveMoves(position, "O-O-O");
-
-            position = position(white(k(e1), r(a1, h1)), black(k(e8), n(a2)), Colour.WHITE);
-            assertHasMoves(position, "O-O");
-            assertDoesNotHaveMoves(position, "O-O-O");
-
-            position = position(white(k(e1), r(a1, h1)), black(k(e8), n(a2, b2, b3, c3, d3, f2)), Colour.WHITE);
-            assertHasMoves(position, "O-O"); /* This should break when we start checking for checks. */
-            assertDoesNotHaveMoves(position, "O-O-O");
-
-            /* Checking right castle. */
-            position = position(white(k(e1), r(a1, h1)), black(k(e8), n(d2)), Colour.WHITE);
-            assertHasMoves(position, "O-O-O");
-            assertDoesNotHaveMoves(position, "O-O");
-
-            position = position(white(k(e1), r(a1, h1)), black(k(e8), n(f3)), Colour.WHITE); /* This should break when we start checking for checks. */
-            assertHasMoves(position, "O-O-O");
-            assertDoesNotHaveMoves(position, "O-O");
-
-            position = position(white(k(e1), r(a1, h1)), black(k(e8), n(g3)), Colour.WHITE);
-            assertHasMoves(position, "O-O-O");
-            assertDoesNotHaveMoves(position, "O-O");
-
-            position = position(white(k(e1), r(a1, h1)), black(k(e8), n(h3)), Colour.WHITE);
-            assertHasMoves(position, "O-O-O");
-            assertDoesNotHaveMoves(position, "O-O");
-
-            position = position(white(k(e1), r(a1, h1)), black(k(e8), n(h2)), Colour.WHITE);
-            assertHasMoves(position, "O-O-O");
-            assertDoesNotHaveMoves(position, "O-O");
-
-            position = position(white(k(e1), r(a1, h1)), black(k(e8), n(d2, f3, g3, h3, h2)), Colour.WHITE);
-            assertHasMoves(position, "O-O-O"); /* This should break when we start checking for checks. */
-            assertDoesNotHaveMoves(position, "O-O");
-
-            /* Black should not have castling rights. */
-            position = position(white(k(e1), n(e6)), black(k(e8), r(a8, h8)), Colour.BLACK);
-            assertDoesNotHaveMoves(position, "O-O O-O-O");
-
-            position = position(white(k(e1), n(e7)), black(k(e8), r(a8, h8)), Colour.BLACK);
-            assertDoesNotHaveMoves(position, "O-O O-O-O");
-
-            /* Checking left castle. */
-            position = position(white(k(e1), n(f7)), black(k(e8), r(a8, h8)), Colour.BLACK); /* This should break when we start checking for checks. */
-            assertHasMoves(position, "O-O");
-            assertDoesNotHaveMoves(position, "O-O-O");
-
-            position = position(white(k(e1), n(d6)), black(k(e8), r(a8, h8)), Colour.BLACK); /* This should break when we start checking for checks. */
-            assertHasMoves(position, "O-O");
-            assertDoesNotHaveMoves(position, "O-O-O");
-
-            position = position(white(k(e1), n(c6)), black(k(e8), r(a8, h8)), Colour.BLACK);
-            assertHasMoves(position, "O-O");
-            assertDoesNotHaveMoves(position, "O-O-O");
-
-            position = position(white(k(e1), n(b6)), black(k(e8), r(a8, h8)), Colour.BLACK);
-            assertHasMoves(position, "O-O");
-            assertDoesNotHaveMoves(position, "O-O-O");
-
-            position = position(white(k(e1), n(b7)), black(k(e8), r(a8, h8)), Colour.BLACK);
-            assertHasMoves(position, "O-O");
-            assertDoesNotHaveMoves(position, "O-O-O");
-
-            position = position(white(k(e1), n(a7)), black(k(e8), r(a8, h8)), Colour.BLACK);
-            assertHasMoves(position, "O-O");
-            assertDoesNotHaveMoves(position, "O-O-O");
-
-            position = position(white(k(e1), n(a7, b7, b6, c6, d6, f7)), black(k(e8), r(a8, h8)), Colour.BLACK);
-            assertHasMoves(position, "O-O"); /* This should break when we start checking for checks. */
-            assertDoesNotHaveMoves(position, "O-O-O");
-
-            /* Checking right castle. */
-            position = position(white(k(e1), n(d7)), black(k(e8), r(a8, h8)), Colour.BLACK);
-            assertHasMoves(position, "O-O-O");
-            assertDoesNotHaveMoves(position, "O-O");
-
-            position = position(white(k(e1), n(f6)), black(k(e8), r(a8, h8)), Colour.BLACK); /* This should break when we start checking for checks. */
-            assertHasMoves(position, "O-O-O");
-            assertDoesNotHaveMoves(position, "O-O");
-
-            position = position(white(k(e1), n(g6)), black(k(e8), r(a8, h8)), Colour.BLACK);
-            assertHasMoves(position, "O-O-O");
-            assertDoesNotHaveMoves(position, "O-O");
-
-            position = position(white(k(e1), n(h6)), black(k(e8), r(a8, h8)), Colour.BLACK);
-            assertHasMoves(position, "O-O-O");
-            assertDoesNotHaveMoves(position, "O-O");
-
-            position = position(white(k(e1), n(h7)), black(k(e8), r(a8, h8)), Colour.BLACK);
-            assertHasMoves(position, "O-O-O");
-            assertDoesNotHaveMoves(position, "O-O");
-
-            position = position(white(k(e1), n(d7, f6, g6, h6, h7)), black(k(e8), r(a8, h8)), Colour.BLACK);
-            assertHasMoves(position, "O-O-O"); /* This should break when we start checking for checks. */
-            assertDoesNotHaveMoves(position, "O-O");
-
-            /* Negative checks knight not-preventing castling. */
-            position = position(white(k(e1), r(a1)),
-                    black(k(e8), n(except(a1, b1, c1, d1, e1, e8, a2, b2, b3, c3, d3, e2, e3, f2))
-                    ), Colour.WHITE);
-            assertHasMoves(position, "O-O-O"); /* This should break when we start checking for checks. */
-
-            position = position(white(k(e1), r(h1)),
-                    black(k(e8), n(except(e1, f1, g1, h1, e8, d2, e2, e3, f3, g3, h3, h2))
-                    ), Colour.WHITE);
-            assertHasMoves(position, "O-O"); /* This should break when we start checking for checks. */
-
-            position = position(white(k(e1), n(except(a8, b8, c8, d8, e8, e1, a7, b7, b6, c6, d6, e6, e7, f7))), black(k(e8), r(a8)), Colour.BLACK);
-            assertHasMoves(position, "O-O-O"); /* This should break when we start checking for checks. */
-
-            position = position(white(k(e1), n(except(e8, f8, g8, h8, e1, d7, e7, e6, f6, g6, h6, h7))), black(k(e8), r(h8)), Colour.BLACK);
-            assertHasMoves(position, "O-O"); /* This should break when we start checking for checks. */
-        }
-
-        @Test
-        public void testKingPreventingCastling() {
-            /* White should not have castling rights. */
-            Position position = position(white(k(e1), r(a1, h1)),
-                    black(k(b2)),
-                    Colour.WHITE);
-            assertDoesNotHaveMoves(position, "O-O-O");
-            assertHasMoves(position, "O-O");
-
-            position = position(white(k(e1), r(a1, h1)),
-                    black(k(c2)),
-                    Colour.WHITE);
-            assertDoesNotHaveMoves(position, "O-O-O");
-            assertHasMoves(position, "O-O");
-
-            position = position(white(k(e1), r(a1, h1)),
-                    black(k(g2)),
-                    Colour.WHITE);
-            assertDoesNotHaveMoves(position, "O-O");
-            assertHasMoves(position, "O-O-O");
-
-            position = position(white(k(e1), r(a1, h1)),
-                    black(k(h2)),
-                    Colour.WHITE);
-            assertDoesNotHaveMoves(position, "O-O");
-            assertHasMoves(position, "O-O-O"); /* Cannot happen but we check anyway. */
-
-            /* Black should not have castling rights. */
-            position = position(white(k(b7)),
-                    black(k(e8), r(a8, h8)),
-                    Colour.BLACK);
-            assertDoesNotHaveMoves(position, "O-O-O");
-            assertHasMoves(position, "O-O");
-
-            position = position(white(k(c7)),
-                    black(k(e8), r(a8, h8)),
-                    Colour.BLACK);
-            assertDoesNotHaveMoves(position, "O-O-O");
-            assertHasMoves(position, "O-O");
-
-            position = position(white(k(g7)),
-                    black(k(e8), r(a8, h8)),
-                    Colour.BLACK);
-            assertDoesNotHaveMoves(position, "O-O");
-            assertHasMoves(position, "O-O-O");
-
-            position = position(white(k(h7)),
-                    black(k(e8), r(a8, h8)),
-                    Colour.BLACK);
-            assertDoesNotHaveMoves(position, "O-O");
-            assertHasMoves(position, "O-O-O"); /* Cannot happen but we check anyway. */
-
-            /* Negative checks opponent's king not-preventing castling. */
-            squaresStream(IntStream.range(15, 64)).forEach(
-                    sq -> {
-                        Position p = position(white(k(e1), r(a1, h1)),
-                                black(k(sq)),
-                                Colour.WHITE);
-                        assertHasMoves(p, "O-O O-O-O");
-                    }
-            );
-
-            squaresStream(IntStream.concat(IntStream.range(0, 48), IntStream.of(55))).forEach(
-                    sq -> {
-                        Position p = position(white(k(sq)),
-                                black(k(e8), r(a8, h8)),
-                                Colour.BLACK);
-                        assertHasMoves(p, "O-O O-O-O");
-                    }
-            );
-        }
-
-        @Test
-        public void testPawnsPreventingCastling() {
-            /* White should not have castling rights. */
-            Position position = position(white(k(e1), r(a1, h1)),
-                    black(k(e8), p(e2)),
-                    Colour.WHITE);
-            assertDoesNotHaveMoves(position, "O-O O-O-O");
-
-            /* Checking left castle. */
-            position = position(white(k(e1), r(a1, h1)),
-                    black(k(e8), p(b2)),
-                    Colour.WHITE);
-            assertDoesNotHaveMoves(position, "O-O-O");
-            assertHasMoves(position, "O-O");
-
-            position = position(white(k(e1), r(a1, h1)),
-                    black(k(e8), p(c2)),
-                    Colour.WHITE);
-            assertDoesNotHaveMoves(position, "O-O-O");
-            assertHasMoves(position, "O-O");
-
-            position = position(white(k(e1), r(a1, h1)),
-                    black(k(e8), p(d2)),
-                    Colour.WHITE);
-            assertDoesNotHaveMoves(position, "O-O-O");
-            assertHasMoves(position, "O-O"); /* This should break when we start checking for checks. */
-
-            /* Checking right castle. */
-            position = position(white(k(e1), r(a1, h1)),
-                    black(k(e8), p(f2)),
-                    Colour.WHITE);
-            assertDoesNotHaveMoves(position, "O-O");
-            assertHasMoves(position, "O-O-O"); /* This should break when we start checking for checks. */
-
-            position = position(white(k(e1), r(a1, h1)),
-                    black(k(e8), p(g2)),
-                    Colour.WHITE);
-            assertDoesNotHaveMoves(position, "O-O");
-            assertHasMoves(position, "O-O-O");
-
-            position = position(white(k(e1), r(a1, h1)),
-                    black(k(e8), p(h2)),
-                    Colour.WHITE);
-            assertDoesNotHaveMoves(position, "O-O");
-            assertHasMoves(position, "O-O-O");
-
-            /* Black should not have castling rights. */
-            position = position(white(k(e1), p(e7)),
-                    black(k(e8), r(a8, h8)),
-                    Colour.BLACK);
-            assertDoesNotHaveMoves(position, "O-O O-O-O");
-
-            /* Checking left castle. */
-            position = position(white(k(e1), p(b7)),
-                    black(k(e8), r(a8, h8)),
-                    Colour.BLACK);
-            assertDoesNotHaveMoves(position, "O-O-O");
-            assertHasMoves(position, "O-O");
-
-            position = position(white(k(e1), p(c7)),
-                    black(k(e8), r(a8, h8)),
-                    Colour.BLACK);
-            assertDoesNotHaveMoves(position, "O-O-O");
-            assertHasMoves(position, "O-O");
-
-            position = position(white(k(e1), p(d7)),
-                    black(k(e8), r(a8, h8)),
-                    Colour.BLACK);
-            assertDoesNotHaveMoves(position, "O-O-O");
-            assertHasMoves(position, "O-O"); /* This should break when we start checking for checks. */
-
-            /* Checking right castle. */
-            position = position(white(k(e1), p(f7)),
-                    black(k(e8), r(a8, h8)),
-                    Colour.BLACK);
-            assertDoesNotHaveMoves(position, "O-O");
-            assertHasMoves(position, "O-O-O"); /* This should break when we start checking for checks. */
-
-            position = position(white(k(e1), p(g7)),
-                    black(k(e8), r(a8, h8)),
-                    Colour.BLACK);
-            assertDoesNotHaveMoves(position, "O-O");
-            assertHasMoves(position, "O-O-O");
-
-            position = position(white(k(e1), p(h7)),
-                    black(k(e8), r(a8, h8)),
-                    Colour.BLACK);
-            assertDoesNotHaveMoves(position, "O-O");
-            assertHasMoves(position, "O-O-O");
-
-            /* Negative checks pawns not-preventing castling. */
-            position = position(white(k(e1), r(a1)),
-                    black(k(e8), p(except(a1, b1, c1, d1, e1, f1, g1, h1, b2, c2, d2, e2, a8, b8, c8, d8, e8, f8, g8, h8))),
-                    Colour.WHITE);
-            assertHasMoves(position, "O-O-O"); /* This should break when we start checking for checks. */
-
-            position = position(white(k(e1), r(h1)),
-                    black(k(e8), p(except(a1, b1, c1, d1, e1, f1, g1, h1, e2, f2, g2, h2, a8, b8, c8, d8, e8, f8, g8, h8))),
-                    Colour.WHITE);
-            assertHasMoves(position, "O-O"); /* This should break when we start checking for checks. */
-
-            position = position(white(k(e1), p(except(a1, b1, c1, d1, e1, f1, g1, h1, b7, c7, d7, e7, a8, b8, c8, d8, e8, f8, g8, h8))),
-                    black(k(e8), r(a8)),
-                    Colour.BLACK);
-            assertHasMoves(position, "O-O-O"); /* This should break when we start checking for checks. */
-
-            position = position(white(k(e1), p(except(a1, b1, c1, d1, e1, f1, g1, h1, e7, f7, g7, h7, a8, b8, c8, d8, e8, f8, g8, h8))),
-                    black(k(e8), r(h8)),
-                    Colour.BLACK);
-            assertHasMoves(position, "O-O"); /* This should break when we start checking for checks. */
         }
     }
 }

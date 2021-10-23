@@ -78,6 +78,10 @@ public class PositionPrinter {
         return stateInfo;
     }
 
+    public static void printBoard(Position position) {
+        System.out.println(getConsolePrintableBoard(position, true, true));
+    }
+
     public static String getConsolePrintableBoard(Position position, boolean useUnicodeSymbols, boolean switchPieceColours){
         StringBuilder board = new StringBuilder();
         for ( int i = 63; i >= 0; i-- ){

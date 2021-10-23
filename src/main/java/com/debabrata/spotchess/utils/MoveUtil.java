@@ -407,13 +407,13 @@ public class MoveUtil {
                             /* No knights attack the path. */
                             if (((allKings | allPawns) & enemyPieces & 0x000F000000000000L) == 0) {
                                 /* No kings or pawns attack the path. */
-                                long attackers = RookAndBishopMovesUtil.getBishopMoves(4, allPieces);
-                                attackers = attackers | RookAndBishopMovesUtil.getBishopMoves(5, allPieces);
+                                long attackers = RookAndBishopMovesUtil.getBishopMoves(57, allPieces);
+                                attackers = attackers | RookAndBishopMovesUtil.getBishopMoves(58, allPieces);
 
                                 if ((enemyQueensAndBishops & attackers) == 0) {
                                     /* No diagonal attackers. */
-                                    attackers = RookAndBishopMovesUtil.getRookMoves(4, allPieces);
-                                    attackers = attackers | RookAndBishopMovesUtil.getRookMoves(4, allPieces);
+                                    attackers = RookAndBishopMovesUtil.getRookMoves(57, allPieces);
+                                    attackers = attackers | RookAndBishopMovesUtil.getRookMoves(58, allPieces);
                                     if ((enemyRooksAndQueens & attackers) == 0) {
                                         /* No lateral attackers. All checks done. */
                                         moveBuffer[startWritingAt++] = MoveInitUtil.newRightCastle(59, 57);
@@ -488,7 +488,7 @@ public class MoveUtil {
             while ( rank7Pawns != 0 ) {
                 long pawn = rank7Pawns & -rank7Pawns;
                 int from = BitUtil.getBitPlaceValue(pawn);
-                if ( ((pawn >>> 7) & 0x7F7F7F7F7F7F7F7FL & enemyPieces) != 0 ) {
+                if ( ((pawn >>> 7) & 0xFEFEFEFEFEFEFEFEL & enemyPieces) != 0 ) {
                     moveBuffer[startWritingAt++] = MoveInitUtil.newPawnPromotion(from, from - 7, PieceType.QUEEN);
                     moveBuffer[startWritingAt++] = MoveInitUtil.newPawnPromotion(from, from - 7, PieceType.KNIGHT);
                     moveBuffer[startWritingAt++] = MoveInitUtil.newPawnPromotion(from, from - 7, PieceType.BISHOP);
@@ -591,12 +591,38 @@ public class MoveUtil {
         long moves = KingAndKnightMovesUtil.getKingMoves(kingPlaceValue);
         moves = moves & notOurPieces;
         while (moves != 0) {
-            int toPlaceValue = BitUtil.getLastBitPlaceValue(moves);
-            //TODO: Check if the king can be attacked after the move.
-            moveBuffer[startWritingAt++] = MoveInitUtil.newMove(kingPlaceValue, toPlaceValue);
+            long moveTo = moves & -moves;
+            int toPlaceValue = BitUtil.getBitPlaceValue(moveTo);
+
+            if ((KingAndKnightMovesUtil.getKingMoves(toPlaceValue) & enemyPieces & allKings) == 0) {
+                /* Enemy king don't attack the position. */
+                if ((KingAndKnightMovesUtil.getKnightMoves(toPlaceValue) & enemyPieces & allKnights) == 0) {
+                    /* Enemy knights don't attack the position. */
+                    long attacks = RookAndBishopMovesUtil.getBishopMoves(toPlaceValue, allPieces ^ ourKing);
+                    if ((attacks & enemyQueensAndBishops) == 0) {
+                        /* Enemy bishops type attackers don't attack the position. */
+                        attacks = RookAndBishopMovesUtil.getRookMoves(toPlaceValue, allPieces ^ ourKing);
+                        if ((attacks & enemyRooksAndQueens) == 0) {
+                            /* Enemy rook type attackers don't attack the position. */
+                            if (whiteToMove) {
+                                if (((moveTo << 7) & allPawns & 0x7F7F7F7F7F7F7F7FL) == 0 &&
+                                        ((moveTo << 9) & allPawns & 0xFEFEFEFEFEFEFEFEL) == 0) {
+                                    /* Black pawns don't attack the position. */
+                                    moveBuffer[startWritingAt++] = MoveInitUtil.newMove(kingPlaceValue, toPlaceValue);
+                                }
+                            } else {
+                                if (((moveTo >>> 9) & allPawns & 0x7F7F7F7F7F7F7F7FL) == 0 &&
+                                        ((moveTo >>> 7) & allPawns & 0xFEFEFEFEFEFEFEFEL) == 0) {
+                                    /* Black pawns don't attack the position. */
+                                    moveBuffer[startWritingAt++] = MoveInitUtil.newMove(kingPlaceValue, toPlaceValue);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             moves = moves & (moves - 1);
         }
-
         /* Putting -1 to mark the end of position where */
         moveBuffer[startWritingAt++] = -1;
 
