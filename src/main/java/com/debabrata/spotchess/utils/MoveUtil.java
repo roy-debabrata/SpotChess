@@ -7,8 +7,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MoveUtil {
-    /* Right now we want to think about getting an application with a simple min-max search with alpha-beta pruning.
-       We'll have to re-organize some of this for move ordering and other considerations. */
+    /*  This class has turned out to be an eyesore, all in the pursuit of using the minimum number of instructions to
+        fetch all legal moves. I was also trying to minimise ram hits. Once this starts working I'll use this as a
+        benchmark for testing out other move generation class ideas to get rid of this ugly duckling. I also need to
+        start giving more thoughts to move ordering. That's what will ultimately dictate search cut-offs.  I'll consider
+        in the future replacing this with a stateful class. Right now I wish all processors had 128 registers per core.*/
+
     public static int addMovesToBuffer(Position position, int[] moveBuffer, int startWritingAt ) {
         // TODO: We need a isUnderCheck and addCheckedMovesToBuffer.
         boolean whiteToMove = position.whiteToMove();
@@ -284,6 +288,44 @@ public class MoveUtil {
                 }
             }
         }
+        /* Checking for extreme edge case where an en-passant take move can expose the king. */
+        if (enPassantTakers != 0 && (lateralPinners & enPassantTakers) != 0 ) {
+            long enPassantTaken = position.getPawnToBeCapturedEnPassant(whiteToMove);
+            if ((enPassantTaken & lateralPinners) != 0) {
+                /* Both the en-passant taker and pawn to be taken are in the same line with the King. */
+                boolean enPassantMoveIsInvalid = false;
+                long rank = whiteToMove? 0x000000FF00000000L : 0x00000000FF000000L;
+                long enPassantTaker = lateralPinners & enPassantTakers;
+
+                long selector = ourKing >> 1;
+                while ((selector & rank) != 0) {
+                    if (selector != enPassantTaken && selector != enPassantTaker && (selector & allPieces) != 0) {
+                        /* We have hit a piece. */
+                        if ((selector & enemyRooksAndQueens) != 0) {
+                            enPassantMoveIsInvalid = true;
+                        }
+                        break;
+                    }
+                    selector = selector >> 1;
+                }
+                if (! enPassantMoveIsInvalid) {
+                    selector = ourKing << 1;
+                    while ((selector & rank) != 0) {
+                        if (selector != enPassantTaken && selector != enPassantTaker && (selector & allPieces) != 0) {
+                            /* We have hit a piece. */
+                            if ((selector & enemyRooksAndQueens) != 0) {
+                                enPassantMoveIsInvalid = true;
+                            }
+                            break;
+                        }
+                        selector = selector << 1;
+                    }
+                }
+                if (enPassantMoveIsInvalid) {
+                    enPassantTakers = enPassantTakers ^ enPassantTaker;
+                }
+            }
+        }
 
         /* We add castling moves. */
         if (position.canPotentiallyCastle(whiteToMove)) {
@@ -313,15 +355,20 @@ public class MoveUtil {
                 }
                 if (position.canPotentiallyCastleRight(true)) {
                     if ((allPieces & 0x0000000000000006L) == 0) {
+                        /* No pieces in the path. */
                         if ((allKnights & enemyPieces & 0x00000000000F1900L) == 0) {
+                            /* No knights attack the path. */
                             if (((allKings | allPawns) & enemyPieces & 0x0000000000000F00L) == 0) {
+                                /* No kings or pawns attack the path. */
                                 long attackers = RookAndBishopMovesUtil.getBishopMoves(2, allPieces);
                                 attackers = attackers | RookAndBishopMovesUtil.getBishopMoves(1, allPieces);
 
                                 if ((enemyQueensAndBishops & attackers) == 0) {
+                                    /* No diagonal attackers. */
                                     attackers = RookAndBishopMovesUtil.getRookMoves(2, allPieces);
                                     attackers = attackers | RookAndBishopMovesUtil.getRookMoves(1, allPieces);
                                     if ((enemyRooksAndQueens & attackers) == 0) {
+                                        /* No lateral attackers. All checks done. */
                                         moveBuffer[startWritingAt++] = MoveInitUtil.newRightCastle(3, 1);
                                     }
                                 }
@@ -332,15 +379,20 @@ public class MoveUtil {
             } else {
                 if (position.canPotentiallyCastleLeft(false)) {
                     if ((allPieces & 0x7000000000000000L) == 0) {
+                        /* No pieces in the path. */
                         if ((allKnights & enemyPieces & 0x00CC780000000000L) == 0) {
+                            /* No knights attack the path. */
                             if (((allKings | allPawns) & enemyPieces & 0x0078000000000000L) == 0) {
+                                /* No kings or pawns attack the path. */
                                 long attackers = RookAndBishopMovesUtil.getBishopMoves(60, allPieces);
                                 attackers = attackers | RookAndBishopMovesUtil.getBishopMoves(61, allPieces);
 
                                 if ((enemyQueensAndBishops & attackers) == 0) {
+                                    /* No diagonal attackers. */
                                     attackers = RookAndBishopMovesUtil.getRookMoves(60, allPieces);
                                     attackers = attackers | RookAndBishopMovesUtil.getRookMoves(61, allPieces);
                                     if ((enemyRooksAndQueens & attackers) == 0) {
+                                        /* No lateral attackers. All checks done. */
                                         moveBuffer[startWritingAt++] = MoveInitUtil.newLeftCastle(59, 61);
                                     }
                                 }
@@ -350,15 +402,20 @@ public class MoveUtil {
                 }
                 if (position.canPotentiallyCastleRight(false)) {
                     if ((allPieces & 0x0600000000000000L) == 0) {
+                        /* No pieces in the path. */
                         if ((allKnights & enemyPieces & 0x00190F0000000000L) == 0) {
+                            /* No knights attack the path. */
                             if (((allKings | allPawns) & enemyPieces & 0x000F000000000000L) == 0) {
+                                /* No kings or pawns attack the path. */
                                 long attackers = RookAndBishopMovesUtil.getBishopMoves(4, allPieces);
                                 attackers = attackers | RookAndBishopMovesUtil.getBishopMoves(5, allPieces);
 
                                 if ((enemyQueensAndBishops & attackers) == 0) {
+                                    /* No diagonal attackers. */
                                     attackers = RookAndBishopMovesUtil.getRookMoves(4, allPieces);
                                     attackers = attackers | RookAndBishopMovesUtil.getRookMoves(4, allPieces);
                                     if ((enemyRooksAndQueens & attackers) == 0) {
+                                        /* No lateral attackers. All checks done. */
                                         moveBuffer[startWritingAt++] = MoveInitUtil.newRightCastle(59, 57);
                                     }
                                 }
