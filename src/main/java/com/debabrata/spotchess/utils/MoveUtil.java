@@ -72,7 +72,6 @@ public class MoveUtil {
                             if (((pinned << 9) & pinPair) != 0) {
                                 int pawnPosition = BitUtil.getBitPlaceValue(pinned);
                                 moveBuffer[startWritingAt++] = MoveInitUtil.newMove(pawnPosition, pawnPosition + 9); /* We take the pinner. */
-                                ourPawns = ourPawns ^ pinned; /* We remove the pawn from further reckoning. */
                             } else if ((enPassantTakers & pinned) != 0) {
                                 long locationAfterEP = position.getPawnLocationAfterEnPassant(true);
                                 if ((pinned << 9) == locationAfterEP) {
@@ -82,11 +81,11 @@ public class MoveUtil {
                                 }
                                 enPassantTakers = enPassantTakers ^ pinned;
                             }
+                            ourPawns = ourPawns ^ pinned; /* We remove the pawn from further reckoning. */
                         } else {
                             if (((pinned >>> 9) & pinPair) != 0) {
                                 int pawnPosition = BitUtil.getBitPlaceValue(pinned);
                                 moveBuffer[startWritingAt++] = MoveInitUtil.newMove(pawnPosition, pawnPosition - 9); /* We take the pinner. */
-                                ourPawns = ourPawns ^ pinned; /* We remove the pawn from further reckoning. */
                             } else if ((enPassantTakers & pinned) != 0) {
                                 long locationAfterEP = position.getPawnLocationAfterEnPassant(true);
                                 if ((pinned >>> 9) == locationAfterEP) {
@@ -96,6 +95,7 @@ public class MoveUtil {
                                 }
                                 enPassantTakers = enPassantTakers ^ pinned;
                             }
+                            ourPawns = ourPawns ^ pinned; /* We remove the pawn from further reckoning. */
                         }
                     }
                     if ((pinned & ourQueensAndBishops) != 0) {
@@ -103,14 +103,17 @@ public class MoveUtil {
                         int pinnedPosition = BitUtil.getBitPlaceValue(pinned);
                         int pinnerPosition = BitUtil.getBitPlaceValue(pinned ^ pinPair);
 
-                        while (pinnedPosition != pinnerPosition) {
-                            moveBuffer[startWritingAt++] = MoveInitUtil.newMove(pinnedPosition, pinnerPosition);
-                            if (pinnedPosition > pinnerPosition) {
-                                pinnerPosition = pinnerPosition + 9;
-                            } else {
+                        while (pinnerPosition != kingPlaceValue) {
+                            if (pinnedPosition != pinnerPosition) {
+                                moveBuffer[startWritingAt++] = MoveInitUtil.newMove(pinnedPosition, pinnerPosition);
+                            }
+                            if (pinnerPosition > kingPlaceValue) {
                                 pinnerPosition = pinnerPosition - 9;
+                            } else {
+                                pinnerPosition = pinnerPosition + 9;
                             }
                         }
+                        ourQueensAndBishops = ourQueensAndBishops ^ pinned;
                     }
                 }
             }
@@ -134,7 +137,6 @@ public class MoveUtil {
                                 int pawnPosition = BitUtil.getBitPlaceValue(pinned);
                                 /* We take the pinner. */
                                 moveBuffer[startWritingAt++] = MoveInitUtil.newMove(pawnPosition, pawnPosition + 7);
-                                ourPawns = ourPawns ^ pinned; /* We remove the pawn from further reckoning. */
                             } else if ((enPassantTakers & pinned) != 0) {
                                 long locationAfterEP = position.getPawnLocationAfterEnPassant(true);
                                 if ((pinned << 7) == locationAfterEP) {
@@ -144,12 +146,12 @@ public class MoveUtil {
                                 }
                                 enPassantTakers = enPassantTakers ^ pinned;
                             }
+                            ourPawns = ourPawns ^ pinned; /* We remove the pawn from further reckoning. */
                         } else {
                             if (((pinned >>> 7) & pinPair) != 0) {
                                 int pawnPosition = BitUtil.getBitPlaceValue(pinned);
                                 /* We take the pinner. */
                                 moveBuffer[startWritingAt++] = MoveInitUtil.newMove(pawnPosition, pawnPosition - 7);
-                                ourPawns = ourPawns ^ pinned; /* We remove the pawn from further reckoning. */
                             } else if ((enPassantTakers & pinned) != 0) {
                                 long locationAfterEP = position.getPawnLocationAfterEnPassant(true);
                                 if ((pinned >>> 7) == locationAfterEP) {
@@ -159,6 +161,7 @@ public class MoveUtil {
                                 }
                                 enPassantTakers = enPassantTakers ^ pinned;
                             }
+                            ourPawns = ourPawns ^ pinned; /* We remove the pawn from further reckoning. */
                         }
                     }
                     if ((pinned & ourQueensAndBishops) != 0) {
@@ -166,14 +169,17 @@ public class MoveUtil {
                         int pinnedPosition = BitUtil.getBitPlaceValue(pinned);
                         int pinnerPosition = BitUtil.getBitPlaceValue(pinned ^ pinPair);
 
-                        while (pinnedPosition != pinnerPosition) {
-                            moveBuffer[startWritingAt++] = MoveInitUtil.newMove(pinnedPosition, pinnerPosition);
-                            if (pinnedPosition > pinnerPosition) {
-                                pinnerPosition = pinnerPosition + 7;
-                            } else {
+                        while (pinnerPosition != kingPlaceValue) {
+                            if (pinnedPosition != pinnerPosition) {
+                                moveBuffer[startWritingAt++] = MoveInitUtil.newMove(pinnedPosition, pinnerPosition);
+                            }
+                            if (pinnerPosition > kingPlaceValue) {
                                 pinnerPosition = pinnerPosition - 7;
+                            } else {
+                                pinnerPosition = pinnerPosition + 7;
                             }
                         }
+                        ourQueensAndBishops = ourQueensAndBishops ^ pinned;
                     }
                 }
             }
@@ -208,7 +214,6 @@ public class MoveUtil {
                                     /* We double push the pawn. */
                                     moveBuffer[startWritingAt++] = MoveInitUtil.newPawnDoubleMove(pawnPosition, pawnPosition + 16);
                                 }
-                                ourPawns = ourPawns ^ pinned; /* We remove the pawn from further reckoning. */
                             }
                         } else {
                             if (((pinned >>> 8) & notPieces) != 0) {
@@ -221,20 +226,24 @@ public class MoveUtil {
                                 }
                             }
                         }
+                        ourPawns = ourPawns ^ pinned; /* We remove the pawn from further reckoning. */
                     }
                     if ((pinned & ourRooksAndQueens) != 0) {
                         /* The pin is only partial. We can attack the pinner and all squares in between. */
                         int pinnedPosition = BitUtil.getBitPlaceValue(pinned);
                         int pinnerPosition = BitUtil.getBitPlaceValue(pinned ^ pinPair);
 
-                        while (pinnedPosition != pinnerPosition) {
-                            moveBuffer[startWritingAt++] = MoveInitUtil.newMove(pinnedPosition, pinnerPosition);
-                            if (pinnedPosition > pinnerPosition) {
-                                pinnerPosition = pinnerPosition + 8;
-                            } else {
+                        while (pinnerPosition != kingPlaceValue) {
+                            if (pinnedPosition != pinnerPosition) {
+                                moveBuffer[startWritingAt++] = MoveInitUtil.newMove(pinnedPosition, pinnerPosition);
+                            }
+                            if (pinnerPosition > kingPlaceValue) {
                                 pinnerPosition = pinnerPosition - 8;
+                            } else {
+                                pinnerPosition = pinnerPosition + 8;
                             }
                         }
+                        ourRooksAndQueens = ourRooksAndQueens ^ pinned;
                     }
                 }
             }
@@ -260,14 +269,17 @@ public class MoveUtil {
                         int pinnedPosition = BitUtil.getBitPlaceValue(pinned);
                         int pinnerPosition = BitUtil.getBitPlaceValue(pinned ^ pinPair);
 
-                        while (pinnedPosition != pinnerPosition) {
-                            moveBuffer[startWritingAt++] = MoveInitUtil.newMove(pinnedPosition, pinnerPosition);
-                            if (pinnedPosition > pinnerPosition) {
-                                pinnerPosition = pinnerPosition + 1;
-                            } else {
+                        while (pinnerPosition != kingPlaceValue) {
+                            if (pinnedPosition != pinnerPosition) {
+                                moveBuffer[startWritingAt++] = MoveInitUtil.newMove(pinnedPosition, pinnerPosition);
+                            }
+                            if (pinnerPosition > kingPlaceValue) {
                                 pinnerPosition = pinnerPosition - 1;
+                            } else {
+                                pinnerPosition = pinnerPosition + 1;
                             }
                         }
+                        ourRooksAndQueens = ourRooksAndQueens ^ pinned;
                     }
                 }
             }

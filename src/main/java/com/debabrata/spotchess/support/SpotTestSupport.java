@@ -5,6 +5,7 @@ import com.debabrata.spotchess.support.notation.move.StandardAlgebraicNotation;
 import com.debabrata.spotchess.types.Position;
 import com.debabrata.spotchess.types.enums.Colour;
 import com.debabrata.spotchess.types.enums.PieceType;
+import com.debabrata.spotchess.utils.MoveUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -165,7 +166,7 @@ public class SpotTestSupport {
     }
 
     public static class Square {
-        final int placeValue;
+        public final int placeValue;
         Square(int placeValue) {
             this.placeValue = placeValue;
         }
@@ -264,9 +265,11 @@ public class SpotTestSupport {
         }
     }
 
-    public static void assertHasMoves(Position position, String expectedMoves, List<Integer> moveIntList) {
-        assert null != expectedMoves && null != moveIntList;
+    public static void assertHasMoves(Position position, String expectedMoves) {
+        assert null != expectedMoves;
         String[] expectedMovesArr = expectedMoves.split("\\s+");
+
+        List<Integer> moveIntList = MoveUtil.getMovesInPosition(position);
 
         List<String> moves = getMoveNotationList(position, moveIntList);
         StringBuilder notFound = null;
@@ -285,9 +288,11 @@ public class SpotTestSupport {
         }
     }
 
-    public static void assertDoesNotHaveMoves(Position position, String movesNotExpected, List<Integer> moveIntList) {
-        assert null != movesNotExpected && null != moveIntList;
+    public static void assertDoesNotHaveMoves(Position position, String movesNotExpected) {
+        assert null != movesNotExpected;
         String[] unexpectedMovesArr = movesNotExpected.split("\\s+");
+
+        List<Integer> moveIntList = MoveUtil.getMovesInPosition(position);
 
         List<String> moves = getMoveNotationList(position, moveIntList);
         StringBuilder found = null;
