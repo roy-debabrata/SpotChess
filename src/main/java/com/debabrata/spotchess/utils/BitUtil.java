@@ -42,7 +42,7 @@ public class BitUtil {
      *
      * @param preMask gives the region for which to generate all possible combinations of values.
      *                Must not contain more than 32 active bits.
-     * @param limitBitCountTo how many maximum number of bits to use.
+     * @param limitBitCountTo maximum number of bits to use in a permutation.
      * @return an array containing bitboards of all combinations of bits of the preMask. */
     public static long[] getAllPossibleBitCombinations(long preMask, int limitBitCountTo){
         int bitCount = Long.bitCount(preMask);
