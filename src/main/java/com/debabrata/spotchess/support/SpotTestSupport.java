@@ -265,9 +265,21 @@ public class SpotTestSupport {
         }
     }
 
-    public static void assertNoLegalMoves(Position position) {
+    public static void assertStalemate(Position position) {
         if (MoveUtil.getMovesInPosition(position).size() > 0) {
-            throw new AssertionError("Has legal moves. Expected none.");
+            throw new AssertionError("Has legal moves. Expected stalemate.");
+        }
+        if(MoveUtil.isKingUnderCheck(position)) {
+            throw new AssertionError("King is under check. Expected stalemate.");
+        }
+    }
+
+    public static void assertCheckmate(Position position) {
+        if (MoveUtil.getMovesInPosition(position).size() > 0) {
+            throw new AssertionError("Has legal moves. Expected checkmate.");
+        }
+        if(!MoveUtil.isKingUnderCheck(position)) {
+            throw new AssertionError("King is not under check. Expected checkmate.");
         }
     }
 

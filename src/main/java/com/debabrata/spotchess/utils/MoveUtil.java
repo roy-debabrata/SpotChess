@@ -41,23 +41,23 @@ public class MoveUtil {
             return true;
         }
         long attacks = RookAndBishopMovesUtil.getBishopMoves(kingPlaceValue, allPieces);
-        if ((attacks & enemyPieces & position.getQueensAndBishops()) == 0) {
+        if ((attacks & enemyPieces & position.getQueensAndBishops()) != 0) {
             /* Enemy bishops type attackers attack the position. */
             return true;
         }
         attacks = RookAndBishopMovesUtil.getRookMoves(kingPlaceValue, allPieces);
-        if ((attacks & enemyPieces & position.getQueensAndBishops()) == 0) {
+        if ((attacks & enemyPieces & position.getRooksAndQueens()) != 0) {
             /* Enemy rook type attackers attack the position. */
             return true;
         }
         if (whiteToMove) {
             /* Black pawns attack the position. */
             return ((ourKing << 7) & enemyPieces & allPawns & 0x7F7F7F7F7F7F7F7FL) != 0
-                    || ((ourKing << 9) & enemyPieces & allPawns & 0xFEFEFEFEFEFEFEFEL) == 0;
+                    || ((ourKing << 9) & enemyPieces & allPawns & 0xFEFEFEFEFEFEFEFEL) != 0;
         } else {
             /* White pawns attack the position. */
-            return ((ourKing >>> 9) & enemyPieces & allPawns & 0x7F7F7F7F7F7F7F7FL) == 0
-                    || ((ourKing >>> 7) & enemyPieces & allPawns & 0xFEFEFEFEFEFEFEFEL) == 0;
+            return ((ourKing >>> 9) & enemyPieces & allPawns & 0x7F7F7F7F7F7F7F7FL) != 0
+                    || ((ourKing >>> 7) & enemyPieces & allPawns & 0xFEFEFEFEFEFEFEFEL) != 0;
         }
     }
 
@@ -445,7 +445,7 @@ public class MoveUtil {
                 }
             }
         }
-        /* Checking for extreme edge case where an en-passant take move can expose the king. */
+        /* Checking for extreme edge case where an en-passant take move can expose the king to a rook attack. */
         if (enPassantTakers != 0 && (lateralPinners & enPassantTakers) != 0 ) {
             long enPassantTaken = position.getPawnToBeCapturedEnPassant(whiteToMove);
             if ((enPassantTaken & lateralPinners) != 0) {
@@ -487,9 +487,115 @@ public class MoveUtil {
         /* If we are in check, now that our pinned pieces have been removed, we look for pieces that can intercede. */
         if (kingCheckCount == 1) {
             /* In case of multiple attackers the only option is for the king to move. So, we checked it's not the case. */
+            if (whiteToMove) {
+                /* Pawn takes moves. */
+                long takers = ((interventionPoints & enemyPieces) >>> 9) & ourPawns & 0x7F7F7F7F7F7F7F7FL;
+                while (takers != 0) {
+                    int moveFrom = BitUtil.getLastBitPlaceValue(takers);
+                    if (moveFrom < 48) {
+                        moveBuffer[writePosition++] = MoveInitUtil.newMove(moveFrom, moveFrom + 9);
+                    } else {
+                        moveBuffer[writePosition++] = MoveInitUtil.newPawnPromotion(moveFrom, moveFrom + 9, PieceType.QUEEN);
+                        moveBuffer[writePosition++] = MoveInitUtil.newPawnPromotion(moveFrom, moveFrom + 9, PieceType.KNIGHT);
+                        moveBuffer[writePosition++] = MoveInitUtil.newPawnPromotion(moveFrom, moveFrom + 9, PieceType.BISHOP);
+                        moveBuffer[writePosition++] = MoveInitUtil.newPawnPromotion(moveFrom, moveFrom + 9, PieceType.ROOK);
+                    }
+                    takers = takers & (takers - 1);
+                }
+                takers = ((interventionPoints & enemyPieces) >>> 7) & ourPawns & 0xFEFEFEFEFEFEFEFEL;
+                while (takers != 0) {
+                    int moveFrom = BitUtil.getLastBitPlaceValue(takers);
+                    if (moveFrom < 48) {
+                        moveBuffer[writePosition++] = moveBuffer[writePosition++] = MoveInitUtil.newMove(moveFrom, moveFrom + 7);
+                    } else {
+                        moveBuffer[writePosition++] = MoveInitUtil.newPawnPromotion(moveFrom, moveFrom + 7, PieceType.QUEEN);
+                        moveBuffer[writePosition++] = MoveInitUtil.newPawnPromotion(moveFrom, moveFrom + 7, PieceType.KNIGHT);
+                        moveBuffer[writePosition++] = MoveInitUtil.newPawnPromotion(moveFrom, moveFrom + 7, PieceType.BISHOP);
+                        moveBuffer[writePosition++] = MoveInitUtil.newPawnPromotion(moveFrom, moveFrom + 7, PieceType.ROOK);
+                    }
+                    takers = takers & (takers - 1);
+                }
+                /* Pawn pushes. */
+                long pushers = ((interventionPoints & notPieces) >>> 8) & ourPawns;
+                while (pushers != 0) {
+                    int moveFrom = BitUtil.getLastBitPlaceValue(pushers);
+                    if (moveFrom < 48) {
+                        moveBuffer[writePosition++] = MoveInitUtil.newMove(moveFrom, moveFrom + 8);
+                    } else {
+                        moveBuffer[writePosition++] = MoveInitUtil.newPawnPromotion(moveFrom, moveFrom + 8, PieceType.QUEEN);
+                        moveBuffer[writePosition++] = MoveInitUtil.newPawnPromotion(moveFrom, moveFrom + 8, PieceType.KNIGHT);
+                        moveBuffer[writePosition++] = MoveInitUtil.newPawnPromotion(moveFrom, moveFrom + 8, PieceType.BISHOP);
+                        moveBuffer[writePosition++] = MoveInitUtil.newPawnPromotion(moveFrom, moveFrom + 8, PieceType.ROOK);
+                    }
+                    pushers = pushers & (pushers - 1);
+                }
+                pushers = ((interventionPoints & notPieces) >>> 16) & ourPawns & 0x000000000000FF00L;
+                while (pushers != 0) {
+                    int moveFrom = BitUtil.getLastBitPlaceValue(pushers);
+                    moveBuffer[writePosition++] = MoveInitUtil.newMove(moveFrom, moveFrom + 16);
+                    pushers = pushers & (pushers - 1);
+                }
+            } else {
+                /* Pawn takes moves. */
+                long takers = ((interventionPoints & enemyPieces) << 7) & ourPawns & 0x7F7F7F7F7F7F7F7FL;
+                while (takers != 0) {
+                    int moveFrom = BitUtil.getLastBitPlaceValue(takers);
+                    if (moveFrom > 15) {
+                        moveBuffer[writePosition++] = MoveInitUtil.newMove(moveFrom, moveFrom - 7);
+                    } else {
+                        moveBuffer[writePosition++] = MoveInitUtil.newPawnPromotion(moveFrom, moveFrom - 7, PieceType.QUEEN);
+                        moveBuffer[writePosition++] = MoveInitUtil.newPawnPromotion(moveFrom, moveFrom - 7, PieceType.KNIGHT);
+                        moveBuffer[writePosition++] = MoveInitUtil.newPawnPromotion(moveFrom, moveFrom - 7, PieceType.BISHOP);
+                        moveBuffer[writePosition++] = MoveInitUtil.newPawnPromotion(moveFrom, moveFrom - 7, PieceType.ROOK);
+                    }
+                    takers = takers & (takers - 1);
+                }
+                takers = ((interventionPoints & enemyPieces) << 9) & ourPawns & 0xFEFEFEFEFEFEFEFEL;
+                while (takers != 0) {
+                    int moveFrom = BitUtil.getLastBitPlaceValue(takers);
+                    if (moveFrom > 15) {
+                        moveBuffer[writePosition++] = MoveInitUtil.newMove(moveFrom, moveFrom - 9);
+                    } else {
+                        moveBuffer[writePosition++] = MoveInitUtil.newPawnPromotion(moveFrom, moveFrom - 9, PieceType.QUEEN);
+                        moveBuffer[writePosition++] = MoveInitUtil.newPawnPromotion(moveFrom, moveFrom - 9, PieceType.KNIGHT);
+                        moveBuffer[writePosition++] = MoveInitUtil.newPawnPromotion(moveFrom, moveFrom - 9, PieceType.BISHOP);
+                        moveBuffer[writePosition++] = MoveInitUtil.newPawnPromotion(moveFrom, moveFrom - 9, PieceType.ROOK);
+                    }
+                    takers = takers & (takers - 1);
+                }
+                /* Pawn pushes. */
+                long pushers = ((interventionPoints & notPieces) << 8) & ourPawns;
+                while (pushers != 0) {
+                    int moveFrom = BitUtil.getLastBitPlaceValue(pushers);
+                    if (moveFrom > 15) {
+                        moveBuffer[writePosition++] = MoveInitUtil.newMove(moveFrom, moveFrom - 8);
+                    } else {
+                        moveBuffer[writePosition++] = MoveInitUtil.newPawnPromotion(moveFrom, moveFrom - 8, PieceType.QUEEN);
+                        moveBuffer[writePosition++] = MoveInitUtil.newPawnPromotion(moveFrom, moveFrom - 8, PieceType.KNIGHT);
+                        moveBuffer[writePosition++] = MoveInitUtil.newPawnPromotion(moveFrom, moveFrom - 8, PieceType.BISHOP);
+                        moveBuffer[writePosition++] = MoveInitUtil.newPawnPromotion(moveFrom, moveFrom - 8, PieceType.ROOK);
+                    }
+                    pushers = pushers & (pushers - 1);
+                }
+                pushers = ((interventionPoints & notPieces) << 16) & ourPawns & 0x00FF000000000000L;
+                while (pushers != 0) {
+                    int moveFrom = BitUtil.getLastBitPlaceValue(pushers);
+                    moveBuffer[writePosition++] = MoveInitUtil.newMove(moveFrom, moveFrom - 16);
+                    pushers = pushers & (pushers - 1);
+                }
+            }
             while(interventionPoints != 0) {
-                long interventionPoint = interventionPoints & -interventionPoints;
-                //TODO: Write code to check if any of our pieces reaches there.
+                int moveTo = BitUtil.getLastBitPlaceValue(interventionPoints);
+
+                /* Adding knight moves. */
+                long attackers = KingAndKnightMovesUtil.getKnightMoves(moveTo) & ourKnights;
+                attackers = attackers | RookAndBishopMovesUtil.getBishopMoves(moveTo,allPieces) & ourQueensAndBishops;
+                attackers = attackers | RookAndBishopMovesUtil.getRookMoves(moveTo,allPieces) & ourRooksAndQueens;
+                while(attackers != 0) {
+                    int moveFrom = BitUtil.getLastBitPlaceValue(attackers);
+                    moveBuffer[writePosition++] = MoveInitUtil.newMove(moveFrom, moveTo);
+                    attackers = attackers & (attackers - 1);
+                }
                 interventionPoints = interventionPoints & (interventionPoints - 1);
             }
         }

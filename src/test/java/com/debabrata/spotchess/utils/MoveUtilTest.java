@@ -2,6 +2,7 @@ package com.debabrata.spotchess.utils;
 
 import com.debabrata.spotchess.types.Position;
 import com.debabrata.spotchess.types.enums.Colour;
+import com.debabrata.spotchess.types.enums.GameType;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -56,13 +57,13 @@ public class MoveUtilTest {
             assertOnlyMoves(position,"Kc3 Ke5 Kxe3");
 
             position = position(white(k(d4)),black(k(a1),b(b2,e2,f2,f3)),Colour.WHITE);
-            assertNoLegalMoves(position);
+            assertCheckmate(position);
 
             position = position(white(k(a1),b(e2,e3,f3)),black(k(d4)),Colour.BLACK);
             assertOnlyMoves(position,"Kc3 Ke5 Kxe3");
 
             position = position(white(k(a1),b(b2,e2,f2,f3)),black(k(d4)),Colour.BLACK);
-            assertNoLegalMoves(position);
+            assertCheckmate(position);
         }
 
         @Test
@@ -77,7 +78,7 @@ public class MoveUtilTest {
             assertOnlyMoves(position,"Kxc4");
 
             position = position(white(k(d4)),black(k(a1),r(a3,a5,a4)),Colour.WHITE);
-            assertNoLegalMoves(position);
+            assertCheckmate(position);
 
             position = position(white(k(a1),r(c1,e1)),black(k(d4)),Colour.BLACK);
             assertOnlyMoves(position,"Kd3 Kd5");
@@ -89,7 +90,7 @@ public class MoveUtilTest {
             assertOnlyMoves(position,"Kxc4");
 
             position = position(white(k(a1),r(a3,a5,a4)),black(k(d4)),Colour.BLACK);
-            assertNoLegalMoves(position);
+            assertCheckmate(position);
         }
 
         @Test
@@ -101,7 +102,7 @@ public class MoveUtilTest {
             assertOnlyMoves(position,"Kxc5");
 
             position = position(white(k(d4)),black(k(a1),q(b5,f3)),Colour.WHITE);
-            assertNoLegalMoves(position);
+            assertStalemate(position);
 
             position = position(white(k(a1),q(f3)),black(k(d4)),Colour.BLACK);
             assertOnlyMoves(position,"Kc4 Ke5 Kc5");
@@ -110,7 +111,7 @@ public class MoveUtilTest {
             assertOnlyMoves(position,"Kxc5");
 
             position = position(white(k(a1),q(b5,f3)),black(k(d4)),Colour.BLACK);
-            assertNoLegalMoves(position);
+            assertStalemate(position);
         }
 
         @Test
@@ -1327,29 +1328,84 @@ public class MoveUtilTest {
                     white(k(d5),p(b3,f3),n(b5,d3,f5),b(d7),r(b7,f7)),
                     black(k(e7),b(a8,g1),r(d2,d8),q(a2,a5,c1,e1,g2,g5,g8)),
                     Colour.WHITE);
-            assertNoLegalMoves(position);
+            assertStalemate(position);
 
             position = position(
                     white(k(e2),b(a1,g8),r(d7,d1),q(a7,a4,c8,e8,g7,g4,g1)),
                     black(k(d4),p(b6,f6),n(b4,d6,f4),b(d2),r(b2,f2)),
                     Colour.BLACK);
-            assertNoLegalMoves(position);
+            assertStalemate(position);
 
             position = position(
                     white(k(e4),p(a2,b5,c2,d6,f6,g2),n(c4,g4),b(e2,e5),r(b7,f5)),
                     black(k(c5),p(a3,b6,d7,f7),n(c1,g1),b(a8,h6),r(b4,e8),q(b1,e1,h1,h4,h7)),
                     Colour.WHITE);
-            assertNoLegalMoves(position);
+            assertStalemate(position);
 
             position = position(
                     white(k(c4),p(a6,b3,d2,f2),n(c8,g8),b(a1,h3),r(b5,e1),q(b8,e8,h8,h5,h2)),
                     black(k(e5),p(a7,b4,c7,d3,f3,g7),n(c5,g5),b(e7,e4),r(b2,f4)),
                     Colour.BLACK);
-            assertNoLegalMoves(position);
+            assertStalemate(position);
         }
     }
 
     @Nested
-    class ChecksTest {
+    class ChecksAndBlocksTest {
+        @Test
+        public void pawnBlock() {
+            /* White defending check. */
+            Position position = position(white(k(a4),p(a3,b2,c3,d2,e3,f2,g3,h2)),black(k(a8),r(b8,h4,h5)),Colour.WHITE);
+            assertHasMoves(position,"b4 c4 d4 e4 f4 g4 gxh4");
+
+            position = position(white(k(a2),p(b2,c2,d4,e5,f6,g7,h7)), black(k(a8),b(f8,g8),r(h1)),Colour.WHITE);
+            assertOnlyMoves(position,"b3 c4 d5 e6 f7 hxg8=Q hxg8=N hxg8=B hxg8=R");
+
+            position = position(white(k(c8),p(g7)),black(k(a8),r(f7,h8)),Colour.WHITE);
+            assertOnlyMoves(position,"gxh8=Q gxh8=N gxh8=B gxh8=R g8=Q g8=N g8=B g8=R");
+
+            /* Black defending check. */
+            position = position(white(k(a1),r(b1,h4,h5)),black(k(a5),p(a6,b7,c6,d7,e6,f7,g6,h7)),Colour.BLACK);
+            assertOnlyMoves(position,"b5 c5 d5 e5 f5 g5 gxh5");
+
+            position = position(white(k(a1),b(f1,g1),r(h8)), black(k(a7),p(b7,c7,d5,e4,f3,g2,h2)),Colour.BLACK);
+            assertOnlyMoves(position,"b6 c5 d4 e3 f2 hxg1=Q hxg1=N hxg1=B hxg1=R");
+
+            position = position(white(k(a1),r(f2,h1)),black(k(c1),p(g2)),Colour.BLACK);
+            assertOnlyMoves(position,"gxh1=Q gxh1=N gxh1=B gxh1=R g1=Q g1=N g1=B g1=R");
+        }
+
+        @Test
+        public void miscBlock() {
+            Position position = position(white(k(b2),n(b5,g4),b(a5,f2,c7,h4),r(c5,f4),q(d3,e6)),black(k(a8),b(g7,d1),r(a1,a7)),Colour.WHITE);
+            assertOnlyMoves(position,"Nc3 Bc3 Rc3 Qc3 Nd4 Bd4 Rd4 Qd4 Ne5 Be5 Re5 Qe5 Nf6 Bf6 Rf6 Qf6");
+
+            position = position(white(k(a8),b(g7,d1),r(a1,a7)),black(k(b2),n(b5,g4),b(a5,f2,c7,h4),r(c5,f4),q(d3,e6)),Colour.BLACK);
+            assertOnlyMoves(position,"Nc3 Bc3 Rc3 Qc3 Nd4 Bd4 Rd4 Qd4 Ne5 Be5 Re5 Qe5 Nf6 Bf6 Rf6 Qf6");
+        }
+
+        @Test
+        public void checkMates() {
+            Position position = new Position(GameType.STANDARD);
+            move(position,"g4 e5 f3 Qh4#");
+            assertCheckmate(position);
+
+            position = new Position(GameType.STANDARD);
+            move(position,"e4 g5 a3 f6 Qh5#");
+            assertCheckmate(position);
+
+            position = position(white(k(d4),b(c3,c5,e5,e3)),black(k(a1),n(d6),b(b2,f2),r(d1)),Colour.WHITE);
+            assertCheckmate(position);
+
+            position = position(white(k(a1),n(d6),b(b2,f2),r(d1)),black(k(d4),b(c3,c5,e5,e3)),Colour.BLACK);
+            assertCheckmate(position);
+
+            /* Double checks. */
+            position = position(white(k(e1),p(d2,f2),q(d1),b(f1)),black(k(e8),q(e7),n(d3)),Colour.WHITE);
+            assertCheckmate(position);
+
+            position = position(white(k(e1),q(e2),n(d6)),black(k(e8),p(d7,f7),q(d8),b(f8)),Colour.BLACK);
+            assertCheckmate(position);
+        }
     }
 }
