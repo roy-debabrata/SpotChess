@@ -46,4 +46,9 @@ public class Game {
         this.currentPosition = new Position(position);
         this.moveHistory = new ArrayList<>();
     }
+
+    public Game(Position position, int unknownMovesCount) {
+        this(position);
+        /* We don't use "unknownMovesCount" right now. */
+    }
 }

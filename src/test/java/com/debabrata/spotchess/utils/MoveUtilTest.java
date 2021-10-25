@@ -554,20 +554,20 @@ public class MoveUtilTest {
             position = position(white(k(h1),p(e4)),black(k(a8),b(c6)),Colour.WHITE);
             assertDoesNotHaveMoves(position, "e5 exd5 exf5");
 
-            position.removePiece(c6.placeValue);
+            position = position(position, withoutPieceAt(c6));
             assertHasMoves(position, "e5");
 
             position = position(white(k(d4),p(e3)),black(k(a8),b(f2)),Colour.WHITE);
             assertDoesNotHaveMoves(position, "e4");
 
-            position.removePiece(f2.placeValue);
+            position = position(position, withoutPieceAt(f2));
             assertHasMoves(position, "e4");
 
             position = position(white(k(d4),p(e5)),black(k(a8),p(d7),b(h8)),Colour.BLACK);
             move(position, "d5");
             assertDoesNotHaveMoves(position, "exd6"); /* En-passant. */
 
-            position.removePiece(h8.placeValue);
+            position = position(position, withoutPieceAt(h8));
             assertHasMoves(position, "exd6");
 
             /* Black bishop/queen pins pawn a1-h8-diagonally. */
@@ -578,33 +578,33 @@ public class MoveUtilTest {
             position = position(white(k(a1),p(d4)),black(k(a8),b(g7)),Colour.WHITE);
             assertDoesNotHaveMoves(position, "d5 dxe5 dxf5");
 
-            position.removePiece(g7.placeValue);
+            position = position(position, withoutPieceAt(g7));
             assertHasMoves(position, "d5");
 
             position = position(white(k(e5),p(b2)),black(k(a8),b(a1)),Colour.WHITE);
             assertDoesNotHaveMoves(position, "b3 b4");
 
-            position.removePiece(a1.placeValue);
+            position = position(position, withoutPieceAt(a1));
             assertHasMoves(position, "b3 b4");
 
             position = position(white(k(e4),p(d5)),black(k(a1),p(e7),b(a8)),Colour.BLACK);
             move(position, "e5");
             assertDoesNotHaveMoves(position, "dxe6");
 
-            position.removePiece(a8.placeValue);
+            position = position(position, withoutPieceAt(a8));
             assertHasMoves(position, "dxe6");
 
             /* Black rook/queen pins pawn horizontally. */
             position = position(white(k(c2),p(f2)),black(k(a8),r(h2)),Colour.WHITE);
             assertDoesNotHaveMoves(position, "f3 f4 fxe3 fxg3");
 
-            position.removePiece(h2.placeValue);
+            position = position(position, withoutPieceAt(h2));
             assertHasMoves(position, "f3 f4");
 
             position = position(white(k(f3),p(c3)),black(k(a8),r(a3)),Colour.WHITE);
             assertDoesNotHaveMoves(position, "c4 cxb4 cxd4");
 
-            position.removePiece(a3.placeValue);
+            position = position(position, withoutPieceAt(a3));
             assertHasMoves(position, "c4");
 
             /* En-passant take exposes king to enemy rook. */
@@ -634,7 +634,7 @@ public class MoveUtilTest {
             assertHasMoves(position, "d3 d4");
             assertDoesNotHaveMoves(position, "dxc3 dxe3");
 
-            position.removePiece(d1.placeValue);
+            position = position(position, withoutPieceAt(d1));
             assertHasMoves(position, "d3 d4 dxc3 dxe3");
 
             /* White bishop/queen pins pawn a8-h1-diagonally. */
@@ -645,20 +645,20 @@ public class MoveUtilTest {
             position = position(white(k(a1),b(c3)),black(k(h8),p(e5)),Colour.BLACK);
             assertDoesNotHaveMoves(position, "e4 exd4 exf4");
 
-            position.removePiece(c3.placeValue);
+            position = position(position, withoutPieceAt(c3));
             assertHasMoves(position, "e4");
 
             position = position(white(k(a1),b(f7)),black(k(d5),p(e6)),Colour.BLACK);
             assertDoesNotHaveMoves(position, "e5");
 
-            position.removePiece(f7.placeValue);
+            position = position(position, withoutPieceAt(f7));
             assertHasMoves(position, "e5");
 
             position = position(white(k(a1),p(d2),b(h1)),black(k(d5),p(e4)),Colour.WHITE);
             move(position, "d4");
             assertDoesNotHaveMoves(position, "exd3"); /* En-passant. */
 
-            position.removePiece(h1.placeValue);
+            position = position(position, withoutPieceAt(h1));
             assertHasMoves(position, "exd3");
 
             /* White bishop/queen pins pawn a1-h8-diagonally. */
@@ -669,33 +669,33 @@ public class MoveUtilTest {
             position = position(white(k(a1),b(g2)),black(k(a8),p(d5)),Colour.BLACK);
             assertDoesNotHaveMoves(position, "d4 dxe4 dxf4");
 
-            position.removePiece(g2.placeValue);
+            position = position(position, withoutPieceAt(g2));
             assertHasMoves(position, "d4");
 
             position = position(white(k(a1),b(a8)),black(k(e4),p(b7)),Colour.BLACK);
             assertDoesNotHaveMoves(position, "b6 b5");
 
-            position.removePiece(a8.placeValue);
+            position = position(position, withoutPieceAt(a8));
             assertHasMoves(position, "b6 b5");
 
             position = position(white(k(a8),p(e2),b(a1)),black(k(e5),p(d4)),Colour.WHITE);
             move(position, "e4");
             assertDoesNotHaveMoves(position, "dxe3");
 
-            position.removePiece(a1.placeValue);
+            position = position(position, withoutPieceAt(a1));
             assertHasMoves(position, "dxe3");
 
             /* White rook/queen pins pawn horizontally. */
             position = position(white(k(a1),r(h7)),black(k(c7),p(f7)),Colour.BLACK);
             assertDoesNotHaveMoves(position, "f6 f5 fxe6 fxg6");
 
-            position.removePiece(h7.placeValue);
+            position = position(position, withoutPieceAt(h7));
             assertHasMoves(position, "f6 f5");
 
             position = position(white(k(a1),r(a6)),black(k(f6),p(c6)),Colour.BLACK);
             assertDoesNotHaveMoves(position, "c5 cxb5 cxd5");
 
-            position.removePiece(a6.placeValue);
+            position = position(position, withoutPieceAt(a6));
             assertHasMoves(position, "c5");
 
             /* En-passant take exposes king to enemy rook. */
@@ -725,7 +725,7 @@ public class MoveUtilTest {
             assertHasMoves(position, "d6 d5");
             assertDoesNotHaveMoves(position, "dxc6 dxe6");
 
-            position.removePiece(d8.placeValue);
+            position = position(position, withoutPieceAt(d8));
             assertHasMoves(position, "d6 d5 dxc6 dxe6");
         }
 
@@ -735,25 +735,25 @@ public class MoveUtilTest {
             Position position = position(white(k(e4),n(d4)),black(k(a1),r(c4)),Colour.WHITE);
             assertDoesNotHaveMoves(position,"Nc2 Nb3 Nb5 Nc6 Ne6 Nf5 Nf3 Ne2");
 
-            position.removePiece(c4.placeValue);
+            position = position(position, withoutPieceAt(c4));
             assertHasMoves(position,"Nc2 Nb3 Nb5 Nc6 Ne6 Nf5 Nf3 Ne2");
 
             position = position(white(k(d5),n(d4)),black(k(a1),r(d3)),Colour.WHITE);
             assertDoesNotHaveMoves(position,"Nc2 Nb3 Nb5 Nc6 Ne6 Nf5 Nf3 Ne2");
 
-            position.removePiece(d3.placeValue);
+            position = position(position, withoutPieceAt(d3));
             assertHasMoves(position,"Nc2 Nb3 Nb5 Nc6 Ne6 Nf5 Nf3 Ne2");
 
             position = position(white(k(c4),n(d4)),black(k(a1),r(e4)),Colour.WHITE);
             assertDoesNotHaveMoves(position,"Nc2 Nb3 Nb5 Nc6 Ne6 Nf5 Nf3 Ne2");
 
-            position.removePiece(e4.placeValue);
+            position = position(position, withoutPieceAt(e4));
             assertHasMoves(position,"Nc2 Nb3 Nb5 Nc6 Ne6 Nf5 Nf3 Ne2");
 
             position = position(white(k(d3),n(d4)),black(k(a1),r(d5)),Colour.WHITE);
             assertDoesNotHaveMoves(position,"Nc2 Nb3 Nb5 Nc6 Ne6 Nf5 Nf3 Ne2");
 
-            position.removePiece(d5.placeValue);
+            position = position(position, withoutPieceAt(d5));
             assertHasMoves(position,"Nc2 Nb3 Nb5 Nc6 Ne6 Nf5 Nf3 Ne2");
 
             /* White knight pinned by queen. */
@@ -785,50 +785,50 @@ public class MoveUtilTest {
             position = position(white(k(c3),n(d4)),black(k(a1),b(e5)),Colour.WHITE);
             assertDoesNotHaveMoves(position,"Nc2 Nb3 Nb5 Nc6 Ne6 Nf5 Nf3 Ne2");
 
-            position.removePiece(e5.placeValue);
+            position = position(position, withoutPieceAt(e5));
             assertHasMoves(position,"Nc2 Nb3 Nb5 Nc6 Ne6 Nf5 Nf3 Ne2");
 
             position = position(white(k(c5),n(d4)),black(k(a1),b(e3)),Colour.WHITE);
             assertDoesNotHaveMoves(position,"Nc2 Nb3 Nb5 Nc6 Ne6 Nf5 Nf3 Ne2");
 
-            position.removePiece(e3.placeValue);
+            position = position(position, withoutPieceAt(e3));
             assertHasMoves(position,"Nc2 Nb3 Nb5 Nc6 Ne6 Nf5 Nf3 Ne2");
 
             position = position(white(k(e5),n(d4)),black(k(a1),b(c3)),Colour.WHITE);
             assertDoesNotHaveMoves(position,"Nc2 Nb3 Nb5 Nc6 Ne6 Nf5 Nf3 Ne2");
 
-            position.removePiece(c3.placeValue);
+            position = position(position, withoutPieceAt(c3));
             assertHasMoves(position,"Nc2 Nb3 Nb5 Nc6 Ne6 Nf5 Nf3 Ne2");
 
             position = position(white(k(e5),n(d4)),black(k(a1),b(c3)),Colour.WHITE);
             assertDoesNotHaveMoves(position,"Nc2 Nb3 Nb5 Nc6 Ne6 Nf5 Nf3 Ne2");
 
-            position.removePiece(c3.placeValue);
+            position = position(position, withoutPieceAt(c3));
             assertHasMoves(position,"Nc2 Nb3 Nb5 Nc6 Ne6 Nf5 Nf3 Ne2");
 
             /* Black knight pinned by rook. */
             position = position(white(k(a1),r(c4)),black(k(e4),n(d4)),Colour.BLACK);
             assertDoesNotHaveMoves(position,"Nc2 Nb3 Nb5 Nc6 Ne6 Nf5 Nf3 Ne2");
 
-            position.removePiece(c4.placeValue);
+            position = position(position, withoutPieceAt(c4));
             assertHasMoves(position,"Nc2 Nb3 Nb5 Nc6 Ne6 Nf5 Nf3 Ne2");
 
             position = position(white(k(a1),r(d3)),black(k(d5),n(d4)),Colour.BLACK);
             assertDoesNotHaveMoves(position,"Nc2 Nb3 Nb5 Nc6 Ne6 Nf5 Nf3 Ne2");
 
-            position.removePiece(d3.placeValue);
+            position = position(position, withoutPieceAt(d3));
             assertHasMoves(position,"Nc2 Nb3 Nb5 Nc6 Ne6 Nf5 Nf3 Ne2");
 
             position = position(white(k(a1),r(e4)),black(k(c4),n(d4)),Colour.BLACK);
             assertDoesNotHaveMoves(position,"Nc2 Nb3 Nb5 Nc6 Ne6 Nf5 Nf3 Ne2");
 
-            position.removePiece(e4.placeValue);
+            position = position(position, withoutPieceAt(e4));
             assertHasMoves(position,"Nc2 Nb3 Nb5 Nc6 Ne6 Nf5 Nf3 Ne2");
 
             position = position(white(k(a1),r(d5)),black(k(d3),n(d4)),Colour.BLACK);
             assertDoesNotHaveMoves(position,"Nc2 Nb3 Nb5 Nc6 Ne6 Nf5 Nf3 Ne2");
 
-            position.removePiece(d5.placeValue);
+            position = position(position, withoutPieceAt(d5));
             assertHasMoves(position,"Nc2 Nb3 Nb5 Nc6 Ne6 Nf5 Nf3 Ne2");
 
             /* Black knight pinned by queen. */
@@ -860,25 +860,25 @@ public class MoveUtilTest {
             position = position(white(k(a1),b(e5)),black(k(c3),n(d4)),Colour.BLACK);
             assertDoesNotHaveMoves(position,"Nc2 Nb3 Nb5 Nc6 Ne6 Nf5 Nf3 Ne2");
 
-            position.removePiece(e5.placeValue);
+            position = position(position, withoutPieceAt(e5));
             assertHasMoves(position,"Nc2 Nb3 Nb5 Nc6 Ne6 Nf5 Nf3 Ne2");
 
             position = position(white(k(a1),b(e3)),black(k(c5),n(d4)),Colour.BLACK);
             assertDoesNotHaveMoves(position,"Nc2 Nb3 Nb5 Nc6 Ne6 Nf5 Nf3 Ne2");
 
-            position.removePiece(e3.placeValue);
+            position = position(position, withoutPieceAt(e3));
             assertHasMoves(position,"Nc2 Nb3 Nb5 Nc6 Ne6 Nf5 Nf3 Ne2");
 
             position = position(white(k(a1),b(c3)),black(k(e5),n(d4)),Colour.BLACK);
             assertDoesNotHaveMoves(position,"Nc2 Nb3 Nb5 Nc6 Ne6 Nf5 Nf3 Ne2");
 
-            position.removePiece(c3.placeValue);
+            position = position(position, withoutPieceAt(c3));
             assertHasMoves(position,"Nc2 Nb3 Nb5 Nc6 Ne6 Nf5 Nf3 Ne2");
 
             position = position(white(k(a1),b(c3)),black(k(e5),n(d4)),Colour.BLACK);
             assertDoesNotHaveMoves(position,"Nc2 Nb3 Nb5 Nc6 Ne6 Nf5 Nf3 Ne2");
 
-            position.removePiece(c3.placeValue);
+            position = position(position, withoutPieceAt(c3));
             assertHasMoves(position,"Nc2 Nb3 Nb5 Nc6 Ne6 Nf5 Nf3 Ne2");
         }
 
@@ -889,25 +889,25 @@ public class MoveUtilTest {
             Position position = position(white(k(d4),r(c3)), black(k(a8),b(a1)), Colour.WHITE);
             assertDoesNotHaveMoves(position, "Rc2 Rc4 Rb3 Rd3");
 
-            position.removePiece(a1.placeValue);
+            position = position(position, withoutPieceAt(a1));
             assertHasMoves(position, "Rc2 Rc4 Rb3 Rd3");
 
             position = position(white(k(d4),r(e5)), black(k(a8),b(h8)), Colour.WHITE);
             assertDoesNotHaveMoves(position, "Re4 Re6 Rd5 Rf5");
 
-            position.removePiece(h8.placeValue);
+            position = position(position, withoutPieceAt(h8));
             assertHasMoves(position, "Re4 Re6 Rd5 Rf5");
 
             position = position(white(k(d4),r(c5)), black(k(a8),b(a7)), Colour.WHITE);
             assertDoesNotHaveMoves(position, "Rc4 Rc6 Rc7 Rc8");
 
-            position.removePiece(a7.placeValue);
+            position = position(position, withoutPieceAt(a7));
             assertHasMoves(position, "Rc4 Rc6 Rc7 Rc8");
 
             position = position(white(k(d4),r(e3)), black(k(a8),b(g1)), Colour.WHITE);
             assertDoesNotHaveMoves(position, "Re2 Re4 Rd3 Rf3");
 
-            position.removePiece(g1.placeValue);
+            position = position(position, withoutPieceAt(g1));
             assertHasMoves(position, "Re2 Re4 Rd3 Rf3");
 
             /* Black queen white rook. */
@@ -927,25 +927,25 @@ public class MoveUtilTest {
             position = position(white(k(a8),b(a1)), black(k(d4),r(c3)), Colour.BLACK);
             assertDoesNotHaveMoves(position, "Rc2 Rc4 Rb3 Rd3");
 
-            position.removePiece(a1.placeValue);
+            position = position(position, withoutPieceAt(a1));
             assertHasMoves(position, "Rc2 Rc4 Rb3 Rd3");
 
             position = position(white(k(a8),b(h8)), black(k(d4),r(e5)), Colour.BLACK);
             assertDoesNotHaveMoves(position, "Re4 Re6 Rd5 Rf5");
 
-            position.removePiece(h8.placeValue);
+            position = position(position, withoutPieceAt(h8));
             assertHasMoves(position, "Re4 Re6 Rd5 Rf5");
 
             position = position(white(k(a8),b(a7)), black(k(d4),r(c5)), Colour.BLACK);
             assertDoesNotHaveMoves(position, "Rc4 Rc6 Rc7 Rc8");
 
-            position.removePiece(a7.placeValue);
+            position = position(position, withoutPieceAt(a7));
             assertHasMoves(position, "Rc4 Rc6 Rc7 Rc8");
 
             position = position(white(k(a8),b(g1)), black(k(d4),r(e3)), Colour.BLACK);
             assertDoesNotHaveMoves(position, "Re2 Re4 Rd3 Rf3");
 
-            position.removePiece(g1.placeValue);
+            position = position(position, withoutPieceAt(g1));
             assertHasMoves(position, "Re2 Re4 Rd3 Rf3");
 
             /* White queen black rook. */
@@ -1039,28 +1039,28 @@ public class MoveUtilTest {
             assertHasMoves(position,"Bxg7 Bf6 Be5 Bc3 Bb2");
             assertDoesNotHaveMoves(position, "Bc5 Be3 Bh8");
 
-            position.removePiece(g7.placeValue);
+            position = position(position, withoutPieceAt(g7));
             assertHasMoves(position, "Bc5 Be3 Bh8");
 
             position = position(white(k(a8),b(d5)), black(k(h8),b(g2)), Colour.WHITE);
             assertHasMoves(position,"Bxg2 Bf3 Be4 Bc6 Bb7");
             assertDoesNotHaveMoves(position, "Bc4 Be6 Bh1");
 
-            position.removePiece(g2.placeValue);
+            position = position(position, withoutPieceAt(g2));
             assertHasMoves(position, "Bc4 Be6 Bh1");
 
             position = position(white(k(h8),b(f6)), black(k(a8),b(d4)), Colour.WHITE);
             assertHasMoves(position,"Bxd4 Be5 Bg7");
             assertDoesNotHaveMoves(position, "Be7 Bg5 Ba1 Bb2 Bc3");
 
-            position.removePiece(d4.placeValue);
+            position = position(position, withoutPieceAt(d4));
             assertHasMoves(position, "Be7 Bg5 Ba1 Bb2 Bc3");
 
             position = position(white(k(h1),b(e4)), black(k(h8),b(b7)), Colour.WHITE);
             assertHasMoves(position,"Bxb7 Bc6 Bd5 Bf3 Bg2");
             assertDoesNotHaveMoves(position, "Bd3 Bf5 Ba8");
 
-            position.removePiece(b7.placeValue);
+            position = position(position, withoutPieceAt(b7));
             assertHasMoves(position, "Bd3 Bf5 Ba8");
 
             /* Black queen pins white bishop. */
@@ -1085,28 +1085,28 @@ public class MoveUtilTest {
             assertHasMoves(position,"Bxg7 Bf6 Be5 Bc3 Bb2");
             assertDoesNotHaveMoves(position, "Bc5 Be3 Bh8");
 
-            position.removePiece(g7.placeValue);
+            position = position(position, withoutPieceAt(g7));
             assertHasMoves(position, "Bc5 Be3 Bh8");
 
             position = position(white(k(h8),b(g2)), black(k(a8),b(d5)), Colour.BLACK);
             assertHasMoves(position,"Bxg2 Bf3 Be4 Bc6 Bb7");
             assertDoesNotHaveMoves(position, "Bc4 Be6 Bh1");
 
-            position.removePiece(g2.placeValue);
+            position = position(position, withoutPieceAt(g2));
             assertHasMoves(position, "Bc4 Be6 Bh1");
 
             position = position(white(k(a8),b(d4)), black(k(h8),b(f6)), Colour.BLACK);
             assertHasMoves(position,"Bxd4 Be5 Bg7");
             assertDoesNotHaveMoves(position, "Be7 Bg5 Ba1 Bb2 Bc3");
 
-            position.removePiece(d4.placeValue);
+            position = position(position, withoutPieceAt(d4));
             assertHasMoves(position, "Be7 Bg5 Ba1 Bb2 Bc3");
 
             position = position(white(k(h8),b(b7)), black(k(h1),b(e4)), Colour.BLACK);
             assertHasMoves(position,"Bxb7 Bc6 Bd5 Bf3 Bg2");
             assertDoesNotHaveMoves(position, "Bd3 Bf5 Ba8");
 
-            position.removePiece(b7.placeValue);
+            position = position(position, withoutPieceAt(b7));
             assertHasMoves(position, "Bd3 Bf5 Ba8");
 
             /* White queen pins black bishop. */

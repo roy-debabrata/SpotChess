@@ -6,9 +6,9 @@ public enum PieceType {
     BISHOP('B'),
     KNIGHT('N'),
     ROOK('R'),
-    PAWN('\0'); /* We can trim this out of the notation. */
+    PAWN('P');
 
-    private char notation;
+    private final char notation;
 
     PieceType(char notation) {
         this.notation = notation;
@@ -16,5 +16,15 @@ public enum PieceType {
 
     public char getNotation(){
         return this.notation;
+    }
+
+    public static PieceType getPiece(char notation) {
+        notation = Character.toUpperCase(notation);
+        for (PieceType piece : values()) {
+            if (piece.getNotation() == notation) {
+                return piece;
+            }
+        }
+        return null;
     }
 }

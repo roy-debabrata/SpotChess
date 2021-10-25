@@ -5,7 +5,6 @@ import com.debabrata.spotchess.types.enums.Colour;
 import com.debabrata.spotchess.types.enums.GameType;
 import org.junit.jupiter.api.Test;
 
-
 import static com.debabrata.spotchess.support.SpotTestSupport.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -18,6 +17,15 @@ public class SpotTestSupportTest{
                 Colour.WHITE);
         Position standardPosition = new Position(GameType.STANDARD);
         assertEquals(standardPosition, position);
+    }
+
+    @Test
+    public void testPieceRemove() {
+        Position position = position(white(k(a1),p(d4)),black(k(a8)),Colour.WHITE);
+        Position positionWithoutPawn = position(white(k(a1)),black(k(a8)),Colour.WHITE);
+
+        position = position(position,withoutPieceAt(d4));
+        assertEquals(positionWithoutPawn, position);
     }
 
     @Test

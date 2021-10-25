@@ -1,5 +1,6 @@
 package com.debabrata.spotchess.types;
 
+import com.debabrata.spotchess.exception.InvalidPositionException;
 import com.debabrata.spotchess.types.enums.GameType;
 import com.debabrata.spotchess.utils.MoveInitUtil;
 import com.debabrata.spotchess.types.enums.Colour;
@@ -51,7 +52,7 @@ public final class Position {
      * At beginning of any regular chess game the flags will have 0. This sets all flags to their initial state. */
     private int flags;
 
-    public Position() {
+    private Position() {
     }
 
     public Position(GameType gameType) {
@@ -82,7 +83,7 @@ public final class Position {
     }
 
     /* We don't addPieces and removePieces in engine. We use this to only setup the board for trying out positions. */
-    public boolean addPiece(Colour colour, PieceType piece, int placeValue) {
+    private boolean addPiece(Colour colour, PieceType piece, int placeValue) {
         if (null == colour || null == piece || placeValue < 0 || placeValue > 63) {
             return false;
         }
@@ -108,7 +109,7 @@ public final class Position {
         return true;
     }
 
-    public boolean removePiece(int placeValue) {
+    private boolean removePiece(int placeValue) {
         if (placeValue < 0 || placeValue > 63) {
             return false; /* PlaceValue outside board. */
         }
@@ -214,7 +215,12 @@ public final class Position {
         flags++;
     }
 
-    public void resetReversibleHalfMoveCount() {
+    private void setHalfMoveCounter(int counter) {
+        resetReversibleHalfMoveCount();
+        flags = flags + counter;
+    }
+
+    private void resetReversibleHalfMoveCount() {
         flags = flags & 0xFFFFFF00;
     }
 
@@ -273,7 +279,7 @@ public final class Position {
         }
     }
 
-    public void resetEnPassantStatusData() {
+    private void resetEnPassantStatusData() {
         flags = flags & 0xFF0000FF;
     }
 
@@ -298,7 +304,7 @@ public final class Position {
         return (flags & 0x08000000) == 0;
     }
 
-    public void leftRookMoved(boolean whiteToMove) {
+    private void leftRookMoved(boolean whiteToMove) {
         if (whiteToMove) {
             flags = flags | 0x01000000;
         } else {
@@ -306,7 +312,7 @@ public final class Position {
         }
     }
 
-    public void rightRookMoved(boolean whiteToMove) {
+    private void rightRookMoved(boolean whiteToMove) {
         if (whiteToMove) {
             flags = flags | 0x04000000;
         } else {
@@ -314,7 +320,7 @@ public final class Position {
         }
     }
 
-    public void kingMoved(boolean whiteToMove) {
+    private void kingMoved(boolean whiteToMove) {
         if (whiteToMove) {
             flags = flags | 0x05000000;
         } else {
@@ -329,7 +335,7 @@ public final class Position {
         return (flags & 0x10000000) == 0;
     }
 
-    public void toggleWhiteToMove() {
+    private void toggleWhiteToMove() {
         flags = flags ^ 0x10000000;
     }
 
@@ -544,7 +550,7 @@ public final class Position {
     }
 
     /* Checks that the board state is not inconsistent. It's a useful method for testing. */
-    public boolean checkSanity() {
+    public boolean validate() {
         if ((whitePieces & blackPieces) != 0) {
             return false; /* No piece can be both black and white. */
         }
@@ -591,5 +597,83 @@ public final class Position {
                 rooksAndQueens == position.rooksAndQueens &&
                 queensAndBishops == position.queensAndBishops &&
                 flags == position.flags;
+    }
+
+    public static class Builder {
+        private Position position;
+        Square enPassantSquare = null;
+        InvalidPositionException exception;
+
+        public Builder() {
+            this.position = new Position();
+        }
+
+        public Builder(GameType gameType) {
+            this.position = new Position(gameType);
+        }
+
+        public Builder(Position position) {
+            this.position = new Position(position);
+        }
+
+        public Builder withPiece(Colour colour, PieceType piece, Square square) {
+            boolean success = position.addPiece(colour, piece, square.placeValue);
+            if (!success) {
+                exception = new InvalidPositionException("Couldn't add the following piece to position "
+                        + colour + " " + piece + " to " + square);
+            }
+            return this;
+        }
+
+        public Builder withoutPiece(Square square){
+            boolean success = position.removePiece(square.placeValue);
+            if (!success) {
+                exception = new InvalidPositionException("Couldn't remove piece from position");
+            }
+            return this;
+        }
+
+        public Builder halfMovesCount(int halfMovesCount) {
+            position.setHalfMoveCounter(halfMovesCount);
+            return this;
+        }
+
+        public Builder leftRookMoved(Colour colour) {
+            position.leftRookMoved(colour == Colour.WHITE);
+            return this;
+        }
+
+        public Builder rightRookMoved(Colour colour) {
+            position.rightRookMoved(colour == Colour.WHITE);
+            return this;
+        }
+
+        public Builder kingMoved(Colour colour) {
+            position.kingMoved(colour == Colour.WHITE);
+            return this;
+        }
+
+        public Builder toMove(Colour colour) {
+            if (position.whiteToMove() != (colour == Colour.WHITE)) {
+                position.toggleWhiteToMove();
+            }
+            return this;
+        }
+
+        public Builder enPassantSquare(Square square) {
+            this.enPassantSquare = square;
+            return this;
+        }
+
+        public Position build() throws InvalidPositionException {
+            if (null != exception) {
+                throw exception;
+            }
+            if (null != enPassantSquare) {
+                position.setEnPassantStatusData(enPassantSquare.placeValue, position.whiteToMove());
+            }
+            position.validate();
+            return position;
+        }
     }
 }

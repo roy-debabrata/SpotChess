@@ -1,6 +1,7 @@
 package com.debabrata.spotchess.support.notation.move;
 
 import com.debabrata.spotchess.types.Position;
+import com.debabrata.spotchess.types.Square;
 import com.debabrata.spotchess.types.enums.Colour;
 import com.debabrata.spotchess.types.enums.PieceType;
 import com.debabrata.spotchess.utils.BitUtil;
@@ -8,7 +9,8 @@ import com.debabrata.spotchess.utils.KingAndKnightMovesUtil;
 import com.debabrata.spotchess.utils.MoveInitUtil;
 import com.debabrata.spotchess.utils.RookAndBishopMovesUtil;
 
-public class StandardAlgebraicNotation implements MoveNotation {
+/** Parses and generates Standard Algebraic Notation moves. */
+public class SANParser implements MoveParser {
     @Override
     public int getMove(Position position, String notation) {
         /* We don't do all checks for legality, only enough to avoid misinterpretation. */
@@ -204,8 +206,7 @@ public class StandardAlgebraicNotation implements MoveNotation {
         }
 
         int to = MoveInitUtil.getTo(move);
-        String notation = "" + (char) ('h' - (to % 8));
-        notation = notation + (to / 8 + 1);
+        String notation = new Square(to).toString();
 
         int from = MoveInitUtil.getFrom(move);
         PieceType pieceType = position.getPieceType(from);
@@ -213,7 +214,7 @@ public class StandardAlgebraicNotation implements MoveNotation {
         if (position.getPieceType(to) != null || MoveInitUtil.isEnPassant(move)) {
             notation = "x" + notation;
             if (pieceType == PieceType.PAWN) {
-                notation = (char) ('h' - (from % 8)) + notation;
+                notation = new Square(from).toString().charAt(0) + notation;
             }
         }
         if (pieceType == PieceType.PAWN) {
@@ -261,19 +262,19 @@ public class StandardAlgebraicNotation implements MoveNotation {
                 /* There is ambiguity with attackers. */
                 if ((attackers & (0x0101010101010101L << (from % 8))) == 0) {
                     /* Attackers are not in the same column. */
-                    notation = (char) ('h' - (from % 8)) + notation;
+                    notation = new Square(from).toString().charAt(0) + notation;
                 } else if ((attackers & (0x00000000000000FFL << (8 * (from / 8)))) == 0) {
                     /* Attackers are in the same column but not same row. */
-                    notation = (from / 8 + 1) + notation;
+                    notation = new Square(from).toString().charAt(1) + notation;
                 } else {
                     /* We share both row and column with some attacker. */
-                    notation = (from / 8 + 1) + notation;
-                    notation = (char) ('h' - (from % 8)) + notation;
+                    notation = new Square(from) + notation;
                 }
             }
         }
 
-        notation = pieceType.getNotation() + notation;
+        char pieceChar = pieceType.getNotation();
+        notation = pieceChar == 'P' ? notation : pieceChar + notation;
         return notation.trim();
     }
 

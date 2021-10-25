@@ -2,8 +2,8 @@ package com.debabrata.spotchess.support.notation.game;
 
 import com.debabrata.spotchess.types.Game;
 
-public interface GameNotation {
+public interface GameParser {
     Game getGame(String gameContent);
-    String getNotation(String game);
+    String getNotation(Game game);
     boolean confirmFormat(String gameContent);
 }
