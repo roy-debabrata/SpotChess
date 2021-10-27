@@ -670,7 +670,7 @@ public final class Position {
                 throw exception;
             }
             if (null != enPassantSquare) {
-                position.setEnPassantStatusData(enPassantSquare.placeValue, position.whiteToMove());
+                position.setEnPassantStatusData(1L << enPassantSquare.placeValue, !position.whiteToMove());
             }
             position.validate();
             return position;

@@ -44,8 +44,8 @@ public class FENParser implements GameParser {
 
         /* We expect to have the following information next: <space>side to move<space> */
         readPosition++;
-        char sideToMove = gameContent.charAt(readPosition++);
-        if (Character.toLowerCase(sideToMove) == 'b') {
+        boolean blackToMove = Character.toLowerCase(gameContent.charAt(readPosition++)) == 'b';
+        if (blackToMove) {
             positionBuilder.toMove(Colour.BLACK);
         }
 
@@ -93,25 +93,22 @@ public class FENParser implements GameParser {
         char epFile = gameContent.charAt(readPosition++);
         if (epFile != '-') {
             char epRank = gameContent.charAt(readPosition++);
-            Square enPassantSquare = new Square(String.valueOf(epFile) + epRank);
+            Square enPassantSquare = new Square(String.valueOf(epFile) + (char)(epRank + (blackToMove ? 1 : -1)));
             positionBuilder.enPassantSquare(enPassantSquare);
         }
         readPosition ++;
         /* We next expect to have the following information next: half move count */
         int halfMoveCounter = 0;
         char halfMoveChar;
-        do {
+        while(readPosition < gameContent.length()) {
             halfMoveChar = gameContent.charAt(readPosition++);
             if (Character.isDigit(halfMoveChar)) {
                 halfMoveCounter = halfMoveCounter * 10 + (halfMoveChar - '0');
             } else {
                 break;
             }
-        } while (readPosition < gameContent.length());
-        positionBuilder.halfMovesCount(halfMoveCounter);
-        if (!(readPosition < gameContent.length())) {
-            throw new RuntimeException("Something is wrong with the  FEN format validator 3!");
         }
+        positionBuilder.halfMovesCount(halfMoveCounter);
 
         /* We next expect to have the following information next: half move count */
         int moveCounter = 0;
@@ -130,7 +127,42 @@ public class FENParser implements GameParser {
 
     @Override
     public String getNotation(Game game) {
-        return null;
+        if (null == game) {
+             return null;
+        }
+        StringBuilder fen = new StringBuilder();
+        Position position = game.getCurrentPosition();
+
+        /* Adding board position. */
+        int spaceCounter = 0;
+        for(int i = 63; i >= 0; i--) {
+            Colour colour = position.getPieceColour(i);
+            if (null == colour) {
+                spaceCounter ++;
+            } else {
+                if (spaceCounter > 0) {
+                    fen.append(spaceCounter);
+                    spaceCounter = 0;
+                }
+                PieceType type = position.getPieceType(i);
+                if (colour == Colour.WHITE) {
+                    fen.append(type.getNotation());
+                } else {
+                    fen.append(Character.toLowerCase(type.getNotation()));
+                }
+            }
+            if (i % 8 == 0) {
+                if (spaceCounter > 0) {
+                    fen.append(spaceCounter);
+                    spaceCounter = 0;
+                }
+                if (i != 0) {
+                    fen.append('/');
+                }
+            }
+        }
+
+        return fen.toString();
     }
 
     @Override

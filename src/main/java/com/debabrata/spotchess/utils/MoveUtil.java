@@ -128,7 +128,7 @@ public class MoveUtil {
             } else {
                 kingAttack = kingAttack & semiMask;
             }
-            if (attacker > ourKing) {
+            if (attacker > ourKing || attacker == 0x8000000000000000L) {
                 interventionPoints = interventionPoints | (kingAttack & -ourKing);
             } else {
                 interventionPoints = interventionPoints | (kingAttack & (ourKing - 1));
@@ -136,20 +136,27 @@ public class MoveUtil {
         }
         if (kingCheckCount < 2) {
             kingAttack = RookAndBishopMovesUtil.getRookMoves(kingPlaceValue, allPieces);
-            attacker = kingAttack & enemyRooksAndQueens; /* There can only be one at max. */
+            /* In this case there can be more than one in case pawn takes and promotes to same type and reveals a check.
+             * For ex. axb8=Q where the king is at a8 and a queen at a6. */
+            attacker = kingAttack & enemyRooksAndQueens;
             if (attacker != 0) {
                 /* Enemy rook type attacker attacks the position. */
-                kingCheckCount++;
                 long semiMask = RookAndBishopMovesUtil.getRookSemiMask(kingPlaceValue);
-                if ((attacker & semiMask) == 0) {
-                    kingAttack = kingAttack & ~semiMask;
+
+                if ((attacker & semiMask) != 0 && (attacker & ~semiMask) != 0) {
+                    kingCheckCount = kingCheckCount + 2;
                 } else {
-                    kingAttack = kingAttack & semiMask;
-                }
-                if (attacker > ourKing) {
-                    interventionPoints = interventionPoints | (kingAttack & -ourKing);
-                } else {
-                    interventionPoints = interventionPoints | (kingAttack & (ourKing - 1));
+                    kingCheckCount++;
+                    if ((attacker & semiMask) == 0) {
+                        kingAttack = kingAttack & ~semiMask;
+                    } else {
+                        kingAttack = kingAttack & semiMask;
+                    }
+                    if (attacker > ourKing || attacker == 0x8000000000000000L) {
+                        interventionPoints = interventionPoints | (kingAttack & -ourKing);
+                    } else {
+                        interventionPoints = interventionPoints | (kingAttack & (ourKing - 1));
+                    }
                 }
             }
         }
@@ -169,6 +176,7 @@ public class MoveUtil {
         }
 
         /* Excluding pinned pieces. Adding their moves to buffer if they are any (and we are not in check). */
+        long notInterventionPoint = ~ interventionPoints;
         long diagonalPinners = RookAndBishopMovesUtil.getBishopPins(kingPlaceValue, allPieces);
         if ((diagonalPinners & enemyQueensAndBishops) != 0) {
             /* There is at least one potential pinner piece. */
@@ -182,7 +190,7 @@ public class MoveUtil {
                 pinPair = pinPair | (diagonalOne & -diagonalOne);
                 diagonalOne = diagonalOne & (diagonalOne - 1);
                 long pinned = pinPair & ourPieces;
-                if (pinned != 0 && (pinPair & enemyQueensAndBishops) != 0) {
+                if (pinned != 0 && (pinPair & enemyQueensAndBishops & notInterventionPoint) != 0) {
                     /* One of our pieces is pinned. */
                     if ((pinned & ourRooksAndQueens) != 0) {
                         ourRooksAndQueens = ourRooksAndQueens ^ pinned; /* We remove the rook/queen from the reckoning. */
@@ -216,11 +224,12 @@ public class MoveUtil {
                                         int pawnPosition = BitUtil.getBitPlaceValue(pinned);
                                         moveBuffer[writePosition++] = MoveInitUtil.newEnPassant(pawnPosition, pawnPosition - 9);
                                     }
-                                    enPassantTakers = enPassantTakers ^ pinned;
                                 }
                             }
                         }
-                        ourPawns = ourPawns ^ pinned; /* We remove the pawn from further reckoning. */
+                        /* We remove the pawn from further reckoning. */
+                        ourPawns = ourPawns ^ pinned;
+                        enPassantTakers = enPassantTakers & ourPawns;
                     }
                     if ((pinned & ourQueensAndBishops) != 0) {
                         /* The pin is only partial. We can attack the pinner and all squares in between. */
@@ -256,7 +265,7 @@ public class MoveUtil {
                 pinPair = pinPair | (diagonalTwo & -diagonalTwo);
                 diagonalTwo = diagonalTwo & (diagonalTwo - 1);
                 long pinned = pinPair & ourPieces;
-                if (pinned != 0 && (pinPair & enemyQueensAndBishops) != 0) {
+                if (pinned != 0 && (pinPair & enemyQueensAndBishops & notInterventionPoint) != 0) {
                     /* One of our pieces is pinned. */
                     if ((pinned & ourRooksAndQueens) != 0) {
                         ourRooksAndQueens = ourRooksAndQueens ^ pinned; /* We remove the rook/queen from the reckoning. */
@@ -292,11 +301,12 @@ public class MoveUtil {
                                         int pawnPosition = BitUtil.getBitPlaceValue(pinned);
                                         moveBuffer[writePosition++] = MoveInitUtil.newEnPassant(pawnPosition, pawnPosition - 7);
                                     }
-                                    enPassantTakers = enPassantTakers ^ pinned;
                                 }
                             }
                         }
-                        ourPawns = ourPawns ^ pinned; /* We remove the pawn from further reckoning. */
+                        /* We remove the pawn from further reckoning. */
+                        ourPawns = ourPawns ^ pinned;
+                        enPassantTakers = enPassantTakers & ourPawns;
                     }
                     if ((pinned & ourQueensAndBishops) != 0) {
                         /* The pin is only partial. We can attack the pinner and all squares in between. */
@@ -339,7 +349,7 @@ public class MoveUtil {
                 pinPair = pinPair | (vertical & -vertical);
                 vertical = vertical & (vertical - 1);
                 long pinned = pinPair & ourPieces;
-                if (pinned != 0 && (pinPair & enemyRooksAndQueens) != 0) {
+                if (pinned != 0 && (pinPair & enemyRooksAndQueens & notInterventionPoint) != 0) {
                     /* One of our pieces is pinned. */
                     if ((pinned & ourQueensAndBishops) != 0) {
                         ourQueensAndBishops = ourQueensAndBishops ^ pinned; /* We remove the queen/bishop from the reckoning. */
@@ -371,7 +381,9 @@ public class MoveUtil {
                                 }
                             }
                         }
-                        ourPawns = ourPawns ^ pinned; /* We remove the pawn from further reckoning. */
+                        /* We remove the pawn from further reckoning. */
+                        ourPawns = ourPawns ^ pinned;
+                        enPassantTakers = enPassantTakers & ourPawns;
                     }
                     if ((pinned & ourRooksAndQueens) != 0) {
                         /* The pin is only partial. We can attack the pinner and all squares in between. */
@@ -407,7 +419,7 @@ public class MoveUtil {
                 pinPair = pinPair | (horizontal & -horizontal);
                 horizontal = horizontal & (horizontal - 1);
                 long pinned = pinPair & ourPieces;
-                if (pinned != 0 && (pinPair & enemyRooksAndQueens) != 0) {
+                if (pinned != 0 && (pinPair & enemyRooksAndQueens & notInterventionPoint) != 0) {
                     /* One of our pieces is pinned. */
                     if ((pinned & ourQueensAndBishops) != 0) {
                         /* We remove the queen/bishop from the reckoning. */
@@ -415,7 +427,9 @@ public class MoveUtil {
                     } else if ((pinned & ourKnights) != 0) {
                         ourKnights = ourKnights ^ pinned; /* We remove the knight from the reckoning. */
                     } else if ((pinned & ourPawns) != 0) {
-                        ourPawns = ourPawns ^ pinned; /* Pawn is horizontally pinned we cannot move it. */
+                        /* Pawn is horizontally pinned we cannot move it. */
+                        ourPawns = ourPawns ^ pinned;
+                        enPassantTakers = enPassantTakers & ourPawns;
                     }
                     if ((pinned & ourRooksAndQueens) != 0) {
                         /* The pin is only partial. We can attack the pinner and all squares in between. */
@@ -506,7 +520,7 @@ public class MoveUtil {
                 while (takers != 0) {
                     int moveFrom = BitUtil.getLastBitPlaceValue(takers);
                     if (moveFrom < 48) {
-                        moveBuffer[writePosition++] = moveBuffer[writePosition++] = MoveInitUtil.newMove(moveFrom, moveFrom + 7);
+                        moveBuffer[writePosition++] = MoveInitUtil.newMove(moveFrom, moveFrom + 7);
                     } else {
                         moveBuffer[writePosition++] = MoveInitUtil.newPawnPromotion(moveFrom, moveFrom + 7, PieceType.QUEEN);
                         moveBuffer[writePosition++] = MoveInitUtil.newPawnPromotion(moveFrom, moveFrom + 7, PieceType.KNIGHT);
@@ -529,10 +543,10 @@ public class MoveUtil {
                     }
                     pushers = pushers & (pushers - 1);
                 }
-                pushers = ((interventionPoints & notPieces) >>> 16) & ourPawns & 0x000000000000FF00L;
+                pushers = ((((interventionPoints & notPieces) >>> 8) & notPieces) >>> 8) & ourPawns & 0x000000000000FF00L;
                 while (pushers != 0) {
                     int moveFrom = BitUtil.getLastBitPlaceValue(pushers);
-                    moveBuffer[writePosition++] = MoveInitUtil.newMove(moveFrom, moveFrom + 16);
+                    moveBuffer[writePosition++] = MoveInitUtil.newPawnDoubleMove(moveFrom, moveFrom + 16);
                     pushers = pushers & (pushers - 1);
                 }
             } else {
@@ -577,10 +591,10 @@ public class MoveUtil {
                     }
                     pushers = pushers & (pushers - 1);
                 }
-                pushers = ((interventionPoints & notPieces) << 16) & ourPawns & 0x00FF000000000000L;
+                pushers = ((((interventionPoints & notPieces) << 8) & notPieces) << 8) & ourPawns & 0x00FF000000000000L;
                 while (pushers != 0) {
                     int moveFrom = BitUtil.getLastBitPlaceValue(pushers);
-                    moveBuffer[writePosition++] = MoveInitUtil.newMove(moveFrom, moveFrom - 16);
+                    moveBuffer[writePosition++] = MoveInitUtil.newPawnDoubleMove(moveFrom, moveFrom - 16);
                     pushers = pushers & (pushers - 1);
                 }
             }
