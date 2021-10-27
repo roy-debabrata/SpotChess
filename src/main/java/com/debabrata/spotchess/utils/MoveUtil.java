@@ -128,7 +128,7 @@ public class MoveUtil {
             } else {
                 kingAttack = kingAttack & semiMask;
             }
-            if (attacker > ourKing || attacker == 0x8000000000000000L) {
+            if ((attacker > ourKing || attacker == 0x8000000000000000L) && (ourKing != 0x8000000000000000L)) {
                 interventionPoints = interventionPoints | (kingAttack & -ourKing);
             } else {
                 interventionPoints = interventionPoints | (kingAttack & (ourKing - 1));
@@ -152,7 +152,7 @@ public class MoveUtil {
                     } else {
                         kingAttack = kingAttack & semiMask;
                     }
-                    if (attacker > ourKing || attacker == 0x8000000000000000L) {
+                    if ((attacker > ourKing || attacker == 0x8000000000000000L) && (ourKing != 0x8000000000000000L)) {
                         interventionPoints = interventionPoints | (kingAttack & -ourKing);
                     } else {
                         interventionPoints = interventionPoints | (kingAttack & (ourKing - 1));
@@ -596,6 +596,19 @@ public class MoveUtil {
                     int moveFrom = BitUtil.getLastBitPlaceValue(pushers);
                     moveBuffer[writePosition++] = MoveInitUtil.newPawnDoubleMove(moveFrom, moveFrom - 16);
                     pushers = pushers & (pushers - 1);
+                }
+            }
+            /* Pawn en-passant takes gets rid of check. */
+            if ((position.getPawnToBeCapturedEnPassant(whiteToMove) & interventionPoints) != 0) {
+                if (enPassantTakers != 0) {
+                    int from = BitUtil.getLastBitPlaceValue(enPassantTakers);
+                    int to = BitUtil.getBitPlaceValue(position.getPawnLocationAfterEnPassant(whiteToMove));
+                    moveBuffer[writePosition++] = MoveInitUtil.newEnPassant(from, to);
+                    enPassantTakers = enPassantTakers & (enPassantTakers - 1);
+                    if ( enPassantTakers != 0 ) {
+                        from = BitUtil.getLastBitPlaceValue(enPassantTakers);
+                        moveBuffer[writePosition++] = MoveInitUtil.newEnPassant(from, to);
+                    }
                 }
             }
             while(interventionPoints != 0) {
