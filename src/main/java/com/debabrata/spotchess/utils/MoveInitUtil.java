@@ -1,5 +1,6 @@
 package com.debabrata.spotchess.utils;
 
+import com.debabrata.spotchess.constants.TypeConstants;
 import com.debabrata.spotchess.types.enums.PieceType;
 
 /**
@@ -24,6 +25,7 @@ import com.debabrata.spotchess.types.enums.PieceType;
  *          0x00200000 Pawn promotes to Knight.
  *          0x00400000 Pawn promotes to Bishop.
  *          0x00800000 Pawn promotes to Rook.
+ *          0x0F000000 Bit-boards to restore a piece to. Added by Position. {@link TypeConstants}
  *
  *          0 can stand as an uninitialized move as a move from h1 to h1 doesn't make any sense in chess. To understand
  *          the orientation of the board please read the comments in Position.

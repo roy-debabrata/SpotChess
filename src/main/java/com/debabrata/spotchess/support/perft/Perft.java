@@ -30,10 +30,11 @@ public class Perft {
             return newWritingPosition - startWritingAt;
         }
         long result = 0;
+        int flag = position.getFlags();
         for (int i = startWritingAt; i < newWritingPosition; i++) {
-            Position newPosition = new Position(position);
-            newPosition.makeMove(moveBuffer[i]);
-            long newResults = perft(newPosition, moveBuffer, newWritingPosition, depth - 1, false);
+            int restoreMove = position.makeMove(moveBuffer[i]);
+            long newResults = perft(position, moveBuffer, newWritingPosition, depth - 1, false);
+            position.unmakeMove(restoreMove, flag);
             if (printDivide) {
                 Square squareFrom = new Square(MoveInitUtil.getFrom(moveBuffer[i]));
                 Square squareTo = new Square(MoveInitUtil.getTo(moveBuffer[i]));

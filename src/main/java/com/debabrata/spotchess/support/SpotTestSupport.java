@@ -265,6 +265,16 @@ public class SpotTestSupport {
         return true;
     }
 
+    public static int moveAndGetReverseMove(Position position, String move) {
+        assert null != position && null != move;
+
+        SANParser sanParser = new SANParser();
+        int moveInt = sanParser.getMove(position, move);
+
+        return position.makeMove(moveInt);
+    }
+
+
     public static void assertEquals(Position expectedPosition, Position actualPosition) {
         if (expectedPosition == actualPosition) {
             return; /* They are the same object, or they are both null. */

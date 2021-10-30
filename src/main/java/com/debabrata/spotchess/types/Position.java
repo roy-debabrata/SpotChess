@@ -1,5 +1,6 @@
 package com.debabrata.spotchess.types;
 
+import com.debabrata.spotchess.constants.TypeConstants;
 import com.debabrata.spotchess.exception.InvalidPositionException;
 import com.debabrata.spotchess.types.enums.GameType;
 import com.debabrata.spotchess.utils.MoveInitUtil;
@@ -383,12 +384,16 @@ public final class Position {
         return getPieceTypeOfKnownPiece(position);
     }
 
-    /* We rely on passed moves to be legal. We do not perform any move sanity checks. To avoid inconsistent board states
+    /** We rely on passed moves to be legal. We do not perform any move sanity checks. To avoid inconsistent board states
      *  make sure:
      *  1. The piece you want to move exists.
      *  2. You're not taking a piece of your own colour.
-     *  3. It's the move of the side you're trying to make the move for. */
-    public void makeMove(int move) {
+     *  3. It's the move of the side you're trying to make the move for.
+     *
+     *  @param move Move to be made.
+     *  @return the counter move that can be used to call {@link #unmakeMove} reverse of this move.
+     *  */
+    public int makeMove(int move) {
         long from = 1L << MoveInitUtil.getFrom(move);
         long to = 1L << MoveInitUtil.getTo(move);
         long fromOrTo = to | from;
@@ -416,8 +421,10 @@ public final class Position {
                 rooksAndQueens = rooksAndQueens ^ to;
                 if ((queensAndBishops & to) != 0) {
                     queensAndBishops = queensAndBishops ^ to;
+                    move = move | TypeConstants.QUEEN_TAKEN;
                 } else {
-                    /* A rook was taken. We check if one of the unmoved rooks and update castling flags accordingly. */
+                    move = move | TypeConstants.ROOK_TAKEN;
+                    /* We check if one of the unmoved rooks and update castling flags accordingly. */
                     if ( whiteToMove ) {
                         if (0x8000000000000000L == to) {
                             leftRookMoved(false);
@@ -436,9 +443,13 @@ public final class Position {
                 pawnsAndKnights = pawnsAndKnights ^ to;
                 if ((knightsAndKings & to) != 0) {
                     knightsAndKings = knightsAndKings ^ to;
+                    move = move | TypeConstants.KNIGHT_TAKEN;
+                } else {
+                    move = move | TypeConstants.PAWN_TAKEN;
                 }
             } else {
                 queensAndBishops = queensAndBishops ^ to; /* Can't take king in chess, taken piece must be a bishop. */
+                move = move | TypeConstants.BISHOP_TAKEN;
             }
         }
         /* Actually making the move for the piece. */
@@ -547,6 +558,128 @@ public final class Position {
         }
         /* Toggling player to move. */
         toggleWhiteToMove();
+
+        return move;
+    }
+
+    public void unmakeMove(int move, int restoreFlags) {
+        flags = restoreFlags;
+
+        long from = 1L << MoveInitUtil.getFrom(move);
+        long to = 1L << MoveInitUtil.getTo(move);
+        long fromOrTo = to | from;
+
+        int pieceTaken = move & TypeConstants.TAKEN_MASK;
+        boolean whiteToMove = whiteToMove();
+        if (whiteToMove) {
+            whitePieces = whitePieces ^ fromOrTo;
+            if (pieceTaken != 0) {
+                /* Black piece put back. */
+                blackPieces = blackPieces ^ to;
+            }
+        } else {
+            blackPieces = blackPieces ^ fromOrTo;
+            if (pieceTaken != 0) {
+                /* White piece put back. */
+                whitePieces = whitePieces ^ to;
+            }
+        }
+
+        /* Reversing promotion. */
+        if (MoveInitUtil.isPromotion(move)) {
+            /* Dealing with prawn promotions. */
+            PieceType promoteTo = MoveInitUtil.promotesTo(move);
+            switch (promoteTo) {
+                case QUEEN:
+                    queensAndBishops = queensAndBishops ^ to;
+                    rooksAndQueens = rooksAndQueens ^ to;
+                    pawnsAndKnights = pawnsAndKnights ^ to;
+                    break;
+                case KNIGHT:
+                    knightsAndKings = knightsAndKings ^ to;
+                    break;
+                case BISHOP:
+                    queensAndBishops = queensAndBishops ^ to;
+                    pawnsAndKnights = pawnsAndKnights ^ to;
+                    break;
+                case ROOK:
+                    rooksAndQueens = rooksAndQueens ^ to;
+                    pawnsAndKnights = pawnsAndKnights ^ to;
+            }
+        }
+
+        /* Moving back our pieces. */
+        if ((pawnsAndKnights & to) != 0) {
+            /* It's a pawn/knight. */
+            if ((knightsAndKings & to) != 0) {
+                /* It's a knight. */
+                knightsAndKings = knightsAndKings ^ fromOrTo;
+                pawnsAndKnights = pawnsAndKnights ^ fromOrTo;
+            } else {
+                /* It's a pawn. */
+                pawnsAndKnights = pawnsAndKnights ^ fromOrTo; /* Taking back the pawn. */
+                /* Deal with en-passant. */
+                if (MoveInitUtil.isEnPassant(move)) {
+                    long toBeTakenEP = getPawnToBeCapturedEnPassant(whiteToMove);
+                    if (whiteToMove) {
+                        /* Black pawn restored. */
+                        blackPieces = blackPieces ^ toBeTakenEP;
+                    } else {
+                        /* White pawn restored. */
+                        whitePieces = whitePieces ^ toBeTakenEP;
+                    }
+                    pawnsAndKnights = pawnsAndKnights ^ toBeTakenEP;
+                }
+            }
+        } else if ((rooksAndQueens & to) != 0) {
+            /* It's a rook/queen. */
+            rooksAndQueens = rooksAndQueens ^ fromOrTo;
+            if ((queensAndBishops & to) != 0) {
+                /* It's a queen. */
+                queensAndBishops = queensAndBishops ^ fromOrTo;
+            }
+        } else if ((queensAndBishops & to) != 0) {
+            /* It's a bishop. */
+            queensAndBishops = queensAndBishops ^ fromOrTo;
+        } else {
+            /* It's a king. */
+            knightsAndKings = knightsAndKings ^ fromOrTo;
+            if (MoveInitUtil.isCastle(move)) {
+                if (MoveInitUtil.isLeftCastle(move)) {
+                    if (whiteToMove) {
+                        whitePieces = whitePieces ^ 0x0000000000000090L;
+                        rooksAndQueens = rooksAndQueens ^ 0x0000000000000090L;
+                    } else {
+                        blackPieces = blackPieces ^ 0x9000000000000000L;
+                        rooksAndQueens = rooksAndQueens ^ 0x9000000000000000L;
+                    }
+                } else {
+                    if (whiteToMove) {
+                        whitePieces = whitePieces ^ 0x0000000000000005L;
+                        rooksAndQueens = rooksAndQueens ^ 0x0000000000000005L;
+                    } else {
+                        blackPieces = blackPieces ^ 0x0500000000000000L;
+                        rooksAndQueens = rooksAndQueens ^ 0x0500000000000000L;
+                    }
+                }
+            }
+        }
+        /* We put back captured pieces. */
+        if (pieceTaken != 0) {
+            if ((pieceTaken & TypeConstants.QUEEN_TAKEN) != 0) {
+                if ((pieceTaken & TypeConstants.BISHOP_TAKEN) != 0) {
+                    queensAndBishops = queensAndBishops ^ to;
+                }
+                if ((pieceTaken & TypeConstants.ROOK_TAKEN) != 0) {
+                    rooksAndQueens = rooksAndQueens ^ to;
+                }
+            } else {
+                if ((pieceTaken & TypeConstants.KNIGHT_TAKEN) != 0) {
+                    knightsAndKings = knightsAndKings ^ to;
+                }
+                pawnsAndKnights = pawnsAndKnights ^ to; /* Only pawns remain. */
+            }
+        }
     }
 
     /* Checks that the board state is not inconsistent. It's a useful method for testing. */
