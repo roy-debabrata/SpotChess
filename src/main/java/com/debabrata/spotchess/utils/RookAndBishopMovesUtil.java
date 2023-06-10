@@ -73,6 +73,7 @@ public class RookAndBishopMovesUtil {
         }
     }
 
+    /** Gives us one row/column for this place value. If we have a cross this helps us isolate them one at a time. */
     public static long getRookSemiMask(int placeValue) {
         return rookSemiMask[placeValue];
     }
@@ -82,11 +83,13 @@ public class RookAndBishopMovesUtil {
         return rookAttacksCache[placeValue][index];
     }
 
+    /** This is basically nearest pair of pieces on all 4 sides of the king. Any of these four pairs can potentially be a pin. */
     public static long getRookPins(int placeValue, long boardPosition) {
         int index = (int)(((boardPosition & rookMask[placeValue]) * rookPinMagic[placeValue]) >>> rookShift[placeValue]);
         return rookPinsCache[placeValue][index];
     }
 
+    /** Gives us one diagonal for that place value. If we have a cross this helps us isolate them one at a time. */
     public static long getBishopSemiMask(int placeValue) {
         return bishopSemiMask[placeValue];
     }
@@ -96,6 +99,7 @@ public class RookAndBishopMovesUtil {
         return bishopAttacksCache[placeValue][index];
     }
 
+    /** This is basically nearest pair of pieces on all 4 sides of the king. Any of these four pairs can potentially be a pin. */
     public static long getBishopPins(int placeValue, long boardPosition) {
         int index = (int)(((boardPosition & bishopMask[placeValue]) * bishopPinMagic[placeValue]) >>> bishopShift[placeValue]);
         return bishopPinsCache[placeValue][index];

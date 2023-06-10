@@ -459,7 +459,7 @@ public class MoveUtil {
                 }
             }
         }
-        /* Checking for extreme edge case where an en-passant take move can expose the king to a rook attack. */
+        /* Checking for extreme edge case where an en-passant take move can expose the king to a rook attack along a rank. */
         if (enPassantTakers != 0 && (lateralPinners & enPassantTakers) != 0 ) {
             long enPassantTaken = position.getPawnToBeCapturedEnPassant(whiteToMove);
             if ((enPassantTaken & lateralPinners) != 0) {
