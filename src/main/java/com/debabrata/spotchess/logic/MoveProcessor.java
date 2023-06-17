@@ -344,6 +344,7 @@ public final class MoveProcessor {
         /* Adding regular moves. */
         long reachable = ~ourPieces & ~enemyAttacks & KingAndKnightMovesUtil.getKingMoves(kingPlace);
         addMoves(kingPlace, reachable);
+        if (isCheck) return;
 
         /* Adding castling moves. */
         long leftCastleBits, rightCastleBits;
