@@ -107,9 +107,9 @@ public final class MoveProcessor {
     }
 
     /* Fetches basic information about the position. */
-    private void prepare(Position position, int writePosition) {
+    private void prepare(Position position, int writePos) {
         /* This is where the moves will be written. */
-        this.writePosition = writePosition;
+        this.writePosition = writePos;
 
         whiteToMove = position.whiteToMove();
         if (whiteToMove) {
@@ -446,17 +446,17 @@ public final class MoveProcessor {
     private void addPieceMoves(long range) {
         for(long bishops = bishopType & ourPieces & ~pinnedPieces; bishops != 0; bishops &= (bishops - 1)) {
             int place = BitUtil.getLastBitPlaceValue(bishops);
-            long blocks = range & RookAndBishopMovesUtil.getBishopMoves(place, allPieces);
+            long blocks = range & ~ourPieces & RookAndBishopMovesUtil.getBishopMoves(place, allPieces);
             addMoves(place, blocks);
         }
         for(long rooks = rookType & ourPieces & ~pinnedPieces; rooks != 0; rooks &= (rooks - 1)) {
             int place = BitUtil.getLastBitPlaceValue(rooks);
-            long blocks = range & RookAndBishopMovesUtil.getRookMoves(place, allPieces);
+            long blocks = range & ~ourPieces & RookAndBishopMovesUtil.getRookMoves(place, allPieces);
             addMoves(place, blocks);
         }
         for(long kinghts = knights & ourPieces & ~pinnedPieces; kinghts != 0; kinghts &= (kinghts - 1)) {
             int place = BitUtil.getLastBitPlaceValue(kinghts);
-            long blocks = range & KingAndKnightMovesUtil.getKnightMoves(place);
+            long blocks = range & ~ourPieces & KingAndKnightMovesUtil.getKnightMoves(place);
             addMoves(place, blocks);
         }
     }
@@ -502,14 +502,14 @@ public final class MoveProcessor {
                         if (whiteToMove) {
                             if (((pinned << 8) & allPieces) == 0) {
                                 moveBuffer[writePosition++] = MoveInitUtil.newMove(from, from + 8);
-                                if (((pinned << 16) & allPieces & 0x00000000FF000000L) == 0) {
+                                if ((((pinned & 0x000000000000FF00L) << 16) & ~allPieces) != 0) {
                                     moveBuffer[writePosition++] = MoveInitUtil.newPawnDoubleMove(from, from + 16);
                                 }
                             }
                         } else {
                             if (((pinned >>> 8) & allPieces) == 0) {
                                 moveBuffer[writePosition++] = MoveInitUtil.newMove(from, from - 8);
-                                if (((pinned >>> 16) & allPieces & 0x000000FF00000000L) == 0) {
+                                if ((((pinned & 0x00FF000000000000L ) >>> 16) & ~allPieces) != 0) {
                                     moveBuffer[writePosition++] = MoveInitUtil.newPawnDoubleMove(from, from - 16);
                                 }
                             }
@@ -525,7 +525,7 @@ public final class MoveProcessor {
                             moveBuffer[writePosition++] = MoveInitUtil.newMove(from, upto);
                         }
                     }
-                    if (pawnPushedTwice != 0) {
+                    if (pawnPushedTwice != 0 && (epTakers & pinned) != 0) {
                         int to = BitUtil.getBitPlaceValue(epTo);
                         if (((upto & 7) - (to & 7)) == ((upto >> 3) - (to >> 3)) || ((upto - to) & 7) + ((upto >> 3) - (to >> 3)) == 0) {
                             /* The en-passant to position shares a diagonal with the pinner as well. */
