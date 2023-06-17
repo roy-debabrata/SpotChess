@@ -463,11 +463,12 @@ public final class MoveProcessor {
 
     private void addPinnedPieceMoves() {
         for(int i = 0; i < pinCount; i++) {
-            long pinned = pinnedList[i];
-            long pinner = pinnerList[i];
-            long pair = pinner | pinned;
+            boolean bishopTypePin = bishopPin[i];
+            long pair = pinPairList[i];
+            long pinned = pair & ourPieces;
+            long pinner = pair & enemyPieces;
 
-            if ((pair & rookType) == pair) { /* Both are rook type. */
+            if ((pair & rookType) == pair && !bishopTypePin) { /* Both are rook type. */
                 int from = BitUtil.getBitPlaceValue(pinned);
                 int upto = BitUtil.getBitPlaceValue(pinner);
 
@@ -475,7 +476,11 @@ public final class MoveProcessor {
                 for (int to = from + shift; to != upto; to += shift) {
                     moveBuffer[writePosition++] = MoveInitUtil.newMove(from, to);
                 }
-            } else if ((pair & bishopType) == pair) { /* Both are bishop type. */
+                for (int to = kingPlace + shift; to != from; to += shift) {
+                    moveBuffer[writePosition++] = MoveInitUtil.newMove(from, to);
+                }
+                moveBuffer[writePosition++] = MoveInitUtil.newMove(from, upto);
+            } else if ((pair & bishopType) == pair && bishopTypePin) { /* Both are bishop type. */
                 int from = BitUtil.getBitPlaceValue(pinned);
                 int upto = BitUtil.getBitPlaceValue(pinner);
 
@@ -484,23 +489,27 @@ public final class MoveProcessor {
                 for (int to = from + shift; to != upto; to += shift) {
                     moveBuffer[writePosition++] = MoveInitUtil.newMove(from, to);
                 }
+                for (int to = kingPlace + shift; to != from; to += shift) {
+                    moveBuffer[writePosition++] = MoveInitUtil.newMove(from, to);
+                }
+                moveBuffer[writePosition++] = MoveInitUtil.newMove(from, upto);
             } else if ((pinned & pawns) != 0) { /* Pinned piece is a pawn. */
                 int from = BitUtil.getBitPlaceValue(pinned);
                 int upto = BitUtil.getBitPlaceValue(pinner);
 
-                if ((pinner & rookType) != 0) {
+                if (!bishopTypePin) {
                     if (((from ^ upto) & 7) == 0) { /* Same column. Adding pawn forward moves. */
                         if (whiteToMove) {
-                            if (((pinner << 8) & allPieces) == 0) {
+                            if (((pinned << 8) & allPieces) == 0) {
                                 moveBuffer[writePosition++] = MoveInitUtil.newMove(from, from + 8);
-                                if (((pinner << 16) & allPieces & 0x00000000FF000000L) == 0) {
+                                if (((pinned << 16) & allPieces & 0x00000000FF000000L) == 0) {
                                     moveBuffer[writePosition++] = MoveInitUtil.newPawnDoubleMove(from, from + 16);
                                 }
                             }
                         } else {
-                            if (((pinner >>> 8) & allPieces) == 0) {
+                            if (((pinned >>> 8) & allPieces) == 0) {
                                 moveBuffer[writePosition++] = MoveInitUtil.newMove(from, from - 8);
-                                if (((pinner >>> 16) & allPieces & 0x000000FF00000000L) == 0) {
+                                if (((pinned >>> 16) & allPieces & 0x000000FF00000000L) == 0) {
                                     moveBuffer[writePosition++] = MoveInitUtil.newPawnDoubleMove(from, from - 16);
                                 }
                             }
