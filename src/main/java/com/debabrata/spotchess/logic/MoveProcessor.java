@@ -1,41 +1,49 @@
 package com.debabrata.spotchess.logic;
 
 import com.debabrata.spotchess.types.Position;
+import com.debabrata.spotchess.types.enums.PieceType;
 import com.debabrata.spotchess.utils.BitUtil;
 import com.debabrata.spotchess.utils.KingAndKnightMovesUtil;
+import com.debabrata.spotchess.utils.MoveInitUtil;
 import com.debabrata.spotchess.utils.RookAndBishopMovesUtil;
 
-public class MoveProcessor {
-    private Position position;
-    private int[] moveBuffer;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+public final class MoveProcessor {
+    private final int[] moveBuffer;
     private int writePosition;
 
     /* Frequently reused values. */
-    boolean whiteToMove;
-    long ourPieces;
-    long enemyPieces;
-    long allPieces;
-    long bishopType;
-    long rookType;
-    long knights;
-    long pawns;
-    long kings;
-    long ourKing;
-    int kingPlace;
+    private boolean whiteToMove;
+    private long ourPieces;
+    private long enemyPieces;
+    private long allPieces;
+    private long bishopType;
+    private long rookType;
+    private long knights;
+    private long pawns;
+    private long kings;
+    private long ourKing;
+    private int kingPlace;
 
-    long pawnPushedTwice;
-    long epTakers;
+    private long pawnPushedTwice;
+    private long epTakers;
+    private long epTo;
 
     /* Related to checks. */
-    boolean isCheck;
-    long checkBlock; /* Positions where if you can place your piece it blocks your check.
-                        Also includes the attacker position as well. Is zero if multiple pieces check.*
+    private boolean isCheck;
+    private long checkBlock; /* Positions where if you can place your piece it blocks your check.
+                                Also includes the attacker position as well. Is zero if multiple pieces check.*/
+    private boolean canLeftCastle;
+    boolean canRightCastle;
 
     /* Relates to pinned pieces. */
-    long pinnedPieces;
+    private long pinnedPieces;
     int pinCount = 0;
-    long [] pinnedList = new long[8];
-    long [] pinnerList = new long[8];
+    private final long [] pinnedList = new long[8];
+    private final long [] pinnerList = new long[8];
 
     public MoveProcessor(int[] moveBuffer) {
         this.moveBuffer = moveBuffer;
@@ -47,9 +55,55 @@ public class MoveProcessor {
      *
      * @return position on moveBuffer where new moves can be written.
      */
-    public int addMovesToBuffer(Position position, int writePosition) {
-        prepare(position, writePosition);
-        return 0;
+    public int addMovesToBuffer(Position position, int writePos) {
+        prepare(position, writePos);
+        processChecks();
+        processPinnedPieces();
+        if(isCheck) {
+            addKingMoves();
+            addBlockingMoves();
+            return writePosition;
+        }
+        addKingMoves();
+        addPawnMoves();
+        addPieceMoves();
+        addPinnedPieceMoves();
+        return writePosition;
+    }
+
+    public boolean isCheck() {
+        return isCheck;
+    }
+
+    /**
+     * Returns a list of moves for any given position. It spawns a new instance of the move processor to do so. This
+     * method should be avoided wherever performance is important.
+     *
+     * @return list of moves in the given position.
+     * */
+    public static List<Integer> getMovesInPosition(Position position) {
+        int [] moves = new int[300];
+        MoveProcessor processor = new MoveProcessor(moves);
+        int endPosition = processor.addMovesToBuffer(position, 0);
+
+        return Arrays.stream(moves).boxed()
+                .limit(endPosition)
+                .filter(x -> x != 0)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Returns if the king is under check in the given position. This method should be avoided wherever performance is
+     * important.
+     *
+     * @return returns true if the king is under check, otherwise false.
+     * */
+    public static boolean isKingUnderCheck(Position position) {
+        int [] moves = new int[300];
+        MoveProcessor processor = new MoveProcessor(moves);
+        processor.addMovesToBuffer(position, 0);
+
+        return processor.isCheck();
     }
 
     /* Fetches basic information about the position. */
@@ -77,15 +131,22 @@ public class MoveProcessor {
         pawns = pawnsAndKnights ^ knights;
         kings = knightsAndKings ^ knights;
 
-        epTakers = 0;
-        pawnPushedTwice = 0;
+        isCheck = false;
+        checkBlock = 0;
+        ourKing = kings & ourPieces;
+        kingPlace = BitUtil.getBitPlaceValue(ourKing);
+        canLeftCastle = position.canPotentiallyCastleLeft(whiteToMove);
+        canRightCastle = position.canPotentiallyCastleRight(whiteToMove);
+
         if(position.enPassantAvailable()) {
             epTakers = position.getPawnsThatCanCaptureEnPassant(whiteToMove);
             pawnPushedTwice = position.getPawnToBeCapturedEnPassant(whiteToMove);
+            epTo = position.getPawnLocationAfterEnPassant(whiteToMove);
+        } else {
+            epTakers = 0;
+            pawnPushedTwice = 0;
+            epTo = 0;
         }
-
-        ourKing = kings & ourPieces;
-        kingPlace = BitUtil.getBitPlaceValue(ourKing);
     }
 
     /**
@@ -96,9 +157,6 @@ public class MoveProcessor {
      * If checkBlock is 0 then the king is bound to move as there are multiple checks.
      **/
     private void processChecks() {
-        isCheck = false;
-        checkBlock = 0;
-
         /* Knight Checks. */
         long attacker = KingAndKnightMovesUtil.getKnightMoves(kingPlace) & knights & enemyPieces;
         if (attacker != 0) {
@@ -118,7 +176,6 @@ public class MoveProcessor {
             }
             isCheck = true;
             long semiMask = RookAndBishopMovesUtil.getRookSemiMask(kingPlace);
-
             if ((attacker & semiMask) != 0 && (attacker & ~semiMask) != 0) {
                 return; /* Attacks are from two different pieces. Check block is already zero. */
             } else {
@@ -210,7 +267,7 @@ public class MoveProcessor {
         if (epTakers != 0 && !isCheck) {
             long epRank = whiteToMove ? 0x000000FF00000000L : 0x00000000FF000000L;
             if ((ourKing & epRank) != 0 && (epTakers & (epTakers - 1)) == 0) {
-                /* Our king and only one pawn can take en passant. */
+                /* Our king is on the rank and only one pawn can take en passant. */
                 long relevantRank = epRank & (ourKing > epTakers ? (ourKing - 1) : -ourKing);
                 long relevantRooks = rookType & enemyPieces & relevantRank;
                 long otherPieces = (relevantRank & allPieces) ^ pawnPushedTwice ^ epTakers;
@@ -231,11 +288,11 @@ public class MoveProcessor {
         long pair1 = diagonal & -ourKing;
         long pair2 = diagonal ^ pair1;
 
-        handlePairsPairs(pair1, attackerType);
-        handlePairsPairs(pair2, attackerType);
+        handlePinPairs(pair1, attackerType);
+        handlePinPairs(pair2, attackerType);
     }
 
-    private void handlePairsPairs(long pair, long attackerType) {
+    private void handlePinPairs(long pair, long attackerType) {
         long pinned = pair & ourPieces;
         if(pinned != 0 && (pair & enemyPieces & attackerType & ~checkBlock) != 0){
             /* One of our pieces is pinned by an enemy bishop type piece. */
@@ -243,6 +300,228 @@ public class MoveProcessor {
             pinnedPieces = pinnedPieces | pinned;
             pinnedList[pinCount] = pinned;
             pinnerList[pinCount++] = pinner;
+        }
+    }
+
+    private long enemyAttacks() {
+        long enemyAttacks = 0;
+        long board = allPieces ^ ourKing;
+
+        for(long bishops = bishopType & enemyPieces; bishops != 0; bishops &= (bishops - 1)) {
+            int place = BitUtil.getLastBitPlaceValue(bishops);
+            enemyAttacks |= RookAndBishopMovesUtil.getBishopMoves(place, board);
+        }
+        for(long rooks = rookType & enemyPieces; rooks != 0; rooks &= (rooks - 1)) {
+            int place = BitUtil.getLastBitPlaceValue(rooks);
+            enemyAttacks |= RookAndBishopMovesUtil.getRookMoves(place, board);
+        }
+        for(long kinghts = knights & enemyPieces; kinghts != 0; kinghts &= (kinghts - 1)) {
+            int place = BitUtil.getLastBitPlaceValue(kinghts);
+            enemyAttacks |= KingAndKnightMovesUtil.getKnightMoves(place);
+        }
+        int place = BitUtil.getBitPlaceValue(kings & enemyPieces);
+        enemyAttacks |= KingAndKnightMovesUtil.getKingMoves(place);
+
+        long enemyPawns = pawns & enemyPieces;
+        if (whiteToMove) {
+            enemyAttacks |= ((enemyPawns >>> 7) & 0xFEFEFEFEFEFEFEFEL) | ((enemyPawns >>> 9) & 0x7F7F7F7F7F7F7F7FL);
+        } else {
+            enemyAttacks |= ((enemyPawns << 7) & 0x7F7F7F7F7F7F7F7FL) | ((enemyPawns << 9) & 0xFEFEFEFEFEFEFEFEL);
+        }
+        return enemyAttacks;
+    }
+
+    private void addMoves(int from, long tos) {
+        for(; tos != 0; tos &= (tos - 1)) {
+            int to = BitUtil.getLastBitPlaceValue(tos);
+            moveBuffer[writePosition++] = MoveInitUtil.newMove(from, to);
+        }
+    }
+
+    private void addKingMoves() {
+        long enemyAttacks = enemyAttacks();
+
+        /* Adding regular moves. */
+        long reachable = ~ourPieces & ~enemyAttacks & KingAndKnightMovesUtil.getKingMoves(kingPlace);
+        addMoves(kingPlace, reachable);
+
+        /* Adding castling moves. */
+        long leftCastleBits, rightCastleBits;
+        if (whiteToMove) {
+            leftCastleBits = 0x0000000000000070L; rightCastleBits = 0x0000000000000006L;
+        } else {
+            leftCastleBits = 0x7000000000000000L; rightCastleBits = 0x0600000000000000L;
+        }
+        if (canLeftCastle && (leftCastleBits & allPieces) == 0 && (leftCastleBits & 0x3000000000000030L & enemyAttacks) == 0) {
+            moveBuffer[writePosition++] = MoveInitUtil.newLeftCastle(kingPlace, kingPlace + 2);
+        }
+        if (canRightCastle && (rightCastleBits & allPieces) == 0 && (rightCastleBits & enemyAttacks) == 0) {
+            moveBuffer[writePosition++] = MoveInitUtil.newRightCastle(kingPlace, kingPlace - 2);
+        }
+    }
+
+    private void addBlockingMoves() {
+        if (checkBlock == 0) {
+            return;
+        }
+        addPawnMoves(checkBlock);
+        addPieceMoves(checkBlock);
+    }
+
+    private void addPawnMoves() {
+        addPawnMoves(0xFFFFFFFFFFFFFFFFL);
+    }
+
+    private void addPawnMoves(long to, int displacement) {
+        for(; to != 0; to &= (to - 1)) {
+            int toInt = BitUtil.getLastBitPlaceValue(to);
+            int from = toInt + displacement;
+            addPawnMoves(from, toInt);
+        }
+    }
+
+    private void addPawnMoves(int from, int to) {
+        if ( to > 55 || to < 8) {
+            moveBuffer[writePosition++] = MoveInitUtil.newPawnPromotion(from, to, PieceType.QUEEN);
+            moveBuffer[writePosition++] = MoveInitUtil.newPawnPromotion(from, to, PieceType.KNIGHT);
+            moveBuffer[writePosition++] = MoveInitUtil.newPawnPromotion(from, to, PieceType.BISHOP);
+            moveBuffer[writePosition++] = MoveInitUtil.newPawnPromotion(from, to, PieceType.ROOK);
+        } else {
+            moveBuffer[writePosition++] = MoveInitUtil.newMove(from, to);
+        }
+    }
+
+    private void addEnPassantMoves() {
+        int to = BitUtil.getBitPlaceValue(epTo);
+        for(long epTaker = epTakers; epTaker != 0; epTaker &= (epTaker -1)) {
+            int from = BitUtil.getLastBitPlaceValue(epTaker);
+            moveBuffer[writePosition++] = MoveInitUtil.newEnPassant(from, to);
+        }
+    }
+
+    private void addPawnDoubleMoves(long to, int displacement) {
+        for(; to != 0; to &= (to - 1)) {
+            int toInt = BitUtil.getLastBitPlaceValue(to);
+            int from = toInt + displacement;
+            moveBuffer[writePosition++] = MoveInitUtil.newPawnDoubleMove(from, toInt);
+        }
+    }
+
+    private void addPawnMoves(long range) {
+        long ourPawns = pawns & ourPieces & ~pinnedPieces;
+        long enemyInRange = range & enemyPieces;
+        long freeRange = range & ~allPieces;
+
+        if (whiteToMove) {
+            long step1 = ourPawns << 8;
+            long step2 = (step1 & ~allPieces & 0x0000000000FF0000L) << 8;
+            addPawnMoves(step1 & freeRange, -8);
+            addPawnDoubleMoves(step2 & freeRange, -16);
+
+            long take1 = (ourPawns << 9) & 0xFEFEFEFEFEFEFEFEL & enemyInRange;
+            long take2 = (ourPawns << 7) & 0x7F7F7F7F7F7F7F7FL & enemyInRange;
+            addPawnMoves(take1, -9);
+            addPawnMoves(take2, -7);
+        } else {
+            long step1 = ourPawns >>> 8;
+            long step2 = (step1 & ~allPieces & 0x0000FF0000000000L) >>> 8;
+            addPawnMoves(step1 & freeRange, 8);
+            addPawnDoubleMoves(step2 & freeRange, 16);
+
+            long take1 = (ourPawns >>> 9) & 0x7F7F7F7F7F7F7F7FL & enemyInRange;
+            long take2 = (ourPawns >>> 7) & 0xFEFEFEFEFEFEFEFEL & enemyInRange;
+            addPawnMoves(take1, 9);
+            addPawnMoves(take2, 7);
+        }
+        if ((enemyInRange & pawnPushedTwice) != 0) {
+            addEnPassantMoves();
+        }
+    }
+
+    private void addPieceMoves() {
+        addPieceMoves(0xFFFFFFFFFFFFFFFFL);
+    }
+
+    private void addPieceMoves(long range) {
+        for(long bishops = bishopType & ourPieces & ~pinnedPieces; bishops != 0; bishops &= (bishops - 1)) {
+            int place = BitUtil.getLastBitPlaceValue(bishops);
+            long blocks = range & RookAndBishopMovesUtil.getBishopMoves(place, allPieces);
+            addMoves(place, blocks);
+        }
+        for(long rooks = rookType & ourPieces & ~pinnedPieces; rooks != 0; rooks &= (rooks - 1)) {
+            int place = BitUtil.getLastBitPlaceValue(rooks);
+            long blocks = range & RookAndBishopMovesUtil.getRookMoves(place, allPieces);
+            addMoves(place, blocks);
+        }
+        for(long kinghts = knights & ourPieces & ~pinnedPieces; kinghts != 0; kinghts &= (kinghts - 1)) {
+            int place = BitUtil.getLastBitPlaceValue(kinghts);
+            long blocks = range & KingAndKnightMovesUtil.getKnightMoves(place);
+            addMoves(place, blocks);
+        }
+    }
+
+    private void addPinnedPieceMoves() {
+        for(int i = 0; i < pinCount; i++) {
+            long pinned = pinnedList[i];
+            long pinner = pinnerList[i];
+            long pair = pinner | pinned;
+
+            if ((pair & rookType) == pair) { /* Both are rook type. */
+                int from = BitUtil.getBitPlaceValue(pinned);
+                int upto = BitUtil.getBitPlaceValue(pinner);
+
+                int shift = ((from ^ upto) & 7) == 0 ? (from > upto ? -8 : 8) : (from > upto ? -1 : 1);
+                for (int to = from + shift; to != upto; to += shift) {
+                    moveBuffer[writePosition++] = MoveInitUtil.newMove(from, to);
+                }
+            } else if ((pair & bishopType) == pair) { /* Both are bishop type. */
+                int from = BitUtil.getBitPlaceValue(pinned);
+                int upto = BitUtil.getBitPlaceValue(pinner);
+
+                int shift = ((from - upto) & 7) == ((from >>> 3) - (upto >>> 3)) ?
+                                                          (from > upto ? -9 : 9) : (from > upto ? -7 : 7);
+                for (int to = from + shift; to != upto; to += shift) {
+                    moveBuffer[writePosition++] = MoveInitUtil.newMove(from, to);
+                }
+            } else if ((pinned & pawns) != 0) { /* Pinned piece is a pawn. */
+                int from = BitUtil.getBitPlaceValue(pinned);
+                int upto = BitUtil.getBitPlaceValue(pinner);
+
+                if ((pinner & rookType) != 0) {
+                    if (((from ^ upto) & 7) == 0) { /* Same column. Adding pawn forward moves. */
+                        if (whiteToMove) {
+                            if (((pinner << 8) & allPieces) == 0) {
+                                moveBuffer[writePosition++] = MoveInitUtil.newMove(from, from + 8);
+                                if (((pinner << 16) & allPieces & 0x00000000FF000000L) == 0) {
+                                    moveBuffer[writePosition++] = MoveInitUtil.newPawnDoubleMove(from, from + 16);
+                                }
+                            }
+                        } else {
+                            if (((pinner >>> 8) & allPieces) == 0) {
+                                moveBuffer[writePosition++] = MoveInitUtil.newMove(from, from - 8);
+                                if (((pinner >>> 16) & allPieces & 0x000000FF00000000L) == 0) {
+                                    moveBuffer[writePosition++] = MoveInitUtil.newPawnDoubleMove(from, from - 16);
+                                }
+                            }
+                        }
+                    }
+                } else { /* Pinned by bishop. */
+                    if (whiteToMove) {
+                        if ((pinned << 7) == pinner || (pinned << 9) == pinner) {
+                            moveBuffer[writePosition++] = MoveInitUtil.newMove(from, upto);
+                        }
+                    } else {
+                        if ((pinned >>> 7) == pinner || (pinned >>> 9) == pinner) {
+                            moveBuffer[writePosition++] = MoveInitUtil.newMove(from, upto);
+                        }
+                    }
+                    int to = BitUtil.getBitPlaceValue(epTo);
+                    if (((upto - to) & 7) == ((upto>>3) - (to>>3)) || ((upto - to) & 7) + ((upto>>3) - (to>>3)) == 0) {
+                        /* The en-passant to position shares a diagonal with the pinner as well. */
+                        moveBuffer[writePosition++] = MoveInitUtil.newEnPassant(from, to);
+                    }
+                }
+            }
         }
     }
 }

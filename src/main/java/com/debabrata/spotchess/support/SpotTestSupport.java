@@ -2,12 +2,12 @@ package com.debabrata.spotchess.support;
 
 import com.debabrata.spotchess.console.PositionPrinter;
 import com.debabrata.spotchess.exception.InvalidPositionException;
+import com.debabrata.spotchess.logic.MoveProcessor;
 import com.debabrata.spotchess.support.notation.move.SANParser;
 import com.debabrata.spotchess.types.Position;
 import com.debabrata.spotchess.types.Square;
 import com.debabrata.spotchess.types.enums.Colour;
 import com.debabrata.spotchess.types.enums.PieceType;
-import com.debabrata.spotchess.utils.MoveUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -325,19 +325,19 @@ public class SpotTestSupport {
     }
 
     public static void assertStalemate(Position position) {
-        if (MoveUtil.getMovesInPosition(position).size() > 0) {
-            throw new AssertionError("Has legal moves. Expected stalemate.");
+        if (MoveProcessor.getMovesInPosition(position).size() > 0) {
+            throw new AssertionError("Moves found. Expected stalemate.");
         }
-        if(MoveUtil.isKingUnderCheck(position)) {
+        if(MoveProcessor.isKingUnderCheck(position)) {
             throw new AssertionError("King is under check. Expected stalemate.");
         }
     }
 
     public static void assertCheckmate(Position position) {
-        if (MoveUtil.getMovesInPosition(position).size() > 0) {
-            throw new AssertionError("Has legal moves. Expected checkmate.");
+        if (MoveProcessor.getMovesInPosition(position).size() > 0) {
+            throw new AssertionError("Moves found. Expected checkmate.");
         }
-        if(!MoveUtil.isKingUnderCheck(position)) {
+        if(!MoveProcessor.isKingUnderCheck(position)) {
             throw new AssertionError("King is not under check. Expected checkmate.");
         }
     }
@@ -346,7 +346,7 @@ public class SpotTestSupport {
         assert null != expectedMoves && null != position && position.validate();
 
         List<String> expectedMovesList = Arrays.asList(expectedMoves.split("\\s+"));
-        List<String> actualMoves = getMoveNotationList(position, MoveUtil.getMovesInPosition(position));
+        List<String> actualMoves = getMoveNotationList(position, MoveProcessor.getMovesInPosition(position));
 
         compareMoves(actualMoves, expectedMovesList);
     }
@@ -355,7 +355,7 @@ public class SpotTestSupport {
         assert null != expectedMoves && null != position && position.validate();
 
         List<String> expectedMovesList = Arrays.asList(expectedMoves.split("\\s+"));
-        List<String> actualMoves = getMoveNotationList(position, MoveUtil.getMovesInPosition(position));
+        List<String> actualMoves = getMoveNotationList(position, MoveProcessor.getMovesInPosition(position));
 
         if (actualMoves.size() > expectedMovesList.size()) {
             throw new AssertionError("More moves than expected.");
@@ -385,7 +385,7 @@ public class SpotTestSupport {
         assert null !=position && null != movesNotExpected && position.validate();
         String[] unexpectedMovesArr = movesNotExpected.split("\\s+");
 
-        List<Integer> moveIntList = MoveUtil.getMovesInPosition(position);
+        List<Integer> moveIntList = MoveProcessor.getMovesInPosition(position);
 
         List<String> moves = getMoveNotationList(position, moveIntList);
         StringBuilder found = null;

@@ -26,9 +26,9 @@ public class PerformanceReport {
             output.append("\n");
         }
 
-        System.out.println("\n\n\n\nTest 1\t\t2\t\t3\t\t4\t5\t\t6");
+        System.out.println("\n\n\nPerft Positions:\n1\t\t2\t\t3\t\t4\t\t5\t6");
         System.out.println(output);
-        System.out.println("--------------------------------------");
+        System.out.println("-----------------------------------------");
         Arrays.stream(avgTimes).map(t -> t/TEST_COUNT).forEach(t -> System.out.printf("%d\t",t));
         System.out.println("\nTotal Execution Time : " +
                 (System.currentTimeMillis() - overallStartTime) +
