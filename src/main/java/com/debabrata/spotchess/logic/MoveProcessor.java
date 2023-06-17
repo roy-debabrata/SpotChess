@@ -245,8 +245,8 @@ public final class MoveProcessor {
             long diagonal1 = semiMask & diagonallyClosePairs;
             long diagonal2 = diagonal1 ^ diagonallyClosePairs;
 
-            separateToPairsAndProcess(diagonal1, bishopType);
-            separateToPairsAndProcess(diagonal2, bishopType);
+            separateToPairsAndProcess(diagonal1, bishopType, true);
+            separateToPairsAndProcess(diagonal2, bishopType, true);
         }
 
         /* Lateral pins. */
@@ -258,8 +258,8 @@ public final class MoveProcessor {
             long lateral1 = semiMask & laterallyClosePairs;
             long lateral2 = lateral1 ^ laterallyClosePairs;
 
-            separateToPairsAndProcess(lateral1, rookType);
-            separateToPairsAndProcess(lateral2, rookType);
+            separateToPairsAndProcess(lateral1, rookType, false);
+            separateToPairsAndProcess(lateral2, rookType, false);
         }
 
         /* Lateral en-passant pin. Edge case.
@@ -281,24 +281,24 @@ public final class MoveProcessor {
         }
     }
 
-    private void separateToPairsAndProcess(long diagonal, long attackerType) {
+    private void separateToPairsAndProcess(long diagonal, long attacker, boolean attackerType) {
         if (diagonal == 0) {
             return;
         }
         long pair1 = diagonal & -ourKing;
         long pair2 = diagonal ^ pair1;
 
-        handlePinPairs(pair1, attackerType);
-        handlePinPairs(pair2, attackerType);
+        handlePinPairs(pair1, attacker, attackerType);
+        handlePinPairs(pair2, attacker, attackerType);
     }
 
-    private void handlePinPairs(long pair, long attackerType) {
+    private void handlePinPairs(long pair, long attacker, boolean attackerType) {
         long pinned = pair & ourPieces;
-        if(pinned != 0 && (pair & enemyPieces & attackerType & ~checkBlock) != 0){
+        if(pinned != 0 && (pair & enemyPieces & attacker & ~checkBlock) != 0){
             /* One of our pieces is pinned by an enemy bishop type piece. */
             pinnedPieces = pinnedPieces | pinned;
             pinPairList[pinCount] = pair;
-            bishopPin[pinCount++] = attackerType == bishopType;
+            bishopPin[pinCount++] = attackerType;
         }
     }
 
@@ -484,7 +484,7 @@ public final class MoveProcessor {
                 int from = BitUtil.getBitPlaceValue(pinned);
                 int upto = BitUtil.getBitPlaceValue(pinner);
 
-                int shift = ((from - upto) & 7) == ((from >>> 3) - (upto >>> 3)) ?
+                int shift = ((from & 7)-(upto & 7)) == ((from >>> 3) - (upto >>> 3)) ?
                                                           (from > upto ? -9 : 9) : (from > upto ? -7 : 7);
                 for (int to = from + shift; to != upto; to += shift) {
                     moveBuffer[writePosition++] = MoveInitUtil.newMove(from, to);
@@ -525,10 +525,12 @@ public final class MoveProcessor {
                             moveBuffer[writePosition++] = MoveInitUtil.newMove(from, upto);
                         }
                     }
-                    int to = BitUtil.getBitPlaceValue(epTo);
-                    if (((upto - to) & 7) == ((upto>>3) - (to>>3)) || ((upto - to) & 7) + ((upto>>3) - (to>>3)) == 0) {
-                        /* The en-passant to position shares a diagonal with the pinner as well. */
-                        moveBuffer[writePosition++] = MoveInitUtil.newEnPassant(from, to);
+                    if (pawnPushedTwice != 0) {
+                        int to = BitUtil.getBitPlaceValue(epTo);
+                        if (((upto & 7) - (to & 7)) == ((upto >> 3) - (to >> 3)) || ((upto - to) & 7) + ((upto >> 3) - (to >> 3)) == 0) {
+                            /* The en-passant to position shares a diagonal with the pinner as well. */
+                            moveBuffer[writePosition++] = MoveInitUtil.newEnPassant(from, to);
+                        }
                     }
                 }
             }
