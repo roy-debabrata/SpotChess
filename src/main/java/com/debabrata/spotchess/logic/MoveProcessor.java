@@ -42,8 +42,8 @@ public final class MoveProcessor {
     /* Relates to pinned pieces. */
     private long pinnedPieces;
     int pinCount = 0;
-    private final long [] pinnedList = new long[8];
-    private final long [] pinnerList = new long[8];
+    private final long [] pinPairList = new long[8];
+    private final boolean [] bishopPin = new boolean[8];
 
     public MoveProcessor(int[] moveBuffer) {
         this.moveBuffer = moveBuffer;
