@@ -252,7 +252,7 @@ public final class MoveProcessor {
         /* Lateral pins. */
         long laterallyClosePairs = RookAndBishopMovesUtil.getRookPins(kingPlace, allPieces);
 
-        long nonCheckingEnemyRooks = laterallyClosePairs & bishopType & enemyPieces & ~checkBlock;
+        long nonCheckingEnemyRooks = laterallyClosePairs & rookType & enemyPieces & ~checkBlock;
         if (nonCheckingEnemyRooks != 0) { /* Enemy rook currently not giving check, among the pair adjacent pieces. */
             long semiMask = RookAndBishopMovesUtil.getRookSemiMask(kingPlace);
             long lateral1 = semiMask & laterallyClosePairs;
@@ -296,10 +296,9 @@ public final class MoveProcessor {
         long pinned = pair & ourPieces;
         if(pinned != 0 && (pair & enemyPieces & attackerType & ~checkBlock) != 0){
             /* One of our pieces is pinned by an enemy bishop type piece. */
-            long pinner = pair ^ pinned;
             pinnedPieces = pinnedPieces | pinned;
-            pinnedList[pinCount] = pinned;
-            pinnerList[pinCount++] = pinner;
+            pinPairList[pinCount] = pair;
+            bishopPin[pinCount++] = attackerType == bishopType;
         }
     }
 
@@ -394,7 +393,8 @@ public final class MoveProcessor {
 
     private void addEnPassantMoves() {
         int to = BitUtil.getBitPlaceValue(epTo);
-        for(long epTaker = epTakers; epTaker != 0; epTaker &= (epTaker -1)) {
+        long nonPinnedEp = epTakers & (~pinnedPieces);
+        for(long epTaker = nonPinnedEp; epTaker != 0; epTaker &= (epTaker -1)) {
             int from = BitUtil.getLastBitPlaceValue(epTaker);
             moveBuffer[writePosition++] = MoveInitUtil.newEnPassant(from, to);
         }
