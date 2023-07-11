@@ -271,8 +271,7 @@ public final class MoveProcessor {
                 long relevantRank = epRank & (ourKing > epTakers ? (ourKing - 1) : -ourKing);
                 long relevantRooks = rookType & enemyPieces & relevantRank;
                 long otherPieces = (relevantRank & allPieces) ^ pawnPushedTwice ^ epTakers;
-                if (relevantRooks != 0 && ((ourKing > epTakers && relevantRooks >= otherPieces)
-                        || ourKing < epTakers && relevantRooks <= otherPieces)) {
+                if (relevantRooks != 0 && (ourKing > epTakers ? relevantRooks >= otherPieces : relevantRooks <= otherPieces)) {
                     /* Nothing in between rooks and the king other than the two en-passant related pieces. Pin en-passant. */
                     epTakers = 0;
                     pawnPushedTwice = 0;
@@ -295,7 +294,7 @@ public final class MoveProcessor {
     private void handlePinPairs(long pair, long attacker, boolean attackerType) {
         long pinned = pair & ourPieces;
         if(pinned != 0 && (pair & enemyPieces & attacker & ~checkBlock) != 0){
-            /* One of our pieces is pinned by an enemy bishop type piece. */
+            /* One of our pieces is pinned by an enemy bishop/rook piece. */
             pinnedPieces = pinnedPieces | pinned;
             pinPairList[pinCount] = pair;
             bishopPin[pinCount++] = attackerType;
