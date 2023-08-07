@@ -63,18 +63,10 @@ public class FENParser implements GameParser {
                 break;
             }
             switch (castleFlag) {
-                case 'K' :
-                    whiteCanCastleRight = true;
-                    break;
-                case 'Q' :
-                    whiteCanCastleLeft = true;
-                    break;
-                case 'k' :
-                    blackCanCastleRight = true;
-                    break;
-                case 'q' :
-                    blackCanCastleLeft = true;
-                    break;
+                case 'K' -> whiteCanCastleRight = true;
+                case 'Q' -> whiteCanCastleLeft = true;
+                case 'k' -> blackCanCastleRight = true;
+                case 'q' -> blackCanCastleLeft = true;
             }
         } while (castleFlag != ' ');
         if (! whiteCanCastleLeft) {
@@ -110,7 +102,7 @@ public class FENParser implements GameParser {
         }
         positionBuilder.halfMovesCount(halfMoveCounter);
 
-        /* We next expect to have the following information next: half move count */
+        /* We next expect to have the following information next: full move count */
         int moveCounter = 0;
         while (readPosition < gameContent.length()) {
             char moveCounterChar = gameContent.charAt(readPosition++);
@@ -161,6 +153,34 @@ public class FENParser implements GameParser {
                 }
             }
         }
+
+        // Side to move.
+        fen.append(" ").append(position.whiteToMove() ? 'w' : 'b');
+
+        // Castling options.
+        fen.append(" ");
+        if (position.canPotentiallyCastle(true) || position.canPotentiallyCastle(false)) {
+            if(position.canPotentiallyCastleRight(true))  fen.append('K');
+            if(position.canPotentiallyCastleLeft(true))   fen.append('Q');
+            if(position.canPotentiallyCastleRight(false)) fen.append('k');
+            if(position.canPotentiallyCastleLeft(false))  fen.append('q');
+        } else {
+            fen.append('-');
+        }
+
+        // En-passant.
+        fen.append(" ");
+        if (position.enPassantAvailable()) {
+            fen.append(new Square(position.getPawnLocationAfterEnPassant(position.whiteToMove())));
+        } else {
+            fen.append('-');
+        }
+
+        // Half-move counter.
+        fen.append(" ").append(position.getReversibleHalfMoveCount());
+
+        // Full-move counter.
+        fen.append(" ").append(game.getMoveCount());
 
         return fen.toString();
     }

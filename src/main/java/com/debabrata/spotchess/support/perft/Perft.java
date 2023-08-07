@@ -29,6 +29,11 @@ public class Perft {
         }
         int newWritingPosition = processor.addMovesToBuffer(position, startWritingAt);
         if (depth == 1) {
+            if (startWritingAt == 0 && printDivide) {
+                for (int i = startWritingAt; i < newWritingPosition; i++) {
+                    printDivide(i, 1);
+                }
+            }
             return newWritingPosition - startWritingAt;
         }
         long result = 0;
@@ -38,12 +43,16 @@ public class Perft {
             long newResults = perft(position, newWritingPosition, depth - 1, false);
             position.unmakeMove(restoreMove, flag);
             if (printDivide) {
-                Square squareFrom = new Square(MoveInitUtil.getFrom(moveBuffer[i]));
-                Square squareTo = new Square(MoveInitUtil.getTo(moveBuffer[i]));
-                System.out.println(squareFrom.toString() + squareTo + ": " + newResults);
+                printDivide(i, newResults);
             }
             result = result + newResults;
         }
         return  result; /* We are only counting leaf nodes.*/
+    }
+
+    private static void printDivide(int i, long result) {
+        Square squareFrom = new Square(MoveInitUtil.getFrom(moveBuffer[i]));
+        Square squareTo = new Square(MoveInitUtil.getTo(moveBuffer[i]));
+        System.out.println(squareFrom.toString() + squareTo + ": " + result);
     }
 }

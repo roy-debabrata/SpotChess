@@ -20,6 +20,10 @@ public class Game {
         return new ArrayList<>(moveHistory);
     }
 
+    public int getMoveCount() {
+        return 1 + moveHistory.size() / 2;
+    }
+
     public void addMove(Move move) {
         moveHistory.add(move);
         currentPosition.makeMove(move.getMove());

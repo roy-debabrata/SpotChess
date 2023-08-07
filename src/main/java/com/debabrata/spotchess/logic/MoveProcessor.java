@@ -268,10 +268,10 @@ public final class MoveProcessor {
             long epRank = whiteToMove ? 0x000000FF00000000L : 0x00000000FF000000L;
             if ((ourKing & epRank) != 0 && (epTakers & (epTakers - 1)) == 0) {
                 /* Our king is on the rank and only one pawn can take en passant. */
-                long relevantRank = epRank & (ourKing > epTakers ? (ourKing - 1) : -ourKing);
+                long relevantRank = epRank & (ourKing > epTakers ? (ourKing - 1) : (-ourKing ^ ourKing));
                 long relevantRooks = rookType & enemyPieces & relevantRank;
-                long otherPieces = (relevantRank & allPieces) ^ pawnPushedTwice ^ epTakers;
-                if (relevantRooks != 0 && (ourKing > epTakers ? relevantRooks >= otherPieces : relevantRooks <= otherPieces)) {
+                long otherPieces = (relevantRank & allPieces) ^ pawnPushedTwice ^ epTakers ^ relevantRooks;
+                if (relevantRooks != 0 && (ourKing > epTakers ? relevantRooks >= otherPieces : ((-otherPieces & relevantRooks) != relevantRooks))) {
                     /* Nothing in between rooks and the king other than the two en-passant related pieces. Pin en-passant. */
                     epTakers = 0;
                     pawnPushedTwice = 0;

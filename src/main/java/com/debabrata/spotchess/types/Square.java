@@ -1,5 +1,7 @@
 package com.debabrata.spotchess.types;
 
+import com.debabrata.spotchess.utils.BitUtil;
+
 import java.util.Objects;
 
 public class Square {
@@ -14,6 +16,10 @@ public class Square {
             this.placeValue = -1;
             this.name = "Invalid";
         }
+    }
+
+    public Square (long bitPosition) {
+        this(BitUtil.getLastBitPlaceValue(bitPosition));
     }
 
     public Square(String name) {
