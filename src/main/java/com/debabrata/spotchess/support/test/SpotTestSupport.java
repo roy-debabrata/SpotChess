@@ -1,4 +1,4 @@
-package com.debabrata.spotchess.support;
+package com.debabrata.spotchess.support.test;
 
 import com.debabrata.spotchess.console.PositionPrinter;
 import com.debabrata.spotchess.exception.InvalidPositionException;

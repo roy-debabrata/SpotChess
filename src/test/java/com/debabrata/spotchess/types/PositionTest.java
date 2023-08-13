@@ -4,7 +4,7 @@ import com.debabrata.spotchess.types.enums.GameType;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import static com.debabrata.spotchess.support.SpotTestSupport.*;
+import static com.debabrata.spotchess.support.test.SpotTestSupport.*;
 
 public class PositionTest {
     @Nested

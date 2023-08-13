@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.stream.IntStream;
 
-import static com.debabrata.spotchess.support.SpotTestSupport.*;
+import static com.debabrata.spotchess.support.test.SpotTestSupport.*;
 
 public class MoveUtilTest {
     @Nested

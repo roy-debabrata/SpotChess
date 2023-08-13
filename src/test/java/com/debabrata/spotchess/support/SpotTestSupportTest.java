@@ -5,7 +5,7 @@ import com.debabrata.spotchess.types.enums.Colour;
 import com.debabrata.spotchess.types.enums.GameType;
 import org.junit.jupiter.api.Test;
 
-import static com.debabrata.spotchess.support.SpotTestSupport.*;
+import static com.debabrata.spotchess.support.test.SpotTestSupport.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class SpotTestSupportTest{
