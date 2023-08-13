@@ -71,8 +71,34 @@ public final class MoveProcessor {
         return writePosition;
     }
 
+    public boolean isCheck(Position position) {
+        prepare(position, this.writePosition);
+        processChecks();
+        return isCheck;
+    }
+
     public boolean isCheck() {
         return isCheck;
+    }
+
+    /**
+     * @return the position of the piece that put a check, if multiple checkers -1, if no checkers -2.
+     */
+    public int getChecker(Position position) {
+        prepare(position, this.writePosition);
+        processChecks();
+        return getChecker();
+    }
+
+    /**
+     * @return the position of the piece that put a check, if multiple checkers -1, if no checkers -2.
+     */
+    public int getChecker() {
+        long checker = checkBlock & enemyPieces;
+        if (isCheck) {
+            return checker == 0 ? -1 : BitUtil.getBitPlaceValue(checker);
+        }
+        return -2;
     }
 
     /**
@@ -97,13 +123,18 @@ public final class MoveProcessor {
      * important.
      *
      * @return returns true if the king is under check, otherwise false.
-     * */
+     */
     public static boolean isKingUnderCheck(Position position) {
-        int [] moves = new int[300];
-        MoveProcessor processor = new MoveProcessor(moves);
-        processor.addMovesToBuffer(position, 0);
+        MoveProcessor processor = new MoveProcessor(null);
+        return processor.isCheck(position);
+    }
 
-        return processor.isCheck();
+    /**
+     * @return the position of the piece that put a check, if multiple checkers -1, if no checkers -2.
+     */
+    public static int getPositionCheckers(Position position) {
+        MoveProcessor processor = new MoveProcessor(null);
+        return processor.getChecker(position);
     }
 
     /* Fetches basic information about the position. */
