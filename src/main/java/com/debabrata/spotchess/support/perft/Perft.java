@@ -6,7 +6,7 @@ import com.debabrata.spotchess.types.Square;
 import com.debabrata.spotchess.utils.MoveInitUtil;
 
 public class Perft {
-    private static final int [] moveBuffer = new int[30000000 * 20];
+    private static final int [] moveBuffer = new int[300 * 20];
     private static final MoveProcessor processor = new MoveProcessor(moveBuffer);
     private static final boolean ENHANCED_STATS = false;
 
