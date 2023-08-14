@@ -1,4 +1,4 @@
-package com.debabrata.spotchess.utils;
+package com.debabrata.spotchess.logic;
 
 import com.debabrata.spotchess.types.Position;
 import com.debabrata.spotchess.types.enums.Colour;
@@ -10,7 +10,7 @@ import java.util.stream.IntStream;
 
 import static com.debabrata.spotchess.support.test.SpotTestSupport.*;
 
-public class MoveUtilTest {
+public class MoveProcessorTest {
     @Nested
     class KingMovesTest {
         @Test

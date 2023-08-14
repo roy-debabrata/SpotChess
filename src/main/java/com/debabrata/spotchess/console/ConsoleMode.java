@@ -3,7 +3,11 @@ package com.debabrata.spotchess.console;
 import java.util.stream.IntStream;
 
 public class ConsoleMode {
-    public static void clearConsole() {
+    public void runREPL(String [] args) {
+
+    }
+
+    public void clearConsole() {
         try {
             final String os = System.getProperty("os.name");
             if (os.contains("Windows")) {
