@@ -13,14 +13,14 @@ import com.debabrata.spotchess.types.enums.PieceType;
  * engines must use this as it seems so basic. Not sure if it's smart to jumble up the Knights, Kings and Pawns,
  * but it did save 4 bytes which seems like a lot at this moment though I might regret it later.
  * That said, progress is change.
- *
+ * <p>
  * Making class final to please the JVM inlining gods. Ideally we would like to make all the methods "inline" but that's
  * not a thing in java (even in C/C++ it's just a suggestion to the compiler that can be ignored), so I right now I'll
  * just make Position final. In case we do make Position non-final we'll make all methods in it final.
- *
+ * <p>
  * The board representation at any position follows Little-Endian Rank, Big-Endian File Mapping (LERBEF).
  * For an illustration check out the following:
- * https://www.chessprogramming.org/Bibob and look at the image labeled "LERBEF"
+ * <a href="https://www.chessprogramming.org/Bibob">...</a> and look at the image labeled "LERBEF"
  * We use this scheme because it feels more intuitive to me rather than for any performance reasons.
  */
 public final class Position {
