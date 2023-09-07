@@ -1,4 +1,6 @@
-package com.debabrata.spotchess.support;
+package com.debabrata.spotchess.tools;
+
+import com.debabrata.spotchess.support.PerftTest;
 
 import java.util.Arrays;
 

@@ -44,8 +44,9 @@ public class MagicHashGenerator {
         long mask = RookAndBishopMovesUtil.getPieceMask(pieceType, pinningType, position);
         long[] positionCombinations = BitUtil.getAllPossibleBitCombinations(mask);
         long[] associatedMoves = RookAndBishopMovesUtil.getAllPossibleMovesCombinations(pieceType, position, positionCombinations);
+        long[] associatedPins = RookAndBishopMovesUtil.getAllPossiblePinCombinations(pieceType, position, positionCombinations);
 
-        SearchScope searchScope = new SearchScope(positionCombinations, associatedMoves, targetedShiftNumber);
+        SearchScope searchScope = new SearchScope(positionCombinations, associatedMoves, associatedPins, targetedShiftNumber);
 
         /* If you want to use anything other than Random Numbers for tying as magic hash just implement your own
         *  version of MagicGenerator and pass it here. Otherwise, you can go into the code directly and change the
@@ -84,19 +85,14 @@ public class MagicHashGenerator {
                 53,54,54,54,54,54,54,53,53,54,54,54,54,54,54,53,
                 53,54,54,54,54,54,54,53,52,53,53,53,53,53,53,52
         };
-        findAndDisplayMagicsFor(PieceType.BISHOP, false, magicNumberBishopShiftTargets);
-        findAndDisplayMagicsFor(PieceType.ROOK, false, magicNumberRookShiftTargets);
-        findAndDisplayMagicsFor(PieceType.BISHOP, true, magicNumberBishopShiftTargets);
-        findAndDisplayMagicsFor(PieceType.ROOK, true, magicNumberRookShiftTargets);
+        findAndDisplayMagicsFor(PieceType.BISHOP, magicNumberBishopShiftTargets);
+        findAndDisplayMagicsFor(PieceType.ROOK, magicNumberRookShiftTargets);
     }
 
-    private static void findAndDisplayMagicsFor(PieceType piece, boolean pinningType, int[] magicNumberShiftTargets) {
+    private static void findAndDisplayMagicsFor(PieceType piece, int[] magicNumberShiftTargets) {
         resetBenchmarkingData();
 
         String capitalCasePieceName = piece == PieceType.BISHOP ? "Bishop" : "Rook";
-        if (pinningType) {
-            capitalCasePieceName = capitalCasePieceName + "Pinning";
-        }
 
         long[] magics = new long[64];
 
@@ -119,9 +115,7 @@ public class MagicHashGenerator {
         }
         System.out.println(shiftArray + "\b};");
         System.out.println(occupancyArray + "\b\b};");
-        if (pinningType) {
-            System.out.println(occupancySelectorArray + "\b\b};");
-        }
+        System.out.println(occupancySelectorArray + "\b\b};");
 
         System.out.print("magicNumber" + capitalCasePieceName + "[] = {");
 
@@ -131,14 +125,12 @@ public class MagicHashGenerator {
 
             long mask = RookAndBishopMovesUtil.getPieceMask(piece, false, position);
             long[] positionCombinations = BitUtil.getAllPossibleBitCombinations(mask);
-            long[] associatedMoves;
-            if (pinningType) {
-                associatedMoves = RookAndBishopMovesUtil.getAllPossiblePinCombinations(piece, position, positionCombinations);
-            } else {
-                associatedMoves = RookAndBishopMovesUtil.getAllPossibleMovesCombinations(piece, position, positionCombinations);
-            }
+            long[] associatedMoves, associatedPins;
 
-            SearchScope searchScope = new SearchScope(positionCombinations, associatedMoves, targetedShiftNumber);
+            associatedMoves = RookAndBishopMovesUtil.getAllPossibleMovesCombinations(piece, position, positionCombinations);
+            associatedPins = RookAndBishopMovesUtil.getAllPossiblePinCombinations(piece, position, positionCombinations);
+
+            SearchScope searchScope = new SearchScope(positionCombinations, associatedMoves, associatedPins, targetedShiftNumber);
 
             long magic = initiateSearch(new SearchConfiguration(), searchScope, new RandomMagicGenerator());
             if (magic == 0) {
@@ -181,17 +173,19 @@ public class MagicHashGenerator {
 
             long[] sortedPositions = new long[searchScope.positionCombinations.length];
             long[] sortedMoves = new long[searchScope.associatedMoves.length];
+            long[] sortedPins = new long[searchScope.associatedPins.length];
 
             int sortedArrayLoc = 0;
             for ( Map.Entry<Long, Integer> move : list ) {
                 for ( int i = 0; i < searchScope.associatedMoves.length; i++ ) {
                     if ( searchScope.associatedMoves[i] == move.getKey() ) {
                         sortedPositions[sortedArrayLoc] = searchScope.positionCombinations[i];
-                        sortedMoves[sortedArrayLoc++] = searchScope.associatedMoves[i];
+                        sortedMoves[sortedArrayLoc] = searchScope.associatedMoves[i];
+                        sortedPins[sortedArrayLoc++] = searchScope.associatedPins[i];
                     }
                 }
             }
-            searchScope = new SearchScope(sortedPositions, sortedMoves, searchScope.targetedShiftNumber);
+            searchScope = new SearchScope(sortedPositions, sortedMoves, sortedPins, searchScope.targetedShiftNumber);
         }
 
         return magicSearchRunner(searchConfig, searchScope, generator);
@@ -278,7 +272,8 @@ public class MagicHashGenerator {
     public static boolean isNumberMagic(SearchConfiguration searchConfig, SearchScope searchScope , long potentialMagic) {
         if (searchScope.targetedShiftNumber < 40 || searchScope.targetedShiftNumber >= 64)
             return false;
-        long[] occupations = new long[1 << (64 - searchScope.targetedShiftNumber)];
+        long[] moveOccupations = new long[1 << (64 - searchScope.targetedShiftNumber)];
+        long[] pinOccupations = new long[1 << (64 - searchScope.targetedShiftNumber)];
         int moveConvergence = 0;
         for (int i = 0; i < searchScope.positionCombinations.length; i++) {
             if ( searchConfig.earlyChecksEnabled && searchConfig.earlyFailureCheckPosition == i ) {
@@ -288,12 +283,13 @@ public class MagicHashGenerator {
                 TOOL_BENCHMARKING_CUTOFF_CROSSED.addAndGet(1);
             }
             int position = (int)((searchScope.positionCombinations[i] * potentialMagic) >>> searchScope.targetedShiftNumber);
-            if (position >= occupations.length) {
+            if (position >= moveOccupations.length) {
                 return false;
             }
-            if (occupations[position] == 0) {
-                occupations[position] = searchScope.associatedMoves[i];
-            } else if (occupations[position] == searchScope.associatedMoves[i]) {
+            if (moveOccupations[position] == 0 && pinOccupations[position] == 0) {
+                moveOccupations[position] = searchScope.associatedMoves[i];
+                pinOccupations[position] = searchScope.associatedPins[i];
+            } else if (moveOccupations[position] == searchScope.associatedMoves[i] || pinOccupations[position] == searchScope.associatedPins[i]) {
                 moveConvergence++;
             } else {
                 return false;
@@ -369,17 +365,20 @@ public class MagicHashGenerator {
     private static class SearchScope {
         final long[] positionCombinations;
         final long[] associatedMoves;
+        final long[] associatedPins;
         final int targetedShiftNumber;
 
         /**
          * @param positionCombinations All the possible piece combination that need to be hashed by the magic.
          * @param associatedMoves The corresponding move sets for all the position combinations.
+         * @param associatedPins The corresponding pins sets for all the position combinations.
          * @param targetedShiftNumber In the magic hashing this is the value that indicates how small the lookup array is.
          *                            It is the value by which after magic multiplication the result is shifted to get the position.
          */
-        public SearchScope(long[] positionCombinations, long[] associatedMoves, int targetedShiftNumber) {
+        public SearchScope(long[] positionCombinations, long[] associatedMoves, long[] associatedPins, int targetedShiftNumber) {
             this.positionCombinations = positionCombinations;
             this.associatedMoves = associatedMoves;
+            this.associatedPins = associatedPins;
             this.targetedShiftNumber = targetedShiftNumber;
         }
     }

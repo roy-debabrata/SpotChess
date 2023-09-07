@@ -197,7 +197,7 @@ public final class MoveProcessor {
 
         /* Lateral Checks.
          * There can be more than one lateral checks at a time. Ex. axb8=Q where the king is at a8 and a queen at a6. */
-        long kingAttack = RookAndBishopMovesUtil.getRookMoves(kingPlace, allPieces);
+        long kingAttack = RookAndBishopMovesUtil.getKingRookMoves(kingPlace, allPieces);
         attacker = kingAttack & rookType & enemyPieces;
         if (attacker != 0) {
             if (isCheck) {
@@ -220,7 +220,7 @@ public final class MoveProcessor {
         }
 
         /* Diagonal Checks. */
-        kingAttack = RookAndBishopMovesUtil.getBishopMoves(kingPlace, allPieces);
+        kingAttack = RookAndBishopMovesUtil.getKingBishopMoves(kingPlace, allPieces);
         attacker = kingAttack & bishopType & enemyPieces; /* There can only be one at max. */
         if (attacker != 0) {
             if (isCheck) {
@@ -268,7 +268,7 @@ public final class MoveProcessor {
         pinCount = 0;
 
         /* Diagonal pins. */
-        long diagonallyClosePairs = RookAndBishopMovesUtil.getBishopPins(kingPlace, allPieces);
+        long diagonallyClosePairs = RookAndBishopMovesUtil.getCachedBishopPins();
 
         long nonCheckingEnemyBishops = diagonallyClosePairs & bishopType & enemyPieces & ~checkBlock; /* Enemy bishop currently not giving check, in pair adjacent pieces. */
         if (nonCheckingEnemyBishops != 0) {
@@ -281,7 +281,7 @@ public final class MoveProcessor {
         }
 
         /* Lateral pins. */
-        long laterallyClosePairs = RookAndBishopMovesUtil.getRookPins(kingPlace, allPieces);
+        long laterallyClosePairs = RookAndBishopMovesUtil.getCachedRookPins();
 
         long nonCheckingEnemyRooks = laterallyClosePairs & rookType & enemyPieces & ~checkBlock;
         if (nonCheckingEnemyRooks != 0) { /* Enemy rook currently not giving check, among the pair adjacent pieces. */

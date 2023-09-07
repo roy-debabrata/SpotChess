@@ -1,4 +1,4 @@
-package com.debabrata.spotchess.support;
+package com.debabrata.spotchess.tools;
 
 import com.debabrata.spotchess.console.PositionPrinter;
 import com.debabrata.spotchess.logic.MoveProcessor;
