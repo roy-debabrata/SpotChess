@@ -548,11 +548,11 @@ public final class MoveProcessor {
                 } else { /* Pinned by bishop. */
                     if (whiteToMove) {
                         if ((pinned << 7) == pinner || (pinned << 9) == pinner) {
-                            moveBuffer[writePosition++] = MoveInitUtil.newMove(from, upto);
+                            addPawnMoves(from, upto);
                         }
                     } else {
                         if ((pinned >>> 7) == pinner || (pinned >>> 9) == pinner) {
-                            moveBuffer[writePosition++] = MoveInitUtil.newMove(from, upto);
+                            addPawnMoves(from, upto);
                         }
                     }
                     if (pawnPushedTwice != 0 && (epTakers & pinned) != 0) {

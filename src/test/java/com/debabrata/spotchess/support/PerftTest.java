@@ -77,6 +77,11 @@ public class PerftTest {
         perft("8/8/2k5/5q2/5n2/8/5K2/8 b - - 0 1", 4, 23527);
     }
 
+    @Test
+    public void pinnedPawnsPromoting() {
+        perft("rnb1qkr1/pp1Pbpp1/2p4p/8/2B3K1/8/PPP1N1PP/RNBQ3R w - - 2 11", 1, 49);
+    }
+
     private void perft(String fen, int depth, long expectedResult) {
         Game game = fenParser.getGame(fen);
 
