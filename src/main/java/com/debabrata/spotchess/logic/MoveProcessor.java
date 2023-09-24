@@ -58,12 +58,17 @@ public final class MoveProcessor {
     public int addMovesToBuffer(Position position, int writePos) {
         prepare(position, writePos);
         processChecks();
-        processPinnedPieces();
         if(isCheck) {
+            if(checkBlock == 0) {
+                addKingMoves();
+                return writePosition;
+            }
+            processPinnedPieces();
             addKingMoves();
             addBlockingMoves();
             return writePosition;
         }
+        processPinnedPieces();
         addKingMoves();
         addPawnMoves();
         addPieceMoves();

@@ -6,7 +6,7 @@ function s_print() {
 
 function stockfish_result() {
     time yes "position fen $1
-bench 0 1 $2 current perft 
+bench 0 1 $2 current perft
 quit"  | stockfish
 }
 
@@ -19,14 +19,14 @@ function to_millis() {
     RES=$((TEMP * 60))
     TEMP=$(echo $1 | cut -dm -f2 | cut -d. -f1)
     RES=$(($((RES + TEMP)) * 1000))
-    TEMP=$(echo $1 | cut -dm -f2 | cut -d. -f2 | cut -ds -f1)
+    TEMP=$(echo $1 | cut -dm -f2 | cut -d. -f2 | cut -ds -f1 | sed 's/^0*//g')
     echo $((RES + TEMP))
 }
 
 function find_diff() {
     SP_SEC=$(to_millis $1)
     SF_SEC=$(to_millis $2)
-    echo $((SP_SEC - SF_SEC)) 
+    echo $((SP_SEC - SF_SEC))
 }
 
 function find_percent() {
@@ -46,14 +46,14 @@ function timer() {
 function run_timer() {
     s_print "#" "Spot" "Stockfish" "Difference" "Percent "
     while read LINE;do
-	if ! echo $LINE | grep -q "^#";then
-	    POS=$(echo $LINE | cut -d# -f1)
-	    FEN=$(echo $LINE | cut -d# -f2)
-	    DEP=$(echo $LINE | cut -d# -f3)
-	    RES=$(echo $LINE | cut -d# -f4)
-	    timer "$POS" "$FEN" "$DEP" "$RES"
-	fi
-    done < positions.list 
+        if ! echo $LINE | grep -q "^#";then
+            POS=$(echo $LINE | cut -d# -f1)
+            FEN=$(echo $LINE | cut -d# -f2)
+            DEP=$(echo $LINE | cut -d# -f3)
+            RES=$(echo $LINE | cut -d# -f4)
+            timer "$POS" "$FEN" "$DEP" "$RES"
+        fi
+    done < positions.list
 }
 
 run_timer
