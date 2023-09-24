@@ -48,12 +48,13 @@ public final class Position {
      * 0x02000000 = black can castle with left rook
      * 0x04000000 = white can castle with right rook
      * 0x08000000 = black can castle with right rook
-     * 0x10000000 = Sets whose move it is. 0 at this position means it's white's turn, 1 means it's black's turn.
+     * 0x80000000 = Sets whose move it is. 1 at this position means it's white's turn, 0 means it's black's turn.
      *
-     * At beginning of any regular chess game the flags will have 0. This sets all flags to their initial state. */
+     * The white to move flag defaults to 1 because flag < 0 is faster to compute than flags >= 0. */
     private int flags;
 
     private Position() {
+        flags = 0x80000000; // White moves first by default.
     }
 
     public Position(GameType gameType) {
@@ -71,6 +72,7 @@ public final class Position {
             default:
                 throw new UnsupportedOperationException("Unsupported game type selected");
         }
+        flags = flags | 0x80000000; // White moves first by default.
     }
 
     public Position(Position position) {
@@ -333,11 +335,11 @@ public final class Position {
      * @return true if it's white's turn to move false if it's black's turn to move.
      */
     public boolean whiteToMove() {
-        return (flags & 0x10000000) == 0;
+        return flags < 0;
     }
 
     private void toggleWhiteToMove() {
-        flags = flags ^ 0x10000000;
+        flags = flags ^ 0x80000000;
     }
 
     public Colour getPieceColour(int placeValue) {
