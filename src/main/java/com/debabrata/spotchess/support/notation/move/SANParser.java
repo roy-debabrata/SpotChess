@@ -12,7 +12,7 @@ import com.debabrata.spotchess.utils.RookAndBishopMovesUtil;
 /** Parses and generates Standard Algebraic Notation moves. */
 public class SANParser implements MoveParser {
     @Override
-    public int getMove(Position position, String notation) {
+    public long getMove(Position position, String notation) {
         /* We don't do all checks for legality, only enough to avoid misinterpretation. */
         if (null == notation || null == position) {
             return 0;
@@ -24,14 +24,14 @@ public class SANParser implements MoveParser {
         boolean whiteToMove = position.whiteToMove();
         if (notation.equalsIgnoreCase("O-O-O") || notation.equalsIgnoreCase("0-0-0")) {
             if (whiteToMove) {
-                return MoveInitUtil.newLeftCastle(3, 5);
+                return MoveInitUtil.newLeftCastle();
             }
-            return MoveInitUtil.newLeftCastle(59, 61);
+            return MoveInitUtil.newLeftCastle();
         } else if (notation.equalsIgnoreCase("O-O") || notation.equalsIgnoreCase("0-0")) {
             if (whiteToMove) {
-                return MoveInitUtil.newRightCastle(3, 1);
+                return MoveInitUtil.newRightCastle();
             }
-            return MoveInitUtil.newRightCastle(59, 57);
+            return MoveInitUtil.newRightCastle();
         }
         int endOfToCoOrdinate;
         int to;
@@ -112,8 +112,7 @@ public class SANParser implements MoveParser {
                 if (Long.bitCount(attackers) != 1) {
                     return 0; /* Despite disambiguation there are multiple attackers or no attackers for the position. */
                 }
-                int from = BitUtil.getBitPlaceValue(attackers);
-                return MoveInitUtil.newMove(from, to);
+                return MoveInitUtil.newMove(attackers, 1L << to);
             }
         }
         /* All piece moves have been dealt with. We take care of pawns now. */
@@ -128,7 +127,7 @@ public class SANParser implements MoveParser {
                 if ((1L << (to - 8) & whitePawns) != 0) {
                     from = to - 8;
                 } else if ((1L << (to - 16) & whitePawns) != 0 && (to - 16) / 8 == 1) {
-                    return MoveInitUtil.newPawnDoubleMove(to - 16, to);
+                    return MoveInitUtil.newPawnDoubleMove(1L << (to - 16), 1L << to);
                 } else {
                     return 0; /* No pawn exists on either of the preceding squares. */
                 }
@@ -137,7 +136,7 @@ public class SANParser implements MoveParser {
                 if ((1L << (to + 8) & blackPawns) != 0) {
                     from = to + 8;
                 } else if ((1L << (to + 16) & blackPawns) != 0 && (to + 16) / 8 == 6) {
-                    return MoveInitUtil.newPawnDoubleMove(to + 16, to); /* Double pawn move taken care of. */
+                    return MoveInitUtil.newPawnDoubleMove(1L << (to + 16), 1L << to); /* Double pawn move taken care of. */
                 } else {
                     return 0; /* No pawn exists on either of the preceding squares. */
                 }
@@ -159,7 +158,7 @@ public class SANParser implements MoveParser {
                 return 0; /* Can't find taker's file. */
             }
             if (!pieceTaken && ((position.getPawnLocationAfterEnPassant(whiteToMove) & 1L << to) != 0)) {
-                return MoveInitUtil.newEnPassant(from, to); /* En-passant move taken care of. */
+                return MoveInitUtil.newEnPassant(1L << from, 1L << to); /* En-passant move taken care of. */
             }
             if (!pieceTaken) {
                 return 0; /* It's neither piece taken nor en-passant, yet we have a 'takes' in notation. */
@@ -174,13 +173,13 @@ public class SANParser implements MoveParser {
                     char promotesTo = Character.toUpperCase(notation.charAt(endOfToCoOrdinate + 2));
                     if (reachedLastRank) {
                         if ( promotesTo == 'Q' ) {
-                            return MoveInitUtil.newPawnPromotion(from, to, PieceType.QUEEN);
+                            return MoveInitUtil.newPawnPromotion(1L << from, 1L << to, whiteToMove, PieceType.QUEEN);
                         } else if ( promotesTo == 'N' ) {
-                            return MoveInitUtil.newPawnPromotion(from, to, PieceType.KNIGHT);
+                            return MoveInitUtil.newPawnPromotion(1L << from, 1L << to, whiteToMove, PieceType.KNIGHT);
                         } else if ( promotesTo == 'R' ) {
-                            return MoveInitUtil.newPawnPromotion(from, to, PieceType.ROOK);
+                            return MoveInitUtil.newPawnPromotion(1L << from, 1L << to, whiteToMove, PieceType.ROOK);
                         } else if ( promotesTo == 'B' ) {
-                            return MoveInitUtil.newPawnPromotion(from, to, PieceType.BISHOP);
+                            return MoveInitUtil.newPawnPromotion(1L << from, 1L << to, whiteToMove, PieceType.BISHOP);
                         } else {
                             return 0; /* Unknown promotion type. */
                         }
@@ -196,29 +195,29 @@ public class SANParser implements MoveParser {
             return 0; /* Doesn't promote at last rank. */
         }
         /* Not takes/takes en-passant/double move/promotion. It's a simple move. */
-        return MoveInitUtil.newMove(from, to);
+        return MoveInitUtil.newMove(1L << from, 1L << to);
     }
 
     @Override
-    public String getNotation(Position position, int move) {
-        if (MoveInitUtil.isCastle(move)) {
+    public String getNotation(Position position, long move) {
+        if (MoveInitUtil.isSpecialMove(move) && MoveInitUtil.isCastle(move)) {
             return MoveInitUtil.isRightCastle(move) ? "O-O" : "O-O-O";
         }
 
-        int to = MoveInitUtil.getTo(move);
+        long to = MoveInitUtil.getTo(move, position);
         String notation = new Square(to).toString();
 
-        int from = MoveInitUtil.getFrom(move);
+        long from = MoveInitUtil.getFrom(move, position);
         PieceType pieceType = position.getPieceType(from);
 
-        if (position.getPieceType(to) != null || MoveInitUtil.isEnPassant(move)) {
+        if (position.getPieceType(to) != null || (MoveInitUtil.isSpecialMove(move) && MoveInitUtil.isEnPassant(move))) {
             notation = "x" + notation;
             if (pieceType == PieceType.PAWN) {
                 notation = new Square(from).toString().charAt(0) + notation;
             }
         }
         if (pieceType == PieceType.PAWN) {
-            if (MoveInitUtil.isPromotion(move)) {
+            if (MoveInitUtil.isSpecialMove(move) && MoveInitUtil.isPromotion(move)) {
                 PieceType promotesTo = MoveInitUtil.promotesTo(move);
                 if (null == promotesTo) {
                     throw new RuntimeException("Invalid promotion!");
@@ -230,27 +229,28 @@ public class SANParser implements MoveParser {
              * from the attacked position and see if it hits another piece of the same kind. */
             long attackers = 0;
             long allPieces = position.getAllPieces();
+            int toPv = BitUtil.getBitPlaceValue(to);
             switch (pieceType) {
                 case KNIGHT:
-                    attackers = KingAndKnightMovesUtil.getKnightMoves(to);
+                    attackers = KingAndKnightMovesUtil.getKnightMoves(toPv);
                     attackers = attackers & position.getKnights();
                     break;
                 case ROOK:
-                    attackers = RookAndBishopMovesUtil.getRookMoves(to, allPieces);
+                    attackers = RookAndBishopMovesUtil.getRookMoves(toPv, allPieces);
                     attackers = attackers & position.getRooks();
                     break;
                 case QUEEN:
-                    attackers = RookAndBishopMovesUtil.getBishopMoves(to, allPieces);
-                    attackers |= RookAndBishopMovesUtil.getRookMoves(to, allPieces);
+                    attackers = RookAndBishopMovesUtil.getBishopMoves(toPv, allPieces);
+                    attackers |= RookAndBishopMovesUtil.getRookMoves(toPv, allPieces);
                     attackers = attackers & position.getQueens();
                     break;
                 case BISHOP:
-                    attackers = RookAndBishopMovesUtil.getBishopMoves(to, allPieces);
+                    attackers = RookAndBishopMovesUtil.getBishopMoves(toPv, allPieces);
                     attackers = attackers & position.getBishops();
                     break;
             }
             /* Removing our own attacker from consideration. */
-            attackers = attackers & ~(1L << from);
+            attackers = attackers & ~from;
             /* We only care about attacking pieces of the same colour. */
             Colour moversColour = position.getPieceColour(from);
             if (moversColour == Colour.BLACK) {
@@ -260,10 +260,10 @@ public class SANParser implements MoveParser {
             }
             if (attackers != 0) {
                 /* There is ambiguity with attackers. */
-                if ((attackers & (0x0101010101010101L << (from % 8))) == 0) {
+                if ((attackers & (0x0101010101010101L << (BitUtil.getBitPlaceValue(from) % 8))) == 0) {
                     /* Attackers are not in the same column. */
                     notation = new Square(from).toString().charAt(0) + notation;
-                } else if ((attackers & (0x00000000000000FFL << (8 * (from / 8)))) == 0) {
+                } else if ((attackers & (0x00000000000000FFL << (8 * (BitUtil.getBitPlaceValue(from) / 8)))) == 0) {
                     /* Attackers are in the same column but not same row. */
                     notation = new Square(from).toString().charAt(1) + notation;
                 } else {
