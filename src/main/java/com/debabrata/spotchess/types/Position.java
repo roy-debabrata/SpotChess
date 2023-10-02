@@ -582,7 +582,7 @@ public final class Position {
                 }
             } else {
                 queensAndBishops = queensAndBishops ^ to; /* Can't take king in chess, taken piece must be a bishop. */
-                move = move | TypeConstants.BISHOP_TAKEN;
+                takes = TypeConstants.BISHOP_TAKEN;
             }
         }
         /* Actually making the move for the piece. */
