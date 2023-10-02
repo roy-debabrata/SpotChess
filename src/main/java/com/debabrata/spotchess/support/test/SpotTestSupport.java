@@ -256,22 +256,22 @@ public class SpotTestSupport {
         SANParser sanParser = new SANParser();
 
         for (String move : movesList) {
-            int moveInt = sanParser.getMove(position, move);
-            if (moveInt == 0) {
+            long moveLong = sanParser.getMove(position, move);
+            if (moveLong == 0) {
                 return false;
             }
-            position.makeMove(moveInt);
+            position.makeMove(moveLong);
         }
         return true;
     }
 
-    public static int moveAndGetReverseMove(Position position, String move) {
+    public static Pair<Long, Integer> moveAndGetReverseMove(Position position, String move) {
         assert null != position && null != move;
 
         SANParser sanParser = new SANParser();
-        int moveInt = sanParser.getMove(position, move);
+        long moveLong = sanParser.getMove(position, move);
 
-        return position.makeMove(moveInt);
+        return new Pair<>(moveLong, position.makeMove(moveLong));
     }
 
 
@@ -385,9 +385,9 @@ public class SpotTestSupport {
         assert null !=position && null != movesNotExpected && position.validate();
         String[] unexpectedMovesArr = movesNotExpected.split("\\s+");
 
-        List<Integer> moveIntList = MoveProcessor.getMovesInPosition(position);
+        List<Long> moveLongList = MoveProcessor.getMovesInPosition(position);
 
-        List<String> moves = getMoveNotationList(position, moveIntList);
+        List<String> moves = getMoveNotationList(position, moveLongList);
         StringBuilder found = null;
         for(String move: unexpectedMovesArr) {
             boolean match = moves.contains(move);
@@ -404,13 +404,23 @@ public class SpotTestSupport {
         }
     }
 
-    private static List<String> getMoveNotationList(Position position, List<Integer> moveIntList) {
+    private static List<String> getMoveNotationList(Position position, List<Long> moveList) {
         SANParser sanParser = new SANParser();
         List<String> moves = new ArrayList<>();
-        for (int moveInt : moveIntList) {
-            String move = sanParser.getNotation(position, moveInt);
+        for (long moveLong : moveList) {
+            String move = sanParser.getNotation(position, moveLong);
             moves.add(move);
         }
         return moves;
+    }
+
+    public static class Pair<T, U> {
+        public final T t;
+        public final U u;
+
+        public Pair(T t, U u) {
+            this.t= t;
+            this.u= u;
+        }
     }
 }

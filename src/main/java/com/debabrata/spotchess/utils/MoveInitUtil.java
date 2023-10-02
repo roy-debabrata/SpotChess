@@ -1,104 +1,158 @@
 package com.debabrata.spotchess.utils;
 
-import com.debabrata.spotchess.constants.TypeConstants;
+import com.debabrata.spotchess.types.Position;
 import com.debabrata.spotchess.types.enums.PieceType;
 
 /**
- * @version 2.0
+ * @version 3.0
  * @author Debabrata Roy
- * comment: Positions are basically represented as by how much does 0x1 need to be left shifted to be over the position
- *          of the piece on the board. Each move is two positions (a from and to) and a couple of flags stored in a
- *          single int value. This is so that we can avoid the overhead of creating objects for moves. May need to run
- *          tests. Breaks OOP but hey, this is a resource intensive standalone application, performance above everything.
- *          We'll test alternatives once we have progressed far enough in our development to test overall performance.
- *
- *          This util to create and understand the move stored in the int. The methods should be inlined by JIT compiler.
+ * comment: Positions are basically represented as a form-two bit pairs for the regular positions. Special moves have
+ *          a different layout and listed below:
+ * <p>
+ *          This util to create and understand the move stored in the long. The methods should be inlined by JIT compiler.
  *          The storage details of he fields are as follows:
- *
- *          0x000000FF Last 8 bits "from" position.
- *          0x0000FF00 Next 8 bits "to" position.
- *          0x00010000 Left castle.
- *          0x00020000 Right castle.
- *          0x00040000 En passant move.
- *          0x00080000 Double pawn move.
- *          0x00100000 Pawn promotes to Queen.
- *          0x00200000 Pawn promotes to Knight.
- *          0x00400000 Pawn promotes to Bishop.
- *          0x00800000 Pawn promotes to Rook.
- *          0x0F000000 Bit-boards to restore a piece to. Added by Position. {@link TypeConstants}
- *
- *          0 can stand as an uninitialized move as a move from h1 to h1 doesn't make any sense in chess. To understand
- *          the orientation of the board please read the comments in Position.
+ * <p>
+ *          0xFF00000000000000 indicates it's a special move.
+ *          0x00000000000000FF part of it encodes the nature of the special move.
+ * <p>
+ *          0xFF00000000000001 Left castle.
+ *          0xFF00000000000002 Right castle.
+ *          0xFF00000000000004 En passant move.
+ *          0xFF00000000000008 Double pawn move.
+ *          0xFF00000000000010 Pawn promotes to Queen.
+ *          0xFF00000000000020 Pawn promotes to Knight.
+ *          0xFF00000000000030 Pawn promotes to Bishop.
+ *          0xFF00000000000040 Pawn promotes to Rook.
+ * <p>
+ *          For pawn promotions we shift the from/to right/left by 8 in order to accomodate the space for the flag.
+ *          To understand board orientation read the comments in Position. 0 can stand as an uninitialized move.
  */
 public class MoveInitUtil {
-    public static int getFrom(int move) {
-        return move & 0x000000FF;
+    public static long getFrom(long move, Position position) {
+        if (isSpecialMove(move)) {
+            if (isPromotion(move)) {
+                move = getPromotionMove(move, position.whiteToMove());
+            } else if(isCastle(move)) {
+                move = position.getKings();
+            } else {
+                move = move & 0x00FFFFFFFFFFFF00L;
+            }
+        }
+        long side = position.whiteToMove() ? position.getWhitePieces() : position.getBlackPieces();
+        return move & side;
     }
 
-    public static int getTo(int move) {
-        return (move >> 8) & 0x000000FF;
+    public static long getTo(long move, Position position) {
+        if (isSpecialMove(move)) {
+            if (isPromotion(move)) {
+                move = getPromotionMove(move, position.whiteToMove());
+            } else if(isCastle(move)) {
+                if (isLeftCastle(move)) {
+                    move = position.getKings() << 2;
+                } else {
+                    move = position.getKings() >> 2;
+                }
+            } else {
+                move = move & 0x00FFFFFFFFFFFF00L;
+            }
+        }
+        long side = position.whiteToMove() ? position.getWhitePieces() : position.getBlackPieces();
+        return move & ~side;
     }
 
-    public static boolean isCastle(int move) {
-        return (move & 0x00030000) != 0;
+    /**
+     * Call isSpecialMove before calling this method.
+     */
+    public static boolean isCastle(long move) {
+        return (move & 0x0000000000000003L) != 0;
     }
 
-    public static boolean isLeftCastle(int move) {
-        return (move & 0x00010000) != 0;
+    /**
+     * Call isSpecialMove before calling this method.
+     */
+    public static boolean isLeftCastle(long move) {
+        return (move & 0x0000000000000001L) != 0;
     }
 
-    public static boolean isRightCastle(int move) {
-        return (move & 0x00020000) != 0;
+    /**
+     * Call isSpecialMove before calling this method.
+     */
+    public static boolean isRightCastle(long move) {
+        return (move & 0x0000000000000002L) != 0;
     }
 
-    public static boolean isPromotion(int move) {
-        return (move & 0x00F00000) != 0;
+    /**
+     * Call isSpecialMove before calling this method.
+     */
+    public static boolean isPromotion(long move) {
+        return (move & 0x0000000000000070L) != 0;
     }
 
-    public static PieceType promotesTo(int move) {
-        switch ( move & 0x00F00000 ) {
-            case 0x00100000 : return PieceType.QUEEN;
-            case 0x00200000 : return PieceType.KNIGHT;
-            case 0x00400000 : return PieceType.BISHOP;
-            case 0x00800000 : return PieceType.ROOK;
+    /**
+     * Call isSpecialMove before calling this method.
+     */
+    public static long getPromotionMove(long move, boolean whiteToMove) {
+        return whiteToMove ? (move & 0x00FFFFFFFFFFFF00L) << 8 : (move & 0x00FFFFFFFFFFFF00L) >>> 8;
+    }
+
+    /**
+     * Call isSpecialMove before calling this method.
+     */
+    public static PieceType promotesTo(long move) {
+        switch ((int) (move & 0x00000000000000F0L)) {
+            case 0x00000010 : return PieceType.QUEEN;
+            case 0x00000020 : return PieceType.KNIGHT;
+            case 0x00000030 : return PieceType.BISHOP;
+            case 0x00000040 : return PieceType.ROOK;
         }
         return null;
     }
 
-    public static boolean isEnPassant(int move) {
-        return (move & 0x00040000) != 0;
+    /**
+     * Call isSpecialMove before calling this method.
+     */
+    public static boolean isEnPassant(long move) {
+        return (move & 0x0000000000000004L) != 0;
     }
 
-    public static boolean isDoublePawnMove(int move) {
-        return (move & 0x00080000) != 0;
+    /**
+     * Call isSpecialMove before calling this method.
+     */
+    public static boolean isDoublePawnMove(long move) {
+        return (move & 0x0000000000000008L) != 0;
     }
 
-    public static int newMove(int from, int to) {
-        return (to << 8) | from;
+    public static boolean isSpecialMove(long move) {
+        return (move & 0xFF00000000000000L) == 0xFF00000000000000L;
     }
 
-    public static int newLeftCastle(int from, int to) {
-        return (to << 8) | from | 0x00010000;
+    public static long newMove(long from, long to) {
+        return from | to;
     }
 
-    public static int newRightCastle(int from, int to) {
-        return (to << 8) | from | 0x00020000;
+    public static long newLeftCastle() {
+        return 0xFF00000000000001L;
     }
 
-    public static int newEnPassant(int from, int to) {
-        return (to << 8) | from | 0x00040000;
+    public static long newRightCastle() {
+        return 0xFF00000000000002L;
     }
 
-    public static int newPawnDoubleMove(int from, int to) {
-        return (to << 8) | from | 0x00080000;
+    public static long newEnPassant(long from, long to) {
+        return to | from | 0xFF00000000000004L;
     }
 
-    public static int newPawnPromotion(int from, int to, PieceType promoteTo) {
+    public static long newPawnDoubleMove(long from, long to) {
+        return to | from | 0xFF00000000000008L;
+    }
+
+    public static long newPawnPromotion(long from, long to, boolean whiteToMove, PieceType promoteTo) {
+        long move = whiteToMove ? (from | to) >>> 8 : (from | to) << 8;
         switch ( promoteTo ) {
-            case QUEEN  : return (to << 8) | from | 0x00100000;
-            case KNIGHT : return (to << 8) | from | 0x00200000;
-            case BISHOP : return (to << 8) | from | 0x00400000;
-            case ROOK   : return (to << 8) | from | 0x00800000;
+            case QUEEN  : return move | 0xFF00000000000010L;
+            case KNIGHT : return move | 0xFF00000000000020L;
+            case BISHOP : return move | 0xFF00000000000030L;
+            case ROOK   : return move | 0xFF00000000000040L;
             case PAWN   :
             case KING   : throw new RuntimeException("A pawn cannot promote to " + promoteTo.name());
         }

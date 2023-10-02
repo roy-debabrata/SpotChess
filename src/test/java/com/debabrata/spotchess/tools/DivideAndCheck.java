@@ -20,13 +20,13 @@ import java.util.stream.Collectors;
 // This class is horrible. I want to refactor it, but refactoring testing code is a luxury I cannot afford.
 public class DivideAndCheck {
     private static String pathToStockfishExe = "D:\\Projects\\OpenSource\\stockfish_15.1\\stockfish-windows-2022-x86-64.exe"; //Replace this with your local path.
-    private static String perftFen = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -"; //Replace this with your fen.
-    private static int    perftDepth = 8; //Replace this with your depth.
+    private static String perftFen = "1k6/1b6/8/8/7R/8/8/4K2R b K - 0 1"; //Replace this with your fen.
+    private static int    perftDepth = 5; //Replace this with your depth.
 
     private static final FENParser parser = new FENParser();
-    private static final int [] moveBuffer = new int[300 * 20];
+    private static final long [] moveBuffer = new long[300 * 20];
     private static final ArrayList<String> moveNameChain= new ArrayList<>();
-    private static final ArrayList<Integer> moveChain= new ArrayList<>();
+    private static final ArrayList<Long> moveChain= new ArrayList<>();
 
     public static void main(String[] args) throws Exception {
         boolean defaultsNotSet = pathToStockfishExe.isEmpty() || perftFen.isEmpty() || perftDepth == 0;
@@ -82,6 +82,10 @@ public class DivideAndCheck {
                     printErrorAndExit("Unexpected Move : " + move);
                 }
                 System.err.println("Mismatch in position : " + perftFen);
+                System.err.println("Move History : " + String.join(", ", moveNameChain));
+                System.err.println("Move Long    : " +
+                        moveChain.stream().map(x -> Long.toString(x)).collect(Collectors.joining(", ")));
+                System.out.println();
 
                 // We figure the offending move out and make it.
                 Position currentPos = parser.getGame(perftFen).getCurrentPosition();
@@ -90,9 +94,13 @@ public class DivideAndCheck {
                 int moveCount = moveProcessor.addMovesToBuffer(currentPos, 0);
                 boolean madeMove = false;
                 for (int i = 0; i < moveCount; i++) {
-                    Square squareFrom = new Square(MoveInitUtil.getFrom(moveBuffer[i]));
-                    Square squareTo = new Square(MoveInitUtil.getTo(moveBuffer[i]));
-                    if ((squareFrom.toString() + squareTo).equals(move)) {
+                    Square squareFrom = new Square(MoveInitUtil.getFrom(moveBuffer[i], currentPos));
+                    Square squareTo = new Square(MoveInitUtil.getTo(moveBuffer[i], currentPos));
+                    String notation = squareFrom.toString() + squareTo;
+                    if (MoveInitUtil.isSpecialMove(moveBuffer[i]) & MoveInitUtil.isPromotion(moveBuffer[i])) {
+                        notation += Character.toLowerCase(MoveInitUtil.promotesTo(moveBuffer[i]).getNotation());
+                    }
+                    if ((notation).equals(move)) {
                         currentPos.makeMove(moveBuffer[i]);
                         moveChain.add(moveBuffer[i]);
                         moveNameChain.add(move);
@@ -120,15 +128,22 @@ public class DivideAndCheck {
 
         Perft.perftRunner(parser.getGame(perftFen).getCurrentPosition(), perftDepth, true);
 
-        Map<String, Long> results = Arrays.stream(baOut.toString().split("\\n"))
-                .map(x -> x.replace("\r",""))
-                .filter(l -> !l.isEmpty())
-                .collect(
-                        Collectors.toMap(
-                                x -> x.split(":")[0],
-                                x -> Long.parseLong(x.split(":")[1].trim())
-                        )
-                );
+        String output = baOut.toString();
+        Map<String, Long> results = null;
+        try {
+            results = Arrays.stream(output.split("\\n"))
+                    .map(x -> x.replace("\r", ""))
+                    .filter(l -> !l.isEmpty())
+                    .collect(
+                            Collectors.toMap(
+                                    x -> x.split(":")[0],
+                                    x -> Long.parseLong(x.split(":")[1].trim())
+                            )
+                    );
+        } catch (Exception exception) {
+            System.out.println(output);
+            System.exit(1);
+        }
         System.setOut(defaultOut);
 
         return results;
@@ -176,10 +191,10 @@ public class DivideAndCheck {
     }
 
     private static void printErrorAndExit(String error) {
-        System.err.println(error + "\n" + perftFen);
+        System.err.println("\n" + error + "\n" + perftFen);
         System.err.println("Move History : " + String.join(", ", moveNameChain));
-        System.err.println("Move Integer : " +
-                moveChain.stream().map(x -> Integer.toString(x)).collect(Collectors.joining(", ")));
+        System.err.println("Move Long    : " +
+                moveChain.stream().map(x -> Long.toString(x)).collect(Collectors.joining(", ")));
         System.err.println();
 
         PositionPrinter.printPosition(parser.getGame(perftFen).getCurrentPosition());
