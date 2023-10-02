@@ -466,6 +466,7 @@ public final class Position {
             case ROOK:
                 rooksAndQueens = rooksAndQueens | to;
         }
+        toggleWhiteToMove();
         return takes;
     }
 
@@ -517,12 +518,16 @@ public final class Position {
                 kingMoved(whiteToMove);
                 incrementReversibleHalfMoveCount();
                 toggleWhiteToMove();
+                resetEnPassantStatusData();
                 return 0;
             } else if (MoveInitUtil.isPromotion(move)) {
+                resetEnPassantStatusData();
                 return promote(move, whiteToMove);
             } else if (MoveInitUtil.isEnPassant(move)) {
                 enPassant(move, whiteToMove);
+                resetEnPassantStatusData();
             } else {
+                resetEnPassantStatusData();
                 doublePush(move, whiteToMove);
             }
             resetReversibleHalfMoveCount();

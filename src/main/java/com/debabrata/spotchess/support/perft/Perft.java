@@ -1,6 +1,9 @@
 package com.debabrata.spotchess.support.perft;
 
 import com.debabrata.spotchess.logic.MoveProcessor;
+import com.debabrata.spotchess.support.notation.game.FENParser;
+import com.debabrata.spotchess.support.notation.move.SANParser;
+import com.debabrata.spotchess.types.Game;
 import com.debabrata.spotchess.types.Position;
 import com.debabrata.spotchess.types.Square;
 import com.debabrata.spotchess.utils.MoveInitUtil;
@@ -58,9 +61,13 @@ public class Perft {
         long result = 0;
         int flag = position.getFlags();
         for (int i = startWritingAt; i < newWritingPosition; i++) {
+//            Position copy = new Position(position);
             int taken = position.makeMove(moveBuffer[i]);
             long newResults = perft(position, newWritingPosition, depth - 1, false);
             position.unmakeMove(moveBuffer[i], taken, flag);
+//            if(! position.equals(copy)) {
+//                System.out.println(new FENParser().getNotation(new Game(copy)) + " : " + new SANParser().getNotation(copy, moveBuffer[i]) + " : " + moveBuffer[i]);
+//            }
             if (printDivide) {
                 printDivide(i, newResults, position);
             }
@@ -85,6 +92,7 @@ public class Perft {
                     promotions += MoveInitUtil.isPromotion(moveBuffer[i]) ? 1 : 0;
                 }
 
+//                Position copy = new Position(position);
                 int taken = position.makeMove(moveBuffer[i]);
 
                 /* Finding check stats. */
@@ -104,6 +112,9 @@ public class Perft {
                 }
 
                 position.unmakeMove(moveBuffer[i], taken, flag);
+//                if(! position.equals(copy)) {
+//                    System.out.println(new FENParser().getNotation(new Game(copy)) + " : " + new SANParser().getNotation(copy, moveBuffer[i]));
+//                }
             }
             if (printDivide) {
                 for (int i = startWritingAt; i < newWritingPosition; i++) {
@@ -153,7 +164,7 @@ public class Perft {
         Square squareFrom = new Square(MoveInitUtil.getFrom(moveBuffer[i], position));
         Square squareTo = new Square(MoveInitUtil.getTo(moveBuffer[i], position));
         if (MoveInitUtil.isSpecialMove(moveBuffer[i]) && MoveInitUtil.isPromotion(moveBuffer[i])) {
-            char promotion = MoveInitUtil.promotesTo(moveBuffer[i]).name().toLowerCase().charAt(0);
+            char promotion = Character.toLowerCase(MoveInitUtil.promotesTo(moveBuffer[i]).getNotation());
             System.out.println(squareFrom.toString() + squareTo + promotion + ": " + result);
         } else {
             System.out.println(squareFrom.toString() + squareTo + ": " + result);
