@@ -265,13 +265,13 @@ public class SpotTestSupport {
         return true;
     }
 
-    public static Pair<Long, Integer> moveAndGetReverseMove(Position position, String move) {
+    public static Pair moveAndGetReverseMove(Position position, String move) {
         assert null != position && null != move;
 
         SANParser sanParser = new SANParser();
         long moveLong = sanParser.getMove(position, move);
 
-        return new Pair<>(moveLong, position.makeMove(moveLong));
+        return new Pair(moveLong, position.makeMove(moveLong));
     }
 
 
@@ -414,13 +414,13 @@ public class SpotTestSupport {
         return moves;
     }
 
-    public static class Pair<T, U> {
-        public final T t;
-        public final U u;
+    public static class Pair {
+        public final long move;
+        public final int taken;
 
-        public Pair(T t, U u) {
-            this.t= t;
-            this.u= u;
+        public Pair(long move, int taken) {
+            this.move= move;
+            this.taken= taken;
         }
     }
 }

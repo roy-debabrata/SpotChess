@@ -51,8 +51,8 @@ public class PositionTest {
             var move9 = moveAndGetReverseMove(position, "cxb8=Q");
             assert ! position.equals(positionCopy);
 
-            position.unmakeMove(move9.t, move9.u, flag9);
-            position.unmakeMove(move8.t, move8.u, flag8);
+            position.unmakeMove(move9.move, move9.taken, flag9);
+            position.unmakeMove(move8.move, move8.taken, flag8);
 
             // Branching out and reverting again.
             flag8 = position.getFlags();
@@ -63,15 +63,15 @@ public class PositionTest {
             move9 = moveAndGetReverseMove(position, "c8=Q");
             assert ! position.equals(positionCopy);
 
-            position.unmakeMove(move9.t, move9.u, flag9);
-            position.unmakeMove(move8.t, move8.u, flag8);
-            position.unmakeMove(move7.t, move7.u, flag7);
-            position.unmakeMove(move6.t, move6.u, flag6);
-            position.unmakeMove(move5.t, move5.u, flag5);
-            position.unmakeMove(move4.t, move4.u, flag4);
-            position.unmakeMove(move3.t, move3.u, flag3);
-            position.unmakeMove(move2.t, move2.u, flag2);
-            position.unmakeMove(move1.t, move1.u, flag1);
+            position.unmakeMove(move9.move, move9.taken, flag9);
+            position.unmakeMove(move8.move, move8.taken, flag8);
+            position.unmakeMove(move7.move, move7.taken, flag7);
+            position.unmakeMove(move6.move, move6.taken, flag6);
+            position.unmakeMove(move5.move, move5.taken, flag5);
+            position.unmakeMove(move4.move, move4.taken, flag4);
+            position.unmakeMove(move3.move, move3.taken, flag3);
+            position.unmakeMove(move2.move, move2.taken, flag2);
+            position.unmakeMove(move1.move, move1.taken, flag1);
 
             assertEquals(position,positionCopy);
         }
