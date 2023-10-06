@@ -387,15 +387,16 @@ public final class Position {
     }
 
     private void castle(long move, boolean whiteToMove) {
-        long colourFlag = whiteToMove ? 0x00000000000000FFL : 0xFF00000000000000L;
-        long side = colourFlag & (MoveInitUtil.isLeftCastle(move) ? 0xF8000000000000F8L : 0x0F0000000000000FL);
-        knightsAndKings = knightsAndKings ^ (0x2A0000000000002AL & side);
-        rooksAndQueens  = rooksAndQueens  ^ (0x9500000000000095L & side);
+        long side = (MoveInitUtil.isLeftCastle(move) ? 0xF8000000000000F8L : 0x0F0000000000000FL);
         if (whiteToMove) {
+            side = 0x00000000000000FFL & side;
             whitePieces = whitePieces ^ (0xBF000000000000BFL & side);
         } else {
+            side = 0xFF00000000000000L & side;
             blackPieces = blackPieces ^ (0xBF000000000000BFL & side);
         }
+        knightsAndKings = knightsAndKings ^ (0x2A0000000000002AL & side);
+        rooksAndQueens  = rooksAndQueens  ^ (0x9500000000000095L & side);
     }
 
     private int promote(long move, boolean whiteToMove) {
