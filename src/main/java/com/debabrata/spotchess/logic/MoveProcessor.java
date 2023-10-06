@@ -373,7 +373,8 @@ public final class MoveProcessor {
             enemyAttacks |= RookAndBishopMovesUtil.getRookMoves(place, board);
         }
 
-        for(long kinghts = knights & enemyPieces; kinghts != 0; kinghts &= (kinghts - 1)) {
+        long circle = KingAndKnightMovesUtil.getKingsCircle(kingPlace);
+        for(long kinghts = knights & enemyPieces & circle; kinghts != 0; kinghts &= (kinghts - 1)) {
             int place = BitUtil.getLastBitPlaceValue(kinghts);
             enemyAttacks |= KingAndKnightMovesUtil.getKnightMoves(place);
         }
