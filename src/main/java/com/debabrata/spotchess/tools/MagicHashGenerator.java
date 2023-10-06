@@ -9,6 +9,8 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static com.debabrata.spotchess.utils.RookAndBishopMovesUtil.MaskType;
+
 public class MagicHashGenerator {
     /* Following fields are for magicSearchRunner. They configure how many threads are set up, after how many runs they
     *  check up on other threads for completions and how long to search for before timing out the search. The last two
@@ -32,7 +34,6 @@ public class MagicHashGenerator {
 
     private static void runForSinglePosition() {
         PieceType pieceType = PieceType.BISHOP;
-        boolean pinningType = false;
         int position = 0;
         int targetedShiftNumber = 58;
         int earlyFailureCheckPosition = 0;
@@ -41,7 +42,7 @@ public class MagicHashGenerator {
 
         SearchConfiguration searchConfig = new SearchConfiguration(earlyFailureCheckPosition, earlyExpectedMoveConvergence);
 
-        long mask = RookAndBishopMovesUtil.getPieceMask(pieceType, pinningType, position);
+        long mask = RookAndBishopMovesUtil.getPieceMask(pieceType, MaskType.MASK, position);
         long[] positionCombinations = BitUtil.getAllPossibleBitCombinations(mask);
         long[] associatedMoves = RookAndBishopMovesUtil.getAllPossibleMovesCombinations(pieceType, position, positionCombinations);
         long[] associatedPins = RookAndBishopMovesUtil.getAllPossiblePinCombinations(pieceType, position, positionCombinations);
@@ -55,9 +56,9 @@ public class MagicHashGenerator {
         long magic = initiateSearch(searchConfig, searchScope, generator);
 
         if ( pieceType == PieceType.ROOK ) {
-            System.out.println("Mask  : " + formatLongToHexLiteral(RookAndBishopMovesUtil.getRookMask(position, pinningType)));
+            System.out.println("Mask  : " + formatLongToHexLiteral(RookAndBishopMovesUtil.getRookMask(position, MaskType.MASK)));
         } else {
-            System.out.println("Mask  : " + formatLongToHexLiteral(RookAndBishopMovesUtil.getBishopMask(position, pinningType)));
+            System.out.println("Mask  : " + formatLongToHexLiteral(RookAndBishopMovesUtil.getBishopMask(position, MaskType.MASK)));
         }
         if ( magic != 0L ) {
             System.out.println("Magic : " + formatLongToHexLiteral(magic));
@@ -100,22 +101,26 @@ public class MagicHashGenerator {
         StringBuilder shiftArray = new StringBuilder("magicNumberShifts" + capitalCasePieceName + "[] = {");
         StringBuilder occupancyArray = new StringBuilder("occupancyMask" + capitalCasePieceName + "[] = {");
         StringBuilder occupancySelectorArray = new StringBuilder("selectorMask" + capitalCasePieceName + "[] = {");
+        StringBuilder fullOccupancyArray = new StringBuilder("fullOccupancyMask" + capitalCasePieceName + "[] = {");
 
         StringBuilder timedOutPositions = new StringBuilder();
 
         for (int i = 0; i < magicNumberShiftTargets.length; i++ ) {
             shiftArray.append(magicNumberShiftTargets[i]).append(",");
             if ( piece == PieceType.ROOK ) {
-                occupancyArray.append(formatLongToHexLiteral(RookAndBishopMovesUtil.getRookMask(i, false))).append(", ");
-                occupancySelectorArray.append(formatLongToHexLiteral(RookAndBishopMovesUtil.getRookMask(i, true))).append(", ");
+                occupancyArray.append(formatLongToHexLiteral(RookAndBishopMovesUtil.getRookMask(i, MaskType.MASK))).append(", ");
+                occupancySelectorArray.append(formatLongToHexLiteral(RookAndBishopMovesUtil.getRookMask(i, MaskType.SEMI_MASK))).append(", ");
+                fullOccupancyArray.append(formatLongToHexLiteral(RookAndBishopMovesUtil.getRookMask(i, MaskType.FULL_MASK))).append(", ");
             } else {
-                occupancyArray.append(formatLongToHexLiteral(RookAndBishopMovesUtil.getBishopMask(i, false))).append(", ");
-                occupancySelectorArray.append(formatLongToHexLiteral(RookAndBishopMovesUtil.getBishopMask(i, true))).append(", ");
+                occupancyArray.append(formatLongToHexLiteral(RookAndBishopMovesUtil.getBishopMask(i, MaskType.MASK))).append(", ");
+                occupancySelectorArray.append(formatLongToHexLiteral(RookAndBishopMovesUtil.getBishopMask(i, MaskType.SEMI_MASK))).append(", ");
+                fullOccupancyArray.append(formatLongToHexLiteral(RookAndBishopMovesUtil.getBishopMask(i, MaskType.FULL_MASK))).append(", ");
             }
         }
         System.out.println(shiftArray + "\b};");
         System.out.println(occupancyArray + "\b\b};");
         System.out.println(occupancySelectorArray + "\b\b};");
+        System.out.println(fullOccupancyArray + "\b\b};");
 
         System.out.print("magicNumber" + capitalCasePieceName + "[] = {");
 
@@ -123,7 +128,7 @@ public class MagicHashGenerator {
         for (int position = 0; position < 64; position++) {
             int targetedShiftNumber = magicNumberShiftTargets[position];
 
-            long mask = RookAndBishopMovesUtil.getPieceMask(piece, false, position);
+            long mask = RookAndBishopMovesUtil.getPieceMask(piece, MaskType.MASK, position);
             long[] positionCombinations = BitUtil.getAllPossibleBitCombinations(mask);
             long[] associatedMoves, associatedPins;
 

@@ -37,7 +37,10 @@ public final class MoveProcessor {
     private long checkBlock; /* Positions where if you can place your piece it blocks your check.
                                 Also includes the attacker position as well. Is zero if multiple pieces check.*/
     private boolean canLeftCastle;
-    boolean canRightCastle;
+    private boolean canRightCastle;
+
+    private boolean bishopChecksSkipped;
+    private boolean rookChecksSkipped;
 
     /* Relates to pinned pieces. */
     private long pinnedPieces;
@@ -194,6 +197,7 @@ public final class MoveProcessor {
      **/
     private void processChecks() {
         /* Knight Checks. */
+        long kingAttack;
         long attacker = KingAndKnightMovesUtil.getKnightMoves(kingPlace) & knights & enemyPieces;
         if (attacker != 0) {
             isCheck = true;
@@ -202,47 +206,59 @@ public final class MoveProcessor {
 
         /* Lateral Checks.
          * There can be more than one lateral checks at a time. Ex. axb8=Q where the king is at a8 and a queen at a6. */
-        long kingAttack = RookAndBishopMovesUtil.getKingRookMoves(kingPlace, allPieces);
-        attacker = kingAttack & rookType & enemyPieces;
+        attacker = rookType & enemyPieces & RookAndBishopMovesUtil.getRookMask(kingPlace);
         if (attacker != 0) {
-            if (isCheck) {
-                /* We avoid unnecessary checks as already in check by another piece. */
-                checkBlock = 0;
-                return;
-            }
-            isCheck = true;
-            long semiMask = RookAndBishopMovesUtil.getRookSemiMask(kingPlace);
-            if ((attacker & semiMask) != 0 && (attacker & ~semiMask) != 0) {
-                return; /* Attacks are from two different pieces. Check block is already zero. */
-            } else {
-                kingAttack = kingAttack & ((attacker & semiMask) == 0 ? ~semiMask : semiMask); /* Limiting blocks to attack lateral. */
-                if ((attacker > ourKing || attacker < 0) && ourKing > 0) {
-                    checkBlock = checkBlock | (kingAttack & -ourKing); /* Adds all positions from king up to attacker to blocks. */
+            rookChecksSkipped = false;
+            kingAttack = RookAndBishopMovesUtil.getKingRookMoves(kingPlace, allPieces);
+            attacker = kingAttack & attacker;
+            if (attacker != 0) {
+                if (isCheck) {
+                    /* We avoid unnecessary checks as already in check by another piece. */
+                    checkBlock = 0;
+                    return;
+                }
+                isCheck = true;
+                long semiMask = RookAndBishopMovesUtil.getRookSemiMask(kingPlace);
+                if ((attacker & semiMask) != 0 && (attacker & ~semiMask) != 0) {
+                    return; /* Attacks are from two different pieces. Check block is already zero. */
                 } else {
-                    checkBlock = checkBlock | (kingAttack & (ourKing - 1));
+                    kingAttack = kingAttack & ((attacker & semiMask) == 0 ? ~semiMask : semiMask); /* Limiting blocks to attack lateral. */
+                    if ((attacker > ourKing || attacker < 0) && ourKing > 0) {
+                        checkBlock = checkBlock | (kingAttack & -ourKing); /* Adds all positions from king up to attacker to blocks. */
+                    } else {
+                        checkBlock = checkBlock | (kingAttack & (ourKing - 1));
+                    }
                 }
             }
+        } else {
+            rookChecksSkipped = true;
         }
 
         /* Diagonal Checks. */
-        kingAttack = RookAndBishopMovesUtil.getKingBishopMoves(kingPlace, allPieces);
-        attacker = kingAttack & bishopType & enemyPieces; /* There can only be one at max. */
+        attacker = bishopType & enemyPieces & RookAndBishopMovesUtil.getBishopMask(kingPlace);
         if (attacker != 0) {
-            if (isCheck) {
-                checkBlock = 0;
+            bishopChecksSkipped = false;
+            kingAttack = RookAndBishopMovesUtil.getKingBishopMoves(kingPlace, allPieces);
+            attacker = kingAttack & attacker; /* There can only be one at max. */
+            if (attacker != 0) {
+                if (isCheck) {
+                    checkBlock = 0;
+                    return;
+                }
+                isCheck = true;
+                long semiMask = RookAndBishopMovesUtil.getBishopSemiMask(kingPlace);
+                kingAttack = kingAttack & ((attacker & semiMask) == 0 ? ~semiMask : semiMask); /* Limiting blocks to attack diagonal. */
+
+                if ((attacker > ourKing || attacker < 0) && ourKing > 0) { /* Simply "attacker > ourKing" if java supported unsigned. */
+                    checkBlock = checkBlock | (kingAttack & -ourKing);
+                } else {
+                    checkBlock = checkBlock | (kingAttack & (ourKing - 1));
+                }
+                /* I cannot think of a way in which we can have a double bishop and pawn check. So we just return. (In an actual game). #FAITH */
                 return;
             }
-            isCheck = true;
-            long semiMask = RookAndBishopMovesUtil.getBishopSemiMask(kingPlace);
-            kingAttack = kingAttack & ((attacker & semiMask) == 0 ? ~semiMask : semiMask); /* Limiting blocks to attack diagonal. */
-
-            if ((attacker > ourKing || attacker < 0) && ourKing > 0) { /* Simply "attacker > ourKing" if java supported unsigned. */
-                checkBlock = checkBlock | (kingAttack & -ourKing);
-            } else {
-                checkBlock = checkBlock | (kingAttack & (ourKing - 1));
-            }
-            /* I cannot think of a way in which we can have a double bishop and pawn check. So we just return. (In an actual game). #FAITH */
-            return;
+        } else {
+            bishopChecksSkipped = true;
         }
 
         /* Pawn Checks. */
@@ -273,44 +289,48 @@ public final class MoveProcessor {
         pinCount = 0;
 
         /* Diagonal pins. */
-        long diagonallyClosePairs = RookAndBishopMovesUtil.getCachedBishopPins();
+        if (!bishopChecksSkipped) {
+            long diagonallyClosePairs = RookAndBishopMovesUtil.getCachedBishopPins();
 
-        long nonCheckingEnemyBishops = diagonallyClosePairs & bishopType & enemyPieces & ~checkBlock; /* Enemy bishop currently not giving check, in pair adjacent pieces. */
-        if (nonCheckingEnemyBishops != 0) {
-            long semiMask = RookAndBishopMovesUtil.getBishopSemiMask(kingPlace);
-            long diagonal1 = semiMask & diagonallyClosePairs;
-            long diagonal2 = diagonal1 ^ diagonallyClosePairs;
+            long nonCheckingEnemyBishops = diagonallyClosePairs & bishopType & enemyPieces & ~checkBlock; /* Enemy bishop currently not giving check, in pair adjacent pieces. */
+            if (nonCheckingEnemyBishops != 0) {
+                long semiMask = RookAndBishopMovesUtil.getBishopSemiMask(kingPlace);
+                long diagonal1 = semiMask & diagonallyClosePairs;
+                long diagonal2 = diagonal1 ^ diagonallyClosePairs;
 
-            separateToPairsAndProcess(diagonal1, bishopType, true);
-            separateToPairsAndProcess(diagonal2, bishopType, true);
+                separateToPairsAndProcess(diagonal1, bishopType, true);
+                separateToPairsAndProcess(diagonal2, bishopType, true);
+            }
         }
 
         /* Lateral pins. */
-        long laterallyClosePairs = RookAndBishopMovesUtil.getCachedRookPins();
+        if (!rookChecksSkipped) {
+            long laterallyClosePairs = RookAndBishopMovesUtil.getCachedRookPins();
 
-        long nonCheckingEnemyRooks = laterallyClosePairs & rookType & enemyPieces & ~checkBlock;
-        if (nonCheckingEnemyRooks != 0) { /* Enemy rook currently not giving check, among the pair adjacent pieces. */
-            long semiMask = RookAndBishopMovesUtil.getRookSemiMask(kingPlace);
-            long lateral1 = semiMask & laterallyClosePairs;
-            long lateral2 = lateral1 ^ laterallyClosePairs;
+            long nonCheckingEnemyRooks = laterallyClosePairs & rookType & enemyPieces & ~checkBlock;
+            if (nonCheckingEnemyRooks != 0) { /* Enemy rook currently not giving check, among the pair adjacent pieces. */
+                long semiMask = RookAndBishopMovesUtil.getRookSemiMask(kingPlace);
+                long lateral1 = semiMask & laterallyClosePairs;
+                long lateral2 = lateral1 ^ laterallyClosePairs;
 
-            separateToPairsAndProcess(lateral1, rookType, false);
-            separateToPairsAndProcess(lateral2, rookType, false);
-        }
+                separateToPairsAndProcess(lateral1, rookType, false);
+                separateToPairsAndProcess(lateral2, rookType, false);
+            }
 
-        /* Lateral en-passant pin. Edge case.
-         * White king at a5, white pawn at b5, black rook at d5. Black moves c5 (double push); b4 legal; bxc4 illegal. */
-        if (epTakers != 0 && !isCheck) {
-            long epRank = whiteToMove ? 0x000000FF00000000L : 0x00000000FF000000L;
-            if ((ourKing & epRank) != 0 && (epTakers & (epTakers - 1)) == 0) {
-                /* Our king is on the rank and only one pawn can take en passant. */
-                long relevantRank = epRank & (ourKing > epTakers ? (ourKing - 1) : (-ourKing ^ ourKing));
-                long relevantRooks = rookType & enemyPieces & relevantRank;
-                long otherPieces = (relevantRank & allPieces) ^ pawnPushedTwice ^ epTakers ^ relevantRooks;
-                if (relevantRooks != 0 && (ourKing > epTakers ? relevantRooks >= otherPieces : ((-otherPieces & relevantRooks) != relevantRooks))) {
-                    /* Nothing in between rooks and the king other than the two en-passant related pieces. Pin en-passant. */
-                    epTakers = 0;
-                    pawnPushedTwice = 0;
+            /* Lateral en-passant pin. Edge case.
+             * White king at a5, white pawn at b5, black rook at d5. Black moves c5 (double push); b4 legal; bxc4 illegal. */
+            if (epTakers != 0 && !isCheck) {
+                long epRank = whiteToMove ? 0x000000FF00000000L : 0x00000000FF000000L;
+                if ((ourKing & epRank) != 0 && (epTakers & (epTakers - 1)) == 0) {
+                    /* Our king is on the rank and only one pawn can take en passant. */
+                    long relevantRank = epRank & (ourKing > epTakers ? (ourKing - 1) : (-ourKing ^ ourKing));
+                    long relevantRooks = rookType & enemyPieces & relevantRank;
+                    long otherPieces = (relevantRank & allPieces) ^ pawnPushedTwice ^ epTakers ^ relevantRooks;
+                    if (relevantRooks != 0 && (ourKing > epTakers ? relevantRooks >= otherPieces : ((-otherPieces & relevantRooks) != relevantRooks))) {
+                        /* Nothing in between rooks and the king other than the two en-passant related pieces. Pin en-passant. */
+                        epTakers = 0;
+                        pawnPushedTwice = 0;
+                    }
                 }
             }
         }
@@ -341,14 +361,18 @@ public final class MoveProcessor {
         long enemyAttacks = 0;
         long board = allPieces ^ ourKing;
 
-        for(long bishops = bishopType & enemyPieces; bishops != 0; bishops &= (bishops - 1)) {
+        long chevron = KingAndKnightMovesUtil.getKingsChevron(kingPlace);
+        for(long bishops = bishopType & enemyPieces & chevron; bishops != 0; bishops &= (bishops - 1)) {
             int place = BitUtil.getLastBitPlaceValue(bishops);
             enemyAttacks |= RookAndBishopMovesUtil.getBishopMoves(place, board);
         }
-        for(long rooks = rookType & enemyPieces; rooks != 0; rooks &= (rooks - 1)) {
+
+        long cross = KingAndKnightMovesUtil.getKingsCross(kingPlace);
+        for(long rooks = rookType & enemyPieces & cross; rooks != 0; rooks &= (rooks - 1)) {
             int place = BitUtil.getLastBitPlaceValue(rooks);
             enemyAttacks |= RookAndBishopMovesUtil.getRookMoves(place, board);
         }
+
         for(long kinghts = knights & enemyPieces; kinghts != 0; kinghts &= (kinghts - 1)) {
             int place = BitUtil.getLastBitPlaceValue(kinghts);
             enemyAttacks |= KingAndKnightMovesUtil.getKnightMoves(place);
