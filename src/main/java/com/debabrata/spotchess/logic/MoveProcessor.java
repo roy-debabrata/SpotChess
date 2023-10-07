@@ -179,8 +179,8 @@ public final class MoveProcessor {
 
         if(position.enPassantAvailable()) {
             epTakers = position.getPawnsThatCanCaptureEnPassant(whiteToMove);
-            pawnPushedTwice = position.getPawnToBeCapturedEnPassant(whiteToMove);
             epTo = position.getPawnLocationAfterEnPassant(whiteToMove);
+            pawnPushedTwice = position.getPawnToBeCapturedEnPassant(epTo, whiteToMove);
         } else {
             epTakers = 0;
             pawnPushedTwice = 0;

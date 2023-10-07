@@ -245,11 +245,11 @@ public final class Position {
     /**
      * @return pawn that can be captured en-passant.
      */
-    public long getPawnToBeCapturedEnPassant(boolean whiteToMove) {
+    public long getPawnToBeCapturedEnPassant(long to, boolean whiteToMove) {
         if (whiteToMove) {
-            return (0x00FF0000L & flags) << 16; /* The L causes an implicit cast to long. */
+            return to >>> 8;
         } else {
-            return (0x00FF0000L & flags) << 8;
+            return to << 8;
         }
     }
 
@@ -467,23 +467,20 @@ public final class Position {
             case ROOK:
                 rooksAndQueens = rooksAndQueens | to;
         }
-        toggleWhiteToMove();
         return takes;
     }
 
     private void enPassant(long move, boolean whiteToMove) {
         move = move & 0x00FFFFFFFFFFFF00L;
-
-        long toBeTakenEP = getPawnToBeCapturedEnPassant(whiteToMove);
+        long pawnToTake = getPawnToBeCapturedEnPassant(move & 0x0000FF0000FF0000L, whiteToMove);
         if (whiteToMove) {
             whitePieces = whitePieces ^ move;
-            blackPieces = blackPieces ^ toBeTakenEP;
+            blackPieces = blackPieces ^ pawnToTake;
         } else {
             blackPieces = blackPieces ^ move;
-            whitePieces = whitePieces ^ toBeTakenEP;
+            whitePieces = whitePieces ^ pawnToTake;
         }
-        pawnsAndKnights = pawnsAndKnights ^ toBeTakenEP;
-        pawnsAndKnights = pawnsAndKnights ^ move;
+        pawnsAndKnights = pawnsAndKnights ^ move ^ pawnToTake;
     }
 
     private void doublePush(long move, boolean whiteToMove) {
@@ -507,33 +504,29 @@ public final class Position {
      *  @return the counter move that can be used to call {@link #unmakeMove} reverse of this move.
      *  */
     public int makeMove(long move) {
-        long from, to;
-        int takes = 0;
-        boolean captures = false;
-        boolean pawnMoves = false;
         boolean whiteToMove = whiteToMove();
+        incrementReversibleHalfMoveCount();
+        resetEnPassantStatusData();
+        toggleWhiteToMove();
+
+        long from, to;
+        int taken = 0;
+        boolean captures = false;
 
         if(MoveInitUtil.isSpecialMove(move)) {
-            if (MoveInitUtil.isCastle(move)) {
-                castle(move, whiteToMove);
-                kingMoved(whiteToMove);
-                incrementReversibleHalfMoveCount();
-                toggleWhiteToMove();
-                resetEnPassantStatusData();
-                return 0;
+            if (MoveInitUtil.isDoublePawnMove(move)) {
+                doublePush(move, whiteToMove);
             } else if (MoveInitUtil.isPromotion(move)) {
-                resetEnPassantStatusData();
-                return promote(move, whiteToMove);
+                taken = promote(move, whiteToMove);
             } else if (MoveInitUtil.isEnPassant(move)) {
                 enPassant(move, whiteToMove);
-                resetEnPassantStatusData();
             } else {
-                resetEnPassantStatusData();
-                doublePush(move, whiteToMove);
+                castle(move, whiteToMove);
+                kingMoved(whiteToMove);
+                return 0;
             }
             resetReversibleHalfMoveCount();
-            toggleWhiteToMove();
-            return 0;
+            return taken;
         }
 
         if(whiteToMove) {
@@ -556,13 +549,14 @@ public final class Position {
 
         /* Removing piece to be captured. */
         if (captures) {
+            resetReversibleHalfMoveCount();
             if ((rooksAndQueens & to) != 0) {
                 rooksAndQueens = rooksAndQueens ^ to;
                 if ((queensAndBishops & to) != 0) {
                     queensAndBishops = queensAndBishops ^ to;
-                    takes = TypeConstants.QUEEN_TAKEN;
+                    taken = TypeConstants.QUEEN_TAKEN;
                 } else {
-                    takes = TypeConstants.ROOK_TAKEN;
+                    taken = TypeConstants.ROOK_TAKEN;
                     /* We check if one of the unmoved rooks and update castling flags accordingly. */
                     if ( whiteToMove ) {
                         if (0x8000000000000000L == to) {
@@ -582,13 +576,13 @@ public final class Position {
                 pawnsAndKnights = pawnsAndKnights ^ to;
                 if ((knightsAndKings & to) != 0) {
                     knightsAndKings = knightsAndKings ^ to;
-                    takes = TypeConstants.KNIGHT_TAKEN;
+                    taken = TypeConstants.KNIGHT_TAKEN;
                 } else {
-                    takes = TypeConstants.PAWN_TAKEN;
+                    taken = TypeConstants.PAWN_TAKEN;
                 }
             } else {
                 queensAndBishops = queensAndBishops ^ to; /* Can't take king in chess, taken piece must be a bishop. */
-                takes = TypeConstants.BISHOP_TAKEN;
+                taken = TypeConstants.BISHOP_TAKEN;
             }
         }
         /* Actually making the move for the piece. */
@@ -600,7 +594,7 @@ public final class Position {
                 knightsAndKings = knightsAndKings ^ move;
             } else {
                 /* It's a pawn. */
-                pawnMoves = true;
+                resetReversibleHalfMoveCount();
             }
         } else if ((rooksAndQueens & from) != 0) {
             /* It's a rook/queen. */
@@ -633,19 +627,7 @@ public final class Position {
             /* We update king castling flags. */
             kingMoved(whiteToMove);
         }
-
-        resetEnPassantStatusData();
-
-        /* Updating reversible half-move count. */
-        if (captures || pawnMoves) {
-            resetReversibleHalfMoveCount();
-        } else {
-            incrementReversibleHalfMoveCount();
-        }
-        /* Toggling player to move. */
-        toggleWhiteToMove();
-
-        return takes;
+        return taken;
     }
 
     public void unmakeMove(long move, int pieceTaken, int restoreFlags) {
@@ -722,7 +704,7 @@ public final class Position {
                 pawnsAndKnights = pawnsAndKnights ^ move; /* Taking back the pawn. */
                 /* Deal with en-passant. */
                 if (enPassant) {
-                    long toBeTakenEP = getPawnToBeCapturedEnPassant(whiteToMove);
+                    long toBeTakenEP = getPawnToBeCapturedEnPassant(to, whiteToMove);
                     if (whiteToMove) {
                         /* Black pawn restored. */
                         blackPieces = blackPieces ^ toBeTakenEP;
@@ -784,7 +766,7 @@ public final class Position {
         if (Long.bitCount(kings & whitePieces) != 1 || Long.bitCount(kings & blackPieces) != 1) {
             return false; /* More or less than 1 king for a side. */
         }
-        long pawnsToBeCapturedEP = getPawnToBeCapturedEnPassant(whiteToMove());
+        long pawnsToBeCapturedEP = getPawnToBeCapturedEnPassant(getPawnLocationAfterEnPassant(whiteToMove()) ,whiteToMove());
         long pawnsThatCanCaptureEP = getPawnsThatCanCaptureEnPassant(whiteToMove());
         if (Long.bitCount(pawnsToBeCapturedEP) > 1) {
             return false; /* Multiple pawns cannot be captured en passant at once. */
