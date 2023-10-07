@@ -336,12 +336,12 @@ public final class MoveProcessor {
         }
     }
 
-    private void separateToPairsAndProcess(long diagonal, long attacker, boolean attackerType) {
-        if (diagonal == 0) {
+    private void separateToPairsAndProcess(long axis, long attacker, boolean attackerType) {
+        if (axis == 0) {
             return;
         }
-        long pair1 = diagonal & -ourKing;
-        long pair2 = diagonal ^ pair1;
+        long pair1 = axis & -ourKing;
+        long pair2 = axis ^ pair1;
 
         handlePinPairs(pair1, attacker, attackerType);
         handlePinPairs(pair2, attacker, attackerType);
