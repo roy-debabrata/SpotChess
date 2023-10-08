@@ -406,17 +406,17 @@ public final class MoveProcessor {
         if (isCheck) return;
 
         /* Adding castling moves. */
-        long leftCastleBits, rightCastleBits;
-        if (whiteToMove) {
-            leftCastleBits = 0x0000000000000070L; rightCastleBits = 0x0000000000000006L;
-        } else {
-            leftCastleBits = 0x7000000000000000L; rightCastleBits = 0x0600000000000000L;
+        if(canLeftCastle) {
+            long leftCastleBits = whiteToMove ? 0x0000000000000070L : 0x7000000000000000L;
+            if ((leftCastleBits & allPieces) == 0 && (leftCastleBits & 0x3000000000000030L & enemyAttacks) == 0) {
+                moveBuffer[writePosition++] = MoveInitUtil.newLeftCastle();
+            }
         }
-        if (canLeftCastle && (leftCastleBits & allPieces) == 0 && (leftCastleBits & 0x3000000000000030L & enemyAttacks) == 0) {
-            moveBuffer[writePosition++] = MoveInitUtil.newLeftCastle();
-        }
-        if (canRightCastle && (rightCastleBits & allPieces) == 0 && (rightCastleBits & enemyAttacks) == 0) {
-            moveBuffer[writePosition++] = MoveInitUtil.newRightCastle();
+        if(canRightCastle) {
+            long rightCastleBits = whiteToMove ? 0x0000000000000006L : 0x0600000000000000L;
+            if ((rightCastleBits & allPieces) == 0 && (rightCastleBits & enemyAttacks) == 0) {
+                moveBuffer[writePosition++] = MoveInitUtil.newRightCastle();
+            }
         }
     }
 
