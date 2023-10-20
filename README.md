@@ -6,5 +6,5 @@ This software contains some new algorithms. I wish to publish a paper on them. I
 consider working with me. If not, please do attribute (if any) novel ideas to me.
 
 # Collaboration
-For V1.0,  I am working extensively on performance improvements whether it be through new approaches or through optimization. I also am working on 
-making the move generation process bug free by adding more tests. If you wish to contribute to the same/have any new ideas, please feel free to contact me.
+For v1.0,  I am working extensively on performance improvements in move generation through optimization and trying out new ideas. If you wish to 
+contribute to the same/have any new ideas, please feel free to contact me.
