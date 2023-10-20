@@ -73,7 +73,7 @@ public class FixedPieceMoveTableGenerator {
             }
             long result = 0;
             for (; kingMoves != 0; kingMoves &= (kingMoves - 1)) {
-                int placeValue = BitUtil.getLastBitPlaceValue(kingMoves);
+                int placeValue = BitUtil.getListBitPlaceValue(kingMoves);
                 result |= attacks.apply(placeValue);
             }
             results[i] = result & ~(1L << i);
