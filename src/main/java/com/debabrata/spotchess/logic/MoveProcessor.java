@@ -321,8 +321,8 @@ public final class MoveProcessor {
              * White king at a5, white pawn at b5, black rook at d5. Black moves c5 (double push); b4 legal; bxc4 illegal. */
             if (epTakers != 0 && !isCheck) {
                 long epRank = whiteToMove ? 0x000000FF00000000L : 0x00000000FF000000L;
-                if ((ourKing & epRank) != 0 && (epTakers & (epTakers - 1)) == 0) {
-                    /* Our king is on the rank and only one pawn can take en passant. */
+                if ((ourKing & epRank) != 0 && (rookType & epRank) != 0 && (epTakers & (epTakers - 1)) == 0) {
+                    /* Our king is on the rank, there are rooks on the rank and only one pawn can take en passant. */
                     long relevantRank = epRank & (ourKing > epTakers ? (ourKing - 1) : (-ourKing ^ ourKing));
                     long relevantRooks = rookType & enemyPieces & relevantRank;
                     long otherPieces = (relevantRank & allPieces) ^ pawnPushedTwice ^ epTakers ^ relevantRooks;
