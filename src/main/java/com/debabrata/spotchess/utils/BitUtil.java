@@ -2,8 +2,8 @@ package com.debabrata.spotchess.utils;
 
 public class BitUtil {
 
-    public static int getListBitPlaceValue(long singleBit){
-        return Long.numberOfTrailingZeros(singleBit);
+    public static int getListBitPlaceValue(long number){
+        return Long.numberOfTrailingZeros(number);
     }
 
     /**
