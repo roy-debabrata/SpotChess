@@ -1,4 +1,4 @@
-package com.debabrata.spotchess.console;
+package com.debabrata.spotchess.settings;
 
 public class ConsoleDisplaySettings {
     private static boolean SHOW_BITBOARDS = true;

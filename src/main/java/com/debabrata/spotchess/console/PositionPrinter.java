@@ -1,5 +1,6 @@
 package com.debabrata.spotchess.console;
 
+import com.debabrata.spotchess.settings.ConsoleDisplaySettings;
 import com.debabrata.spotchess.types.Position;
 import com.debabrata.spotchess.types.enums.Colour;
 import com.debabrata.spotchess.types.enums.PieceType;
