@@ -49,7 +49,7 @@ public class Perft {
         if (depth < 1) {
             return 1;
         }
-        int newWritingPosition = processor.addMovesToBuffer(position, startWritingAt);
+        int newWritingPosition = processor.addAllLegalMoves(position, startWritingAt);
         if (depth == 1) {
             if (printDivide) {
                 for (int i = startWritingAt; i < newWritingPosition; i++) {
@@ -80,7 +80,7 @@ public class Perft {
         if (depth < 1) {
             return 1;
         }
-        int newWritingPosition = processor.addMovesToBuffer(position, startWritingAt);
+        int newWritingPosition = processor.addAllLegalMoves(position, startWritingAt);
         if (depth == 1) {
             /* Move Stats. */
             int flag = position.getFlags();
@@ -106,7 +106,7 @@ public class Perft {
                             discoveryChecks++;
                         }
                     }
-                    if ( processor.addMovesToBuffer(position, newWritingPosition) == newWritingPosition ) {
+                    if ( processor.addAllLegalMoves(position, newWritingPosition) == newWritingPosition ) {
                         checkmates++;
                     }
                 }

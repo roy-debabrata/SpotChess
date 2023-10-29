@@ -229,7 +229,7 @@ public class SANParser implements MoveParser {
              * from the attacked position and see if it hits another piece of the same kind. */
             long attackers = 0;
             long allPieces = position.getAllPieces();
-            int toPv = BitUtil.getListBitPlaceValue(to);
+            int toPv = BitUtil.getLastBitPlaceValue(to);
             switch (pieceType) {
                 case KNIGHT:
                     attackers = KingAndKnightMovesUtil.getKnightMoves(toPv);
@@ -260,10 +260,10 @@ public class SANParser implements MoveParser {
             }
             if (attackers != 0) {
                 /* There is ambiguity with attackers. */
-                if ((attackers & (0x0101010101010101L << (BitUtil.getListBitPlaceValue(from) % 8))) == 0) {
+                if ((attackers & (0x0101010101010101L << (BitUtil.getLastBitPlaceValue(from) % 8))) == 0) {
                     /* Attackers are not in the same column. */
                     notation = new Square(from).toString().charAt(0) + notation;
-                } else if ((attackers & (0x00000000000000FFL << (8 * (BitUtil.getListBitPlaceValue(from) / 8)))) == 0) {
+                } else if ((attackers & (0x00000000000000FFL << (8 * (BitUtil.getLastBitPlaceValue(from) / 8)))) == 0) {
                     /* Attackers are in the same column but not same row. */
                     notation = new Square(from).toString().charAt(1) + notation;
                 } else {

@@ -19,7 +19,7 @@ public class Square {
     }
 
     public Square (long bitPosition) {
-        this(BitUtil.getListBitPlaceValue(bitPosition));
+        this(BitUtil.getLastBitPlaceValue(bitPosition));
     }
 
     public Square(String name) {

@@ -2,7 +2,7 @@ package com.debabrata.spotchess.utils;
 
 public class BitUtil {
 
-    public static int getListBitPlaceValue(long number){
+    public static int getLastBitPlaceValue(long number){
         return Long.numberOfTrailingZeros(number);
     }
 
@@ -34,7 +34,7 @@ public class BitUtil {
         int [] bitToPositionMapping = new int[bitCount];
         int i = 0;
         while ( preMask != 0 ){
-            bitToPositionMapping[i++] = getListBitPlaceValue(preMask);
+            bitToPositionMapping[i++] = getLastBitPlaceValue(preMask);
             preMask = preMask & (preMask - 1);
         }
         int comboCount = 1 << bitCount;

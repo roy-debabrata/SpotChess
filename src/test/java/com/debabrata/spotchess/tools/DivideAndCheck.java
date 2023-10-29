@@ -91,7 +91,7 @@ public class DivideAndCheck {
                 Position currentPos = parser.getGame(perftFen).getCurrentPosition();
                 MoveProcessor moveProcessor = new MoveProcessor(moveBuffer);
 
-                int moveCount = moveProcessor.addMovesToBuffer(currentPos, 0);
+                int moveCount = moveProcessor.addAllLegalMoves(currentPos, 0);
                 boolean madeMove = false;
                 for (int i = 0; i < moveCount; i++) {
                     Square squareFrom = new Square(MoveInitUtil.getFrom(moveBuffer[i], currentPos));
