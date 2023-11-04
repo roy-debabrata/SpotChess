@@ -331,6 +331,22 @@ public final class Position {
         }
     }
 
+    private void updateRookFlags(long pos) {
+        if ((0x8100000000000081L & pos) == 0) {
+            return;
+        }
+        if (0x8000000000000000L == pos) {
+            leftRookMoved(false);
+        } else if (0x0100000000000000L == pos) {
+            rightRookMoved(false);
+        } else if (0x0000000000000080L == pos) {
+            leftRookMoved(true);
+        } else if (0x0000000000000001L == pos) {
+            rightRookMoved(true);
+        }
+    }
+
+
     /**
      * @return true if it's white's turn to move false if it's black's turn to move.
      */
@@ -431,20 +447,9 @@ public final class Position {
             } else if ((rooksAndQueens & to) != 0) {
                 rooksAndQueens = rooksAndQueens ^ to;
                 takes = TypeConstants.ROOK_TAKEN;
-                if ( whiteToMove ) {
-                    if (0x8000000000000000L == to) {
-                        leftRookMoved(false);
-                    } else if (0x0100000000000000L == to) {
-                        rightRookMoved(false);
-                    }
-                } else {
-                    if (0x0000000000000080L == to) {
-                        leftRookMoved(true);
-                    } else if (0x0000000000000001L == to) {
-                        rightRookMoved(true);
-                    }
-                }
-            } else if ((knightsAndKings & to) != 0) {
+                updateRookFlags(to);
+            } else {
+                /* Has to be knight as you can't take kings and there aren't any pawns on the last rank. */
                 knightsAndKings = knightsAndKings ^ to;
                 pawnsAndKnights = pawnsAndKnights ^ to;
                 takes = TypeConstants.KNIGHT_TAKEN;
@@ -558,19 +563,7 @@ public final class Position {
                 } else {
                     taken = TypeConstants.ROOK_TAKEN;
                     /* We check if one of the unmoved rooks and update castling flags accordingly. */
-                    if ( whiteToMove ) {
-                        if (0x8000000000000000L == to) {
-                            leftRookMoved(false);
-                        } else if (0x0100000000000000L == to) {
-                            rightRookMoved(false);
-                        }
-                    } else {
-                        if (0x0000000000000080L == to) {
-                            leftRookMoved(true);
-                        } else if (0x0000000000000001L == to) {
-                            rightRookMoved(true);
-                        }
-                    }
+                    updateRookFlags(to);
                 }
             } else if ((pawnsAndKnights & to) != 0) {
                 pawnsAndKnights = pawnsAndKnights ^ to;
@@ -604,19 +597,7 @@ public final class Position {
                 queensAndBishops = queensAndBishops ^ move;
             } else {
                 /* It's a rook. We update rook castling flags. */
-                if ( whiteToMove ) {
-                    if (0x0000000000000080L == from) {
-                        leftRookMoved(true);
-                    } else if (0x0000000000000001L == from) {
-                        rightRookMoved(true);
-                    }
-                } else {
-                    if (0x8000000000000000L == from) {
-                        leftRookMoved(false);
-                    } else if (0x0100000000000000L == from) {
-                        rightRookMoved(false);
-                    }
-                }
+                updateRookFlags(from);
             }
         } else if ((queensAndBishops & from) != 0) {
             /* It's a bishop. */
@@ -631,7 +612,6 @@ public final class Position {
     }
 
     public void unmakeMove(long move, int pieceTaken, int restoreFlags) {
-        long from, to;
         flags = restoreFlags;
         boolean whiteToMove = whiteToMove();
         boolean enPassant = false;
@@ -652,9 +632,9 @@ public final class Position {
             }
         }
 
+        long to;
         if (whiteToMove) {
             to = whitePieces & move;
-            from = to ^ move;
             whitePieces = whitePieces ^ move;
             if (pieceTaken != 0) {
                 /* Black piece put back. */
@@ -662,7 +642,6 @@ public final class Position {
             }
         } else {
             to = blackPieces & move;
-            from = to ^ move;
             blackPieces = blackPieces ^ move;
             if (pieceTaken != 0) {
                 /* White piece put back. */
