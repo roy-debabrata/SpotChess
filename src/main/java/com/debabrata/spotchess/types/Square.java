@@ -26,7 +26,7 @@ public class Square {
         if (null != name && name.length() == 2) {
             char file = name.charAt(0);
             char rank = name.charAt(1);
-            if (rank >= '1' && rank <= 'h' && file >= 'a' && file <= 'h') {
+            if (rank >= '1' && rank <= '8' && file >= 'a' && file <= 'h') {
                 this.placeValue = (rank - '1') * 8 + ('h' - file);
                 this.name = name;
                 return;
